@@ -16,10 +16,10 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 interface QuickActionsProps {
-    className?: string;
+    className?: string; // Correctly added className to props
 }
 
-const QuickActions = ({ className }: QuickActionsProps) => {
+const quickActions = [
     {
         title: 'New Lead',
         icon: Plus,
@@ -50,9 +50,9 @@ const QuickActions = ({ className }: QuickActionsProps) => {
     }
 ];
 
-export default function QuickActions() {
+export default function QuickActions({ className }: QuickActionsProps) {
     return (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className={`grid grid-cols-2 gap-4 sm:grid-cols-4 ${className || ''}`}>
             {quickActions.map((action) => {
                 const Icon = action.icon;
                 return (
