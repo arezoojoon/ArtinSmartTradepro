@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ interface Transaction {
     created_at: string;
 }
 
-export default function WalletPage() {
+function WalletContent() {
     const [balance, setBalance] = useState(0);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
@@ -79,7 +79,7 @@ export default function WalletPage() {
             setStatusMessage({ type: "error", text: "Payment was canceled. No charges were made." });
             window.history.replaceState({}, "", "/wallet");
         }
-    }, []);
+    }, [searchParams]);
 
     return (
         <div className="space-y-6 p-6">
@@ -88,8 +88,8 @@ export default function WalletPage() {
             {/* Stripe payment return banner */}
             {statusMessage && (
                 <div className={`flex items-center gap-3 p-4 rounded-lg border ${statusMessage.type === "success"
-                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                        : "bg-red-500/10 border-red-500/30 text-red-400"
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                    : "bg-red-500/10 border-red-500/30 text-red-400"
                     }`}>
                     {statusMessage.type === "success" ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
                     <span className="text-sm font-medium">{statusMessage.text}</span>
@@ -125,7 +125,7 @@ export default function WalletPage() {
                                 className="mt-8 bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold"
                             >
                                 <CreditCard className="mr-2 h-4 w-4" />
-                                Add Funds
+                                <AddFundsText />
                             </Button>
                         </div>
                     </CardContent>
@@ -189,5 +189,17 @@ export default function WalletPage() {
                 </CardContent>
             </Card>
         </div>
+    );
+}
+
+function AddFundsText() {
+    return <span>Add Funds</span>;
+}
+
+export default function WalletPage() {
+    return (
+        <Suspense fallback={<div className="p-6 text-white">Loading wallet...</div>}>
+            <WalletContent />
+        </Suspense>
     );
 }
