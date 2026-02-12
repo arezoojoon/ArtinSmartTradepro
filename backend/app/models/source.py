@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from .base import Base
 
 class ScrapedSource(Base):
+    __tablename__ = "scraped_sources"
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     
     name = Column(String, nullable=False) # e.g. "Google Maps - Dubai Sugar"

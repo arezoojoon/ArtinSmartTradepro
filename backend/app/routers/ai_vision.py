@@ -20,7 +20,7 @@ from app.services.billing import BillingService
 from app.services.ai_worker import AIWorkerService, RATE_LIMITS
 from typing import List, Optional
 from uuid import UUID
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 import datetime
 import uuid
 import os
@@ -89,8 +89,10 @@ class ScannedCardRead(BaseModel):
     is_ai_suggested: Optional[bool]
     created_at: datetime.datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=()
+    )
 
 
 # --- Background Worker ---

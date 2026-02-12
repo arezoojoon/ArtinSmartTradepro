@@ -21,3 +21,4 @@ class Tenant(Base):
     scraped_sources = relationship("ScrapedSource", back_populates="tenant")
     plan = relationship("Plan")  # Plan controls features
     subscription = relationship("Subscription", back_populates="tenant", uselist=False)  # Subscription controls billing
+    products = relationship("Product", back_populates="tenant")

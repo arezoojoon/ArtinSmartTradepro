@@ -12,7 +12,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 from app.models.bot_session import BotSession, BotEvent, BotDeeplinkRef
 from app.models.crm import CRMContact
-from app.models.product import Product, RFQ
+from app.models.product import Product
+from app.models.sourcing import RFQ
 from app.services.waha_service import WAHAService
 from app.services.scheduling_service import SchedulingService
 

@@ -38,6 +38,8 @@ dist/
 
 # Environment Variables
 .env
+.env.prod
+.env.prod.quoted
 .env.local
 .env.development.local
 .env.test.local

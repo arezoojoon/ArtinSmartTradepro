@@ -60,7 +60,7 @@ class CRMRevenueAttribution(Base):
     
     deal_id = Column(UUID(as_uuid=True), ForeignKey("crm_deals.id"), nullable=False)
     campaign_id = Column(UUID(as_uuid=True), ForeignKey("crm_campaigns.id"), nullable=True)
-    message_id = Column(String, ForeignKey("whatsapp_messages.message_id"), nullable=True) # Link to exact message if possible
+    message_id = Column(String, index=True, nullable=True) # Link to exact message if possible
     
     attribution_type = Column(String, default="last_touch") # first_touch, last_touch
     amount = Column(Integer, default=0) # Attributed amount

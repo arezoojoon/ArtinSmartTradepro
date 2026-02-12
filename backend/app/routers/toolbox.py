@@ -53,7 +53,7 @@ async def get_fx_rate(
     return rate
 
 @router.get("/analytics")
-@require_feature(Feature.ANALYTICS)
+@require_feature(Feature.REPORTS)
 async def get_bi_kpis(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)

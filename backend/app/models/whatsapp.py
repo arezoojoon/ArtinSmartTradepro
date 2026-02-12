@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from .base import Base
 
 class WhatsAppMessage(Base):
+    __tablename__ = "whatsapp_messages"
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     conversation_id = Column(UUID(as_uuid=True), ForeignKey("crm_conversations.id"), nullable=True) # Linked to CRM thread
     

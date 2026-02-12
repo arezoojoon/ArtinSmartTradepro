@@ -20,7 +20,7 @@ stripe==7.6.0
 pyjwt==2.8.0
 bcrypt==4.1.2
 tenacity==8.2.3
-email-validator==2.1.0
+email-validator>=2.1.0
 loguru==0.7.2
 jinja2==3.1.2
 faker==20.1.0
@@ -37,13 +37,13 @@ Pillow==10.1.0
 python-magic==0.4.27
 python-slugify==8.0.1
 shortuuid==1.0.11
-geo-py==1.0.0
+
 country_converter==1.1.1
 holidays==0.36
 APScheduler==3.10.4
 pytz==2023.3.post1
 itsdangerous==2.1.2
-starlette==0.32.0.post1
+
 anyio==3.7.1
 h11==0.14.0
 greenlet==3.0.1
@@ -83,7 +83,7 @@ nh3==0.2.14
 pytest==7.4.3
 pytest-asyncio==0.21.1
 httpx==0.25.2
-dirty-json==1.0.8
+
 inflect==7.0.0
 humanize==4.9.0
 arrow==1.3.0
@@ -123,7 +123,7 @@ itemloaders==1.1.0
 scrapinghub==2.4.0
 scrapy==2.11.0 ; python_version >= "3.8"
 scrapy-splash==0.9.0
-scrapy-zzy==0.0.1
+
 scrapy-fake-useragent==1.4.4
 scrapy-selenium==0.0.7
 scrapy-playwright==0.0.31
@@ -140,7 +140,7 @@ python-whois==0.8.0
 dnspython==2.4.2
 aiodns==3.1.1
 pycares==4.4.0
-cchardet==2.1.7
+
 aiofiles==23.2.1
 aiohttp==3.9.1
 aiohttp-socks==0.8.4
@@ -157,5 +157,5 @@ spacy==3.7.2
 scikit-learn==1.3.2
 numpy==1.26.2
 scipy==1.11.4
-modin[ray]==0.25.0
+
 pyspark==3.5.0

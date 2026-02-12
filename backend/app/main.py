@@ -2,10 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.routers import (
-    auth, users, billing, subscription, 
-    crm, campaign, whatsapp, 
-    voice, vision, ai_job, hunter, ai_brain, toolbox, sourcing, financial, execution, operations, scheduling,
-    waha_webhook
+    auth, billing,
+    crm, campaigns, whatsapp,
+    ai_voice, ai_vision, hunter, ai_brain, toolbox, sourcing, financial, execution, operations, scheduling,
+    waha_webhook,
+    leads, admin, stripe, trade, followups
 )
 settings = get_settings()
 
