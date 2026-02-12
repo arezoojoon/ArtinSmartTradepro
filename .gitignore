@@ -12,6 +12,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!/frontend/src/lib/
 lib64/
 parts/
 sdist/
@@ -58,3 +59,6 @@ Thumbs.db
 # Project specific
 backend/app/static/exports/
 frontend/out/
+
+# Unignore frontend lib
+!frontend/src/lib/
