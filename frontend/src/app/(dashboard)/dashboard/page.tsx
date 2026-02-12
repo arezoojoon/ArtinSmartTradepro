@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { Send, Search, Wallet } from "lucide-react";
+import { Send, Search, Wallet, DollarSign, TrendingUp } from "lucide-react";
 
 export default function DashboardPage() {
     const [stats, setStats] = useState({
@@ -69,9 +69,9 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <MoneyCard value={stats.potentialRevenue} title="Potential Revenue" icon="dollar" trend="+20.1% from last month" />
-                <MoneyCard value={stats.hotLeads} title="Hot Leads to Close" icon="fire" trend="+12 since yesterday" isCount />
-                <MoneyCard value={stats.walletBalance} title="Wallet Balance" icon="wallet" trend="Credits available" isCurrency />
+                <MoneyCard value={stats.potentialRevenue} title="Potential Revenue" icon={DollarSign} trend="+20.1% from last month" />
+                <MoneyCard value={stats.hotLeads} title="Hot Leads to Close" icon={TrendingUp} trend="+12 since yesterday" isCount />
+                <MoneyCard value={stats.walletBalance} title="Wallet Balance" icon={Wallet} trend="Credits available" isCurrency />
             </div>
 
             {/* Empty State / Call to Action - MVP Vital */}

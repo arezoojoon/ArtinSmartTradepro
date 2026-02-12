@@ -4,18 +4,35 @@ import { LucideIcon } from "lucide-react";
 
 interface MoneyCardProps {
     title: string;
-    amount: string;
+    value: number;
     icon: LucideIcon;
     trend?: string;
     trendUp?: boolean;
     color?: "gold" | "blue" | "green";
+    isCount?: boolean;
+    isCurrency?: boolean;
 }
 
-const MoneyCard = ({ title, amount, icon: Icon, trend, trendUp, color = "blue" }: MoneyCardProps) => {
+const MoneyCard = ({ title, value, icon: Icon, trend, trendUp, color = "blue", isCount, isCurrency }: MoneyCardProps) => {
     const colorClasses = {
         gold: "text-gold-400 bg-gold-400/10",
         blue: "text-blue-400 bg-blue-400/10",
         green: "text-green-400 bg-green-400/10",
+    };
+
+    const formatValue = () => {
+        if (isCurrency) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+            }).format(value);
+        } else if (isCount) {
+            return value.toLocaleString();
+        } else {
+            return value.toLocaleString();
+        }
     };
 
     return (
@@ -29,7 +46,7 @@ const MoneyCard = ({ title, amount, icon: Icon, trend, trendUp, color = "blue" }
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{amount}</div>
+                <div className="text-2xl font-bold">{formatValue()}</div>
                 {trend && (
                     <p className="text-xs text-gray-400 mt-1">
                         <span className={cn(trendUp ? "text-green-500" : "text-red-500", "font-medium")}>

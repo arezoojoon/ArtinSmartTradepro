@@ -15,7 +15,11 @@ import {
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-const quickActions = [
+interface QuickActionsProps {
+    className?: string;
+}
+
+const QuickActions = ({ className }: QuickActionsProps) => {
     {
         title: 'New Lead',
         icon: Plus,

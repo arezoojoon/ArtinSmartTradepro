@@ -10,9 +10,13 @@ const leads = [
     { id: 4, name: "Elena Petrova", company: "Spinneys", status: "Warm Lead", source: "Smart Scanner", confidence: 75 },
 ];
 
-const RecentLeads = () => {
+interface RecentLeadsProps {
+    className?: string;
+}
+
+const RecentLeads = ({ className }: RecentLeadsProps) => {
     return (
-        <Card className="col-span-3 border-navy-800 bg-navy-900 text-white">
+        <Card className={`col-span-3 border-navy-800 bg-navy-900 text-white ${className || ''}`}>
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg font-medium text-white">Recent Leads</CardTitle>
                 <Button variant="ghost" size="sm" className="text-gold-400 hover:text-gold-300">
