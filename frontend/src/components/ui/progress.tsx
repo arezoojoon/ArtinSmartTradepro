@@ -4,10 +4,11 @@ import { cn } from "@/lib/utils"
 type ProgressProps = React.HTMLAttributes<HTMLDivElement> & {
     value?: number
     max?: number
+    indicatorClassName?: string
 }
 
 const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
-    ({ className, value = 0, max = 100, ...props }, ref) => {
+    ({ className, value = 0, max = 100, indicatorClassName, ...props }, ref) => {
         const clamped = Math.min(Math.max(value, 0), max)
         const percentage = (clamped / max) * 100
 
@@ -25,7 +26,10 @@ const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
                 {...props}
             >
                 <div
-                    className="h-full w-full origin-left rounded-full bg-gradient-to-r from-gold-500 via-amber-400 to-yellow-300 transition-transform duration-300"
+                    className={cn(
+                        "h-full w-full origin-left rounded-full transition-transform duration-300",
+                        indicatorClassName || "bg-gradient-to-r from-gold-500 via-amber-400 to-yellow-300"
+                    )}
                     style={{ transform: `translateX(-${100 - percentage}%)` }}
                 />
             </div>
