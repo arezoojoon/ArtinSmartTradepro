@@ -1,11 +1,16 @@
 {
     "name": "Artin Smart Trade",
     "short_name": "Artin Trade",
-    "start_url": "/mobile",
+    "start_url": "/dashboard",
     "display": "standalone",
     "background_color": "#0a192f",
     "theme_color": "#0a192f",
     "orientation": "portrait",
+    "categories": [
+        "business",
+        "finance",
+        "productivity"
+    ],
     "icons": [
         {
             "src": "/logo.png",
