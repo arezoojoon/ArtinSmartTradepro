@@ -26,6 +26,9 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
+import { AuthProvider } from "@/context/AuthContext";
+import { Toaster } from "@/components/ui/toaster";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -36,7 +39,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <AuthProvider>
+          {children}
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );
