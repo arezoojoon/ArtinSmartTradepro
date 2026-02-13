@@ -26,9 +26,9 @@ app = FastAPI(
 
 # --- API Routers ---
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
-app.include_router(hunter.router, prefix="/api/hunter", tags=["Hunter"])
-app.include_router(ai_brain.router, prefix="/api/brain", tags=["Brain"])
-app.include_router(toolbox.router, prefix="/api/toolbox", tags=["Toolbox"])
+app.include_router(hunter.router, prefix=f"{settings.API_V1_STR}/hunter", tags=["Hunter"])
+app.include_router(ai_brain.router, prefix=f"{settings.API_V1_STR}/brain", tags=["Brain"])
+app.include_router(toolbox.router, prefix=f"{settings.API_V1_STR}/toolbox", tags=["Toolbox"])
 app.include_router(sourcing.router, prefix=f"{settings.API_V1_STR}/sourcing", tags=["sourcing"])
 app.include_router(financial.router, prefix=f"{settings.API_V1_STR}/finance", tags=["finance"])
 app.include_router(execution.router, prefix=f"{settings.API_V1_STR}/execution", tags=["execution"])

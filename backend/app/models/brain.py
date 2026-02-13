@@ -72,3 +72,54 @@ class CulturalStrategy(Base):
     negotiation_tactics = Column(JSON)
     
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class TradeOpportunity(Base):
+    """
+    V3 Proactive AI: Specific actionable trade opportunities pushed to the user.
+    """
+    __tablename__ = "brain_opportunities"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True)
+    
+    title = Column(String, nullable=False)
+    description = Column(String)
+    
+    # Classification
+    type = Column(String) # Arbitrage, Demand Spike, Supply Shock
+    status = Column(String, default="new") # new, accepted, rejected, expired
+    
+    # Financials
+    estimated_profit = Column(Numeric(12, 2))
+    confidence_score = Column(Float) # 0.0 - 1.0
+    
+    # Metadata
+    source_data = Column(JSON) # Links to original data (BrainArbitrage ID, etc)
+    actions = Column(JSON) # Suggested next steps (Start Campaign, RFQ)
+    
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    expires_at = Column(DateTime)
+
+
+class MarketSignal(Base):
+    """
+    V3 Proactive AI: News, weather, and political signals that affect trade.
+    """
+    __tablename__ = "brain_signals"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    # Signals can be global (no tenant_id) or specific
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=True, index=True)
+    
+    headline = Column(String, nullable=False)
+    summary = Column(String)
+    url = Column(String)
+    
+    severity = Column(String) # low, medium, high, critical
+    impact_area = Column(String) # Logistics, FX, Supply Chain
+    
+    sentiment_score = Column(Float) # -1.0 to 1.0
+    
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)

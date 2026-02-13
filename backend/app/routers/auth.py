@@ -210,7 +210,8 @@ def register_user(
                 name=user_in.company_name,
                 slug=slugify(user_in.company_name) + "-" + str(uuid.uuid4())[:4],
                 is_active=True,
-                plan_id=plan.id  # NEVER null — this controls features
+                plan_id=plan.id,  # NEVER null — this controls features
+                mode=user_in.tenant_mode
             )
             db.add(new_tenant)
             db.flush()
@@ -241,7 +242,8 @@ def register_user(
             hashed_password=get_password_hash(user_in.password),
             full_name=user_in.full_name,
             role=user_role,
-            tenant_id=tenant_id
+            tenant_id=tenant_id,
+            persona=user_in.persona
         )
         db.add(db_user)
         

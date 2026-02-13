@@ -37,39 +37,79 @@ interface NavItem {
     external?: boolean;
 }
 
-const navItems: NavItem[] = [
-    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { label: "CRM", href: "/crm", icon: Users },
-    { label: "Companies", href: "/crm/companies", icon: Building2 },
-    { label: "Campaigns", href: "/crm/campaigns", icon: Megaphone },
-    { label: "Follow-Ups", href: "/crm/followups", icon: Repeat },
-    { label: "Voice Intelligence", href: "/crm/voice", icon: Mic },
-    { label: "Vision Intelligence", href: "/crm/vision", icon: Eye },
-    { label: "Hunter", href: "/hunter", icon: Search },
-    { label: "Competitor Intel", href: "/hunter/competitors", icon: Crosshair },
-    { label: "Sourcing OS", href: "/sourcing/rfqs", icon: Package },
-    { label: "Financial OS", href: "/finance/simulator", icon: Calculator },
-    { label: "Deal Flow", href: "/brain/opportunities", icon: Briefcase },
-    { label: "Operations", href: "/operations/inventory", icon: Warehouse },
-    { label: "Scheduling", href: "/schedule", icon: CalendarDays },
-    { label: "Leads", href: "/leads", icon: Users },
-    { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle },
-    { label: "Bot Settings", href: "/whatsapp/bot", icon: Bot },
-    { label: "Catalog", href: "/whatsapp/catalog", icon: Package },
-    { label: "Buyer RFQs", href: "/whatsapp/rfqs", icon: ShoppingCart },
-    { label: "Deep Links", href: "/whatsapp/links", icon: Link2 },
-    { label: "Trader Toolbox", href: "/toolbox", icon: Globe },
-    { label: "Trade Intelligence", href: "/trade", icon: Globe },
-    { label: "AI Brain", href: "/brain", icon: Brain },
-    { label: "Wallet", href: "/wallet", icon: Wallet },
-];
-
 import { useAuth } from "@/context/AuthContext";
 import { LogOut } from "lucide-react";
 
+// Define all possible items
+const allNavItems: NavItem[] = [
+    // Common
+    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+
+    // Buyer Specific
+    { label: "Buyer Control Tower", href: "/buyer", icon: LayoutDashboard }, // Replaces standard dashboard for Buyer
+    { label: "Sourcing OS", href: "/sourcing/rfqs", icon: Package },
+    { label: "Trade Intelligence", href: "/trade", icon: Globe },
+    { label: "Deal Flow", href: "/brain/opportunities", icon: Briefcase },
+    { label: "Calculators", href: "/finance/simulator", icon: Calculator },
+    { label: "Operations", href: "/operations/inventory", icon: Warehouse },
+
+    // Seller Specific
+    { label: "Seller Control Tower", href: "/seller", icon: LayoutDashboard }, // Replaces standard dashboard for Seller
+    { label: "CRM", href: "/crm", icon: Users },
+    { label: "Hunter", href: "/hunter", icon: Search },
+    { label: "Campaigns", href: "/crm/campaigns", icon: Megaphone },
+    { label: "Competitor Intel", href: "/hunter/competitors", icon: Crosshair },
+    { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle },
+    { label: "Catalog", href: "/whatsapp/catalog", icon: Package },
+
+    // Universal
+    { label: "Wallet", href: "/wallet", icon: Wallet },
+    { label: "Settings", href: "/settings", icon: Settings },
+];
+
 export default function Sidebar() {
     const pathname = usePathname();
-    const { logout } = useAuth();
+    const { user, logout } = useAuth();
+
+    // Determine Nav Items based on Mode
+    const mode = user?.tenant?.mode || "hybrid";
+
+    let displayedItems: NavItem[] = [];
+
+    if (mode === "buyer") {
+        displayedItems = [
+            { label: "Control Tower", href: "/buyer", icon: LayoutDashboard },
+            { label: "Sourcing OS", href: "/sourcing/rfqs", icon: Package },
+            { label: "Trade Intelligence", href: "/trade", icon: Globe },
+            { label: "Deal Flow (AI)", href: "/brain/opportunities", icon: Briefcase },
+            { label: "Operations", href: "/operations/inventory", icon: Warehouse },
+            { label: "Wallet", href: "/wallet", icon: Wallet },
+        ];
+    } else if (mode === "seller") {
+        displayedItems = [
+            { label: "Control Tower", href: "/seller", icon: LayoutDashboard },
+            { label: "CRM", href: "/crm", icon: Users },
+            { label: "Hunter (Leads)", href: "/hunter", icon: Search },
+            { label: "Campaigns", href: "/crm/campaigns", icon: Megaphone },
+            { label: "Market Intel", href: "/hunter/competitors", icon: Crosshair },
+            { label: "WhatsApp Sales", href: "/whatsapp", icon: MessageCircle },
+            { label: "Wallet", href: "/wallet", icon: Wallet },
+        ];
+    } else {
+        // Hybrid - Show key items from both
+        displayedItems = [
+            { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+            { label: "CRM (Sales)", href: "/crm", icon: Users },
+            { label: "Hunter (Leads)", href: "/hunter", icon: Search },
+            { label: "Sourcing", href: "/sourcing/rfqs", icon: Package },
+            { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle },
+            { label: "AI Brain", href: "/brain", icon: Brain },
+            { label: "Wallet", href: "/wallet", icon: Wallet },
+            { label: "Settings", href: "/settings", icon: Settings },
+        ];
+    }
+
+    if (!user) return null; // Don't render sidebar if not logged in
 
     return (
         <aside className="w-64 h-full bg-navy-900 border-r border-navy-800 flex flex-col">
@@ -88,7 +128,10 @@ export default function Sidebar() {
 
             {/* Navigation */}
             <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-                {navItems.map((item) => {
+                <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    {mode.toUpperCase()} MODE
+                </div>
+                {displayedItems.map((item) => {
                     const isActive = pathname === item.href || (item.href !== "/dashboard" && !item.external && pathname?.startsWith(item.href + "/"));
                     const LinkComponent = item.external ? "a" : Link;
                     const props = item.external ? { href: item.href, target: "_blank", rel: "noopener noreferrer" } : { href: item.href };

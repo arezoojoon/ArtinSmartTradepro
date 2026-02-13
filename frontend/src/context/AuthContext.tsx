@@ -1,30 +1,44 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 
+type UserRole = "super_admin" | "admin" | "user";
+type TenantMode = "buyer" | "seller" | "hybrid";
+type UserPersona = "trader" | "logistics" | "finance" | "admin";
+
+interface Tenant {
+    id: string;
+    name: string;
+    mode: TenantMode;
+    is_active: boolean;
+}
+
 interface User {
+    id: string;
     email: string;
-    full_name?: string;
-    role: string;
-    tenant_id?: number;
+    full_name: string;
+    role: UserRole;
+    tenant_id?: string;
+    tenant?: Tenant;
+    persona?: UserPersona;
 }
 
 interface AuthContextType {
     user: User | null;
-    login: (token: string) => void;
-    logout: () => void;
     loading: boolean;
     isAuthenticated: boolean;
+    login: (token: string, refresh_token: string) => Promise<void>;
+    logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
     user: null,
-    login: () => { },
-    logout: () => { },
     loading: true,
     isAuthenticated: false,
+    login: async () => { },
+    logout: () => { },
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -33,31 +47,74 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token) {
-            // In a real app, verify token validity or fetch user profile
-            // For now, decode if possible or just assume valid until 401
-            // simplified:
-            setUser({ email: "user@example.com", role: "user" }); // Placeholder until profile fetch implemented
-        }
-        setLoading(false);
+        checkAuth();
     }, []);
 
-    const login = (token: string) => {
-        localStorage.setItem("token", token);
-        // Decode token to get user info
-        setUser({ email: "user@example.com", role: "user" });
-        router.push("/dashboard");
+    const checkAuth = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            setLoading(false);
+            return;
+        }
+
+        try {
+            // Fetch comprehensive user profile
+            // This endpoint must return user + tenant details
+            const userData = await api.get("/users/me");
+            setUser(userData.data);
+        } catch (error) {
+            console.error("Auth check failed:", error);
+            // If 401, clear token
+            localStorage.removeItem("token");
+            localStorage.removeItem("refresh_token");
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const logout = () => {
+    const login = async (token: string, refresh_token: string) => {
+        localStorage.setItem("token", token);
+        localStorage.setItem("refresh_token", refresh_token);
+
+        try {
+            // Fetch user data immediately to decide redirect
+            const response = await api.get("/users/me");
+            const userData = response.data;
+            setUser(userData);
+
+            // V3 Redirect Logic
+            const mode = userData.tenant?.mode || "hybrid";
+            console.log(`[Auth] Redirecting for mode: ${mode}`);
+
+            if (mode === "buyer") {
+                router.push("/buyer");
+            } else if (mode === "seller") {
+                router.push("/seller");
+            } else {
+                router.push("/dashboard");
+            }
+
+        } catch (error) {
+            console.error("Login profile fetch failed:", error);
+            // Fallback
+            router.push("/dashboard");
+        }
+    };
+
+    const logout = async () => {
+        try {
+            await api.post("/auth/logout");
+        } catch (e) {
+            console.error("Logout API failed", e);
+        }
         localStorage.removeItem("token");
+        localStorage.removeItem("refresh_token");
         setUser(null);
         router.push("/login");
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading, isAuthenticated: !!user }}>
+        <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

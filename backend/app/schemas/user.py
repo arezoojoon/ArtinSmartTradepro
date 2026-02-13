@@ -13,6 +13,10 @@ class UserCreate(UserBase):
     tenant_id: Optional[UUID] = None
     company_name: Optional[str] = None  # For new tenant registration
     plan_name: Optional[str] = "professional"  # professional, enterprise, white_label
+    
+    # V3 Upgrade
+    tenant_mode: Optional[str] = "hybrid" # buyer, seller, hybrid
+    persona: Optional[str] = "trader"
 
 class UserUpdate(UserBase):
     password: Optional[str] = None

@@ -28,7 +28,7 @@ export default function LoginPage() {
             formData.append("password", password);
 
             const response = await api.post("/auth/login", formData);
-            login(response.data.access_token);
+            login(response.data.access_token, response.data.refresh_token);
         } catch (err: any) {
             setError(err.response?.data?.detail || "Failed to login");
         } finally {

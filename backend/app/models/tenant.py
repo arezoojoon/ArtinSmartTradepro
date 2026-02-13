@@ -1,7 +1,13 @@
-from sqlalchemy import Column, String, Boolean, JSON, ForeignKey
+from sqlalchemy import Column, String, Boolean, JSON, ForeignKey, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import Base
+import enum
+
+class TenantMode(str, enum.Enum):
+    BUYER = "buyer"
+    SELLER = "seller"
+    HYBRID = "hybrid"
 
 class Tenant(Base):
     name = Column(String, index=True)
@@ -10,6 +16,9 @@ class Tenant(Base):
     is_active = Column(Boolean, default=True)
     settings = Column(JSON, default={})
     
+    # V3: Operating Mode
+    mode = Column(String, default=TenantMode.HYBRID.value)
+
     # Plan = source of truth for features (NEVER null after registration)
     plan_id = Column(UUID(as_uuid=True), ForeignKey("plans.id"), nullable=True)
     
