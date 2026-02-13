@@ -81,3 +81,23 @@ def admin_stats(
         "active_tenants": active_tenants,
         "total_users": total_users
     }
+
+class UserInfo(BaseModel):
+    id: UUID
+    email: str
+    full_name: Optional[str] = None
+    role: str
+    is_active: bool
+    tenant_id: Optional[UUID] = None
+    
+    class Config:
+        from_attributes = True
+
+@router.get("/users", response_model=List[UserInfo])
+def list_users(
+    current_user: User = Depends(get_current_superuser),
+    db: Session = Depends(get_db)
+):
+    """List all users across the platform."""
+    users = db.query(User).all()
+    return users

@@ -18,6 +18,7 @@ export default function LandingPage() {
             <Link href="#features" className="hover:text-gold-400 transition-colors">Features</Link>
             <Link href="#pricing" className="hover:text-gold-400 transition-colors">Pricing</Link>
             <Link href="#testimonials" className="hover:text-gold-400 transition-colors">Success Stories</Link>
+            <Link href="https://www.linkedin.com/in/arezoomohammadzadegan/" target="_blank" className="hover:text-gold-400 transition-colors">About Us</Link>
           </div>
           <div className="flex items-center space-x-4">
             <Link href="/login" className="text-sm font-medium text-white hover:text-gold-400">Log in</Link>

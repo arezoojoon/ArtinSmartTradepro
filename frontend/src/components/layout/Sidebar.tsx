@@ -30,7 +30,14 @@ import {
     ShoppingCart
 } from "lucide-react";
 
-const navItems = [
+interface NavItem {
+    label: string;
+    href: string;
+    icon: any;
+    external?: boolean;
+}
+
+const navItems: NavItem[] = [
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "CRM", href: "/crm", icon: Users },
     { label: "Companies", href: "/crm/companies", icon: Building2 },
@@ -55,11 +62,14 @@ const navItems = [
     { label: "Trade Intelligence", href: "/trade", icon: Globe },
     { label: "AI Brain", href: "/brain", icon: Brain },
     { label: "Wallet", href: "/wallet", icon: Wallet },
-    { label: "About Us", href: "https://www.linkedin.com/in/arezoomohammadzadegan/", icon: UserCircle, external: true },
 ];
+
+import { useAuth } from "@/context/AuthContext";
+import { LogOut } from "lucide-react";
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const { logout } = useAuth();
 
     return (
         <aside className="w-64 h-full bg-navy-900 border-r border-navy-800 flex flex-col">
@@ -99,8 +109,15 @@ export default function Sidebar() {
                 })}
             </nav>
 
-            {/* Footer */}
-            <div className="p-4 border-t border-navy-800">
+            {/* Footer / Logout */}
+            <div className="p-4 border-t border-navy-800 space-y-4">
+                <button
+                    onClick={logout}
+                    className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-400/10 transition-colors"
+                >
+                    <LogOut className="h-4 w-4" />
+                    Log Out
+                </button>
                 <p className="text-xs text-navy-600 text-center">v2.0 • Phase D2</p>
             </div>
         </aside>
