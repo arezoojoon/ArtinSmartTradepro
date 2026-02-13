@@ -85,8 +85,15 @@ def require_feature(feature: str):
                 raise HTTPException(status_code=500, detail="Plan gate configuration error")
             
             if not current_user.tenant_id:
+                # Super Admins might not have a tenant, allow them if they are superuser
+                if current_user.is_superuser or current_user.role == "super_admin":
+                     return await func(*args, **kwargs)
                 raise HTTPException(status_code=403, detail="No organization associated")
             
+            # BYPASS: Super Admins get all features
+            if current_user.is_superuser or current_user.role == "super_admin":
+                return await func(*args, **kwargs)
+
             features = _get_tenant_features(db, current_user.tenant_id)
             
             # Wildcard = White Label (all features)
