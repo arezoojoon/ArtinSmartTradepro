@@ -49,7 +49,7 @@ export default function SuperAdminDashboard() {
 
     useEffect(() => {
         // Redundant check, middleware or layout should handle this ideally
-        if (user && user.role !== "super_admin" && user.role !== "SUPER_ADMIN") {
+        if (user && user.role !== "super_admin") {
             // router.push("/dashboard"); 
             // Commented out to prevent redirect loop during dev if role is not set correctly in context
         }
