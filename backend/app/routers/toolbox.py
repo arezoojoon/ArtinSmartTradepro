@@ -21,7 +21,7 @@ async def get_trade_data(
     db: Session = Depends(get_db)
 ):
     """Search Global Trade Data."""
-    return ToolboxService.get_trade_data(db, hs_code, country, year)
+    return await ToolboxService.get_trade_data(db, hs_code, country, year)
 
 @router.get("/freight")
 @require_feature(Feature.AI_BRAIN)
@@ -33,7 +33,7 @@ async def get_freight_rates(
     db: Session = Depends(get_db)
 ):
     """Get Freight Estimates."""
-    rate = ToolboxService.get_freight_rate(db, origin, dest, equipment)
+    rate = await ToolboxService.get_freight_rate(db, origin, dest, equipment)
     if not rate:
         raise HTTPException(status_code=404, detail="No rate found for route")
     return rate
@@ -47,7 +47,7 @@ async def get_fx_rate(
     db: Session = Depends(get_db)
 ):
     """Get Latest FX Rate."""
-    rate = ToolboxService.get_latest_fx(db, base, quote)
+    rate = await ToolboxService.get_latest_fx(db, base, quote)
     if not rate:
         raise HTTPException(status_code=404, detail="No rate found for pair")
     return rate

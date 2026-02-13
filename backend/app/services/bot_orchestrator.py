@@ -854,17 +854,28 @@ class BotOrchestrator:
 
         try:
             _increment_ai_usage(session)
+            
+            # QA-5: Inject Real-time Context (FX)
+            from app.services.toolbox_service import ToolboxService
+            try:
+                # Fetch a sample vital sign (USD/EUR)
+                fx = await ToolboxService.get_latest_fx(db, "USD", "EUR")
+                context_str = f"Live Market Data:\nFX USD/EUR: {fx['rate']} (Source: {fx['provider']})\nTimestamp: {fx['timestamp']}"
+            except Exception as e:
+                context_str = "Live Market Data: Unavailable (Service Error)"
+
             from app.services.gemini_service import GeminiService
-            result = await GeminiService.analyze_market(inp, "current")
+            result = await GeminiService.analyze_market(inp, "current", context_data=context_str)
 
             _audit(db, tenant_id, session.id, phone, "ai_market",
-                   {"query": inp[:200]}, ai_cost=8.0)
+                   {"query": inp[:200], "context": context_str[:100]}, ai_cost=8.0)
 
             msg = "🤖 *AI Market Analysis:*\n\n"
             if isinstance(result, dict):
                 for key, val in result.items():
-                    if val:
-                        msg += f"• *{key}*: {val}\n"
+                    if val and key not in ("raw_response", "confidence", "disclaimer"):
+                        msg += f"• *{key.replace('_', ' ').title()}*: {val}\n"
+                msg += f"\n_Note: {result.get('disclaimer', 'AI-generated.')}_"
             else:
                 msg += str(result)[:1000]
             msg += "\n\n0️⃣ Main Menu"

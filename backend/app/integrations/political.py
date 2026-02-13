@@ -1,28 +1,39 @@
-from .base import BaseIntegration
-from typing import List, Dict, Any
+"""
+Political Risk Integration (Mock)
+Provides political risk scores and sanctions data.
+"""
 import random
-import datetime
+from typing import Dict, Any
 
-class PoliticalRiskClient(BaseIntegration):
-    @property
-    def provider_name(self) -> str:
-        return "political_risk"
+class PoliticalRiskClient:
+    def __init__(self, api_key: str = None):
+        self.api_key = api_key
+        self.source_name = "Global Risk Index (Mock)"
 
-    async def fetch_data(self, country_code: str = None) -> List[Dict[str, Any]]:
-        # MOCK IMPLEMENTATION
-        # Returns stability index
-        results = []
-        score = random.randint(10, 100) # 100 is stable
+    async def get_risk_score(self, country: str) -> Dict[str, Any]:
+        """
+        Mock fetches political risk score (0-100, where 100 is stable).
+        """
+        # Roughly realistic assignments
+        high_risk = ["Iran", "Russia", "Sudan", "Yemen"]
+        medium_risk = ["Brazil", "Turkey", "South Africa", "India"]
+        low_risk = ["UAE", "Germany", "USA", "Singapore", "Switzerland"]
         
-        results.append({
-            "source": "risk_api",
-            "country": country_code or "Unknown",
+        if country in high_risk:
+            score = random.randint(20, 50)
+            status = "High Risk"
+        elif country in medium_risk:
+            score = random.randint(50, 75)
+            status = "Moderate Risk"
+        else:
+            score = random.randint(75, 95)
+            status = "Stable"
+            
+        return {
+            "country": country,
             "stability_score": score,
-            "corruption_index": random.randint(10, 90),
-            "trade_embargo_risk": score < 40,
-            "last_updated": datetime.datetime.now().isoformat()
-        })
-        return results
-
-    async def health_check(self) -> bool:
-        return True
+            "risk_level": status,
+            "sanctions_active": True if country in high_risk else False,
+            "last_updated": "2026-02-01",
+            "source": self.source_name
+        }

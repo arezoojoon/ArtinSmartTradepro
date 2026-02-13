@@ -1,34 +1,45 @@
-from .base import BaseIntegration
-from typing import List, Dict, Any
+"""
+FX Integration (Mock)
+Provides live currency exchange rates and historical volatility.
+"""
 import random
-import datetime
+from typing import Dict, Any
 
-class RXClient(BaseIntegration):
-    @property
-    def provider_name(self) -> str:
-        return "fx_rates"
+class FXClient:
+    def __init__(self, api_key: str = None):
+        self.api_key = api_key
+        self.source_name = "Bloomberg FX (Mock)"
 
-    async def fetch_data(self, base_currency: str = "USD", target_currencies: List[str] = None) -> List[Dict[str, Any]]:
-        if not target_currencies:
-            target_currencies = ["EUR", "AED", "CNY", "INR", "RUB"]
-        
-        results = []
-        base_rates = {
-            "EUR": 0.92, "AED": 3.67, "CNY": 7.20, "INR": 83.00, "RUB": 90.00
+    async def get_rate(self, base: str, quote: str) -> Dict[str, Any]:
+        """
+        Mock fetches FX rate.
+        """
+        # Realistic mock rates
+        rates = {
+            "USD": 1.0,
+            "EUR": 0.92,
+            "GBP": 0.79,
+            "AED": 3.67,
+            "CNY": 7.15,
+            "INR": 83.5,
+            "SAR": 3.75,
+            "IRR": 42000.0, # Official (mock)
         }
         
-        for curr in target_currencies:
-            rate = base_rates.get(curr, 1.0)
-            # Add some volatility
-            rate = rate * (1 + random.uniform(-0.01, 0.01))
-            results.append({
-                "source": "fx_mock",
-                "base": base_currency,
-                "target": curr,
-                "rate": round(rate, 4),
-                "timestamp": datetime.datetime.now().isoformat()
-            })
-        return results
-
-    async def health_check(self) -> bool:
-        return True
+        base_val = rates.get(base, 1.0)
+        quote_val = rates.get(quote, 1.0)
+        
+        rate = quote_val / base_val
+        
+        # Add some random noise
+        rate = rate * random.uniform(0.99, 1.01)
+        
+        return {
+            "base": base,
+            "quote": quote,
+            "rate": round(rate, 4),
+            "timestamp": "Now",
+            "change_24h": round(random.uniform(-0.5, 0.5), 2),
+            "volatility": "Low" if abs(random.uniform(-1, 1)) < 0.5 else "High",
+            "source": self.source_name
+        }

@@ -67,54 +67,119 @@ class HunterService:
         total_leads = 0
         
         try:
-            for source in sources:
-                # A) Check if it's an Official API integration
-                api_client = HunterService._get_integration_client(source)
-                if api_client:
-                    # Fetch Macro Data
-                    data = await api_client.fetch_data() # Arguments would need mapping in real scenario
-                    # Save as TradeSignal (Global or Tenant scoped?)
-                    # For this implementation, we save as HunterResult type="trade_data"
-                    for item in data:
-                        res = HunterResult(
-                            run_id=run.id,
-                            tenant_id=tenant_id,
-                            source=source,
-                            type="trade_data",
-                            raw_data=item,
-                            confidence_score=1.0
-                        )
-                        db.add(res)
-                    total_leads += len(data)
+            # Initialize Clients
+            from app.integrations.uncomtrade import UNComtradeClient
+            from app.integrations.trademap import TradeMapClient
+            from app.integrations.freight import FreightClient
+            from app.integrations.fx import FXClient
+            from app.integrations.political import PoliticalRiskClient
 
-                # B) Otherwise, treat as Scraper (Leads)
-                else:
-                    try:
-                        scraper = ScraperFactory.get_scraper(source)
-                        results = await scraper.scrape(keyword, location)
-                        snythesized_results = []
-                        
-                        for item in results:
-                            # Normalize scraper output to HunterResult
-                            res = HunterResult(
-                                run_id=run.id,
-                                tenant_id=tenant_id,
-                                source=source,
-                                type="lead", # Simplification
-                                name=item.get("title") or item.get("name"),
-                                company=item.get("company"),
-                                email=item.get("email"),
-                                phone=item.get("phone"),
-                                website=item.get("website"),
-                                address=item.get("address"),
-                                raw_data=item,
-                                confidence_score=0.8 # Mock score
-                            )
-                            db.add(res)
-                            snythesized_results.append(res)
-                        total_leads += len(results)
-                    except Exception as scraper_err:
-                        logger.error(f"Scraper {source} failed: {scraper_err}")
+            results = []
+            
+            # 1. Trade Data (UN Comtrade / TradeMap)
+            if "un_comtrade" in sources or "trademap" in sources:
+                try:
+                    # Mock HS Code lookup for keyword
+                    hs_code = "1006.30" if "rice" in keyword.lower() else "8517.12"
+                    
+                    if "un_comtrade" in sources:
+                        un_client = UNComtradeClient()
+                        trade_data = await un_client.get_top_importers(hs_code)
+                        for item in trade_data:
+                            results.append({
+                                "source": "un_comtrade",
+                                "type": "trade_flow",
+                                "title": f"Top Importer: {item['country']}",
+                                "company": "N/A",
+                                "country": item['country'],
+                                "details": item
+                            })
+
+                    if "trademap" in sources:
+                        tm_client = TradeMapClient()
+                        companies = await tm_client.get_companies(keyword, location)
+                        for comp in companies:
+                            results.append({
+                                "source": "trademap",
+                                "type": "company",
+                                "title": comp["name"],
+                                "company": comp["name"],
+                                "country": comp["country"],
+                                "website": comp.get("website"),
+                                "details": comp
+                            })
+                except Exception as e:
+                    logger.error(f"Trade Data Error: {e}")
+
+            # 2. Logistics & Risk (Freight, FX, Political)
+            if "freight" in sources:
+                try:
+                    f_client = FreightClient()
+                    # Mock route based on location
+                    origin = "Shanghai, China"
+                    dest = location if location != "Global" else "Hamburg, Germany"
+                    rates = await f_client.get_rates(origin, dest)
+                    results.append({
+                        "source": "freight",
+                        "type": "logistics",
+                        "title": f"Freight: {origin} -> {dest}",
+                        "details": rates
+                    })
+                except Exception as e:
+                    logger.error(f"Freight Error: {e}")
+
+            if "political_risk" in sources:
+                try:
+                    pr_client = PoliticalRiskClient()
+                    target = location if location != "Global" else "Iran"
+                    risk = await pr_client.get_risk_score(target)
+                    results.append({
+                        "source": "political_risk",
+                        "type": "risk",
+                        "title": f"Risk Score: {target}",
+                        "details": risk
+                    })
+                except Exception as e:
+                    logger.error(f"Risk Error: {e}")
+
+            # 3. Existing Scraper Logic
+            for source in sources:
+                # Skip if already handled above
+                if source in ("un_comtrade", "trademap", "freight", "political_risk", "fx"):
+                    continue
+
+                try:
+                    scraper = ScraperFactory.get_scraper(source)
+                    scraped_data = await scraper.scrape(keyword, location)
+                    for item in scraped_data:
+                         results.append({
+                            "source": source,
+                            "type": "lead",
+                            "title": item.get("title") or item.get("name"),
+                            "company": item.get("company"),
+                            "details": item
+                         })
+                except Exception as scraper_err:
+                    logger.error(f"Scraper {source} failed: {scraper_err}")
+
+            # Persist Results
+            for item in results:
+                res = HunterResult(
+                    run_id=run.id,
+                    tenant_id=tenant_id,
+                    source=item.get("source", "unknown"),
+                    type=item.get("type", "lead"),
+                    name=item.get("title") or item.get("name"),
+                    company=item.get("company"),
+                    email=item.get("details", {}).get("email"),
+                    phone=item.get("details", {}).get("phone"),
+                    website=item.get("details", {}).get("website"),
+                    country=item.get("details", {}).get("country"),
+                    raw_data=item.get("details", item),
+                    confidence_score=0.85
+                )
+                db.add(res)
+                total_leads += 1
             
             # Update Run
             run.status = "completed"

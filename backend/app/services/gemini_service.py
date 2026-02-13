@@ -88,13 +88,16 @@ Respond in this exact JSON format:
         return _extract_json(response.text)
     
     @staticmethod
-    def analyze_market(product: str, season: str = "Q4") -> dict:
+    def analyze_market(product: str, season: str = "Q4", context_data: Optional[str] = None) -> dict:
         """
         Market intelligence.
         "Which country is best for product X in Q4?"
         """
         model = _get_model()
         prompt = f"""You are an expert international trade analyst. Identify the best markets for the following product in a specific season.
+        
+Context Data (Real-time):
+{context_data or "No real-time data available."}
 
 Product: {product}
 Season: {season}
