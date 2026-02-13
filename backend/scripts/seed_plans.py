@@ -60,7 +60,7 @@ def seed():
                 ).first()
                 if not existing_feat:
                     logger.info(f"  + Adding feature: {feature_key}")
-                    pf = PlanFeature(plan_id=plan.id, feature_key=feature_key, limit_value=None)
+                    pf = PlanFeature(plan_id=plan.id, feature_key=feature_key)
                     db.add(pf)
         
         db.commit()
