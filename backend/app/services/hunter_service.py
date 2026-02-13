@@ -11,7 +11,7 @@ from app.services.scraper.base import ScraperFactory
 from app.integrations.uncomtrade import UNComtradeClient
 from app.integrations.trademap import TradeMapClient
 from app.integrations.freight import FreightClient
-from app.integrations.fx import RXClient
+from app.integrations.fx import FXClient
 from app.integrations.weather import WeatherClient
 from app.integrations.political import PoliticalRiskClient
 
@@ -27,7 +27,7 @@ class HunterService:
         if source == "un_comtrade": return UNComtradeClient()
         if source == "trademap": return TradeMapClient()
         if source == "freight": return FreightClient()
-        if source == "fx": return RXClient()
+        if source == "fx": return FXClient()
         if source == "weather": return WeatherClient()
         if source == "political": return PoliticalRiskClient()
         return None
@@ -130,13 +130,13 @@ class HunterService:
                     except Exception as e:
                         logger.error(f"Freight Error: {e}")
     
-                if "political_risk" in sources:
+                if "political" in sources:
                     try:
                         pr_client = PoliticalRiskClient()
                         target = location if location != "Global" else "Iran"
                         risk = await pr_client.get_risk_score(target)
                         results.append({
-                            "source": "political_risk",
+                            "source": "political",
                             "type": "risk",
                             "title": f"Risk Score: {target}",
                             "details": risk
@@ -147,7 +147,7 @@ class HunterService:
                 # 3. Existing Scraper Logic
                 for source in sources:
                     # Skip if already handled above
-                    if source in ("un_comtrade", "trademap", "freight", "political_risk", "fx"):
+                    if source in ("un_comtrade", "trademap", "freight", "political", "fx"):
                         continue
     
                     try:
