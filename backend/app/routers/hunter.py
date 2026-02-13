@@ -47,15 +47,6 @@ async def start_hunt(
     # 2. Queue Background Task
     background_tasks.add_task(
         HunterService.run_hunter_job,
-        db=db, # Warning: Passing DB session to background task is risky in FastAPI if session closes. 
-        # Ideally, we pass a SessionLocal factory or handle session inside service. 
-        # But for this architecture where `db` is DI, we need to be careful.
-        # We will assume `db` session stays valid or verify. 
-        # Actually, FastAPI `background_tasks` runs AFTER response. Dependency `db` closes.
-        # FIX: We should pass parameters and let worker open new session. 
-        # But for now, let's keep it simple and hope verify test catches it.
-        # Wait, I am the Architect. I MUST FIX IT.
-        # I will change logic below to NOT pass DB, but pass ID.
         job_id=job.id,
         tenant_id=current_user.tenant_id,
         keyword=request.keyword,
@@ -180,7 +171,6 @@ def track_competitor(
     # We use background_tasks to prevent blocking UI.
     background_tasks.add_task(
         CompetitorService.track_competitor_job,
-        db=db, # Still using db dependency workaround for MVP
         competitor_id=uuid.UUID(id),
         tenant_id=current_user.tenant_id
     )

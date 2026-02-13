@@ -18,7 +18,7 @@ class CompetitorService:
     # --- Async Job Orchestration ---
     
     @staticmethod
-    def track_competitor_job(db: Session, competitor_id: uuid.UUID, tenant_id: uuid.UUID):
+    def track_competitor_job(competitor_id: uuid.UUID, tenant_id: uuid.UUID):
         """
         Enqueues a scrape job for a competitor.
         In a real system, this would push to Redis/Celery.
@@ -26,36 +26,41 @@ class CompetitorService:
         
         Idempotency: Checks if we already scraped this competitor today.
         """
-        competitor = db.query(Competitor).filter(Competitor.id == competitor_id).first()
-        if not competitor:
-            raise ValueError("Competitor not found")
-
-        # 1. Idempotency Check
-        today = datetime.datetime.utcnow().date()
-        # Mock idempotency check: assume if updated_at is today, we skip (unless forced)
-        # Real impl would check a 'JobLog' table with (competitor_id + date) key.
-        if competitor.updated_at and competitor.updated_at.date() == today:
-             logger.info(f"Skipping track for {competitor.name}, already updated today.")
-             # return {"status": "skipped", "reason": "idempotent"} 
-             # For demo, we allow re-run
-
-        logger.info(f"Starting Scrape Job for {competitor.name}...")
-        
-        # 2. Mock Scrape Execution (Worker Logic)
-        # In reality: fetch URL -> parse HTML -> extract products
-        mock_products = CompetitorService._mock_scrape_products(competitor.name)
-        
-        # 3. Store Results & Update History
-        results = []
-        for p_data in mock_products:
-            product = CompetitorService._store_product_observation(db, competitor_id, tenant_id, p_data)
-            results.append(product)
+        from app.database import SessionLocal
+        db = SessionLocal()
+        try:
+            competitor = db.query(Competitor).filter(Competitor.id == competitor_id).first()
+            if not competitor:
+                raise ValueError("Competitor not found")
+    
+            # 1. Idempotency Check
+            today = datetime.datetime.utcnow().date()
+            # Mock idempotency check: assume if updated_at is today, we skip (unless forced)
+            # Real impl would check a 'JobLog' table with (competitor_id + date) key.
+            if competitor.updated_at and competitor.updated_at.date() == today:
+                 logger.info(f"Skipping track for {competitor.name}, already updated today.")
+                 # return {"status": "skipped", "reason": "idempotent"} 
+                 # For demo, we allow re-run
+    
+            logger.info(f"Starting Scrape Job for {competitor.name}...")
             
-        # 4. Update Competitor Timestamp
-        competitor.updated_at = datetime.datetime.utcnow()
-        db.commit()
-        
-        return {"status": "completed", "products_tracked": len(results)}
+            # 2. Mock Scrape Execution (Worker Logic)
+            # In reality: fetch URL -> parse HTML -> extract products
+            mock_products = CompetitorService._mock_scrape_products(competitor.name)
+            
+            # 3. Store Results & Update History
+            results = []
+            for p_data in mock_products:
+                product = CompetitorService._store_product_observation(db, competitor_id, tenant_id, p_data)
+                results.append(product)
+                
+            # 4. Update Competitor Timestamp
+            competitor.updated_at = datetime.datetime.utcnow()
+            db.commit()
+            
+            return {"status": "completed", "products_tracked": len(results)}
+        finally:
+            db.close()
 
     @staticmethod
     def _mock_scrape_products(competitor_name: str) -> List[Dict]:
