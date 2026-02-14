@@ -1,93 +1,98 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app.config import get_settings
-from app.routers import (
-    auth, billing, tenant, users,
-    crm, campaigns, whatsapp,
-    ai_voice, ai_vision, hunter, ai_brain, toolbox, sourcing, financial, execution, operations, scheduling,
-    waha_webhook,
-    leads, admin, stripe, trade, followups
-)
-settings = get_settings()
+from fastapi.responses import JSONResponse
+from fastapi.requests import Request
+import logging
+
+from .core.config import settings
+from .api.routes import auth, tenants
+from .db.session import engine
+from .db.base import Base
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Disable docs in production
-_docs_url = None if getattr(settings, 'ENVIRONMENT', 'development') == 'production' else '/docs'
-_redoc_url = None if getattr(settings, 'ENVIRONMENT', 'development') == 'production' else '/redoc'
-_openapi_url = None if getattr(settings, 'ENVIRONMENT', 'development') == 'production' else f"{settings.API_V1_STR}/openapi.json"
+docs_url = None if settings.ENVIRONMENT == "production" else "/docs"
+redoc_url = None if settings.ENVIRONMENT == "production" else "/redoc"
+openapi_url = None if settings.ENVIRONMENT == "production" else "/openapi.json"
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
+    title=settings.APP_NAME,
     description="Artin Smart Trade — AI Trade Operating System",
-    version="2.0.0",
-    docs_url=_docs_url,
-    redoc_url=_redoc_url,
-    openapi_url=_openapi_url
+    version=settings.APP_VERSION,
+    docs_url=docs_url,
+    redoc_url=redoc_url,
+    openapi_url=openapi_url
 )
 
-# --- API Routers ---
-app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
-app.include_router(tenant.router, prefix=f"{settings.API_V1_STR}/tenants", tags=["tenants"])
-app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["users"])
-app.include_router(hunter.router, prefix=f"{settings.API_V1_STR}/hunter", tags=["Hunter"])
-app.include_router(ai_brain.router, prefix=f"{settings.API_V1_STR}/brain", tags=["Brain"])
-app.include_router(toolbox.router, prefix=f"{settings.API_V1_STR}/toolbox", tags=["Toolbox"])
-app.include_router(sourcing.router, prefix=f"{settings.API_V1_STR}/sourcing", tags=["sourcing"])
-app.include_router(financial.router, prefix=f"{settings.API_V1_STR}/finance", tags=["finance"])
-app.include_router(execution.router, prefix=f"{settings.API_V1_STR}/execution", tags=["execution"])
-app.include_router(operations.router, prefix=f"{settings.API_V1_STR}/operations", tags=["operations"])
-app.include_router(scheduling.router, prefix=f"{settings.API_V1_STR}/scheduling", tags=["scheduling"])
-app.include_router(waha_webhook.router, prefix=f"{settings.API_V1_STR}/waha", tags=["waha-bot"])
-app.include_router(whatsapp.router, prefix=f"{settings.API_V1_STR}/whatsapp", tags=["whatsapp"])
-app.include_router(leads.router, prefix=f"{settings.API_V1_STR}/leads", tags=["leads"])
-app.include_router(admin.router, prefix=f"{settings.API_V1_STR}/admin", tags=["admin"])
-app.include_router(stripe.router, prefix=f"{settings.API_V1_STR}/stripe", tags=["stripe"])
-app.include_router(trade.router, prefix=f"{settings.API_V1_STR}/trade", tags=["trade-intelligence"])
-app.include_router(crm.router, prefix=f"{settings.API_V1_STR}/crm", tags=["crm"])
-app.include_router(campaigns.router, prefix=f"{settings.API_V1_STR}/campaigns", tags=["campaigns"])
-app.include_router(followups.router, prefix=f"{settings.API_V1_STR}/crm/followups", tags=["followups"])
-app.include_router(ai_voice.router, prefix=f"{settings.API_V1_STR}/crm/ai/voice", tags=["voice-intelligence"])
-app.include_router(ai_vision.router, prefix=f"{settings.API_V1_STR}/crm/ai/vision", tags=["vision-intelligence"])
-app.include_router(billing.router, prefix=f"{settings.API_V1_STR}/billing", tags=["billing"])
-
-# CORS
-origins = [
-    "http://localhost",
-    "http://localhost:3000",
-    "https://trade.artinsmartagent.com",
-    "https://admin.artinsmartagent.com"
-]
-
+# CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# --- API Routers ---
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(tenants.router, prefix="/api/v1/tenants", tags=["tenants"])
+
+# --- Health Check ---
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "version": "2.0.0", "platform": "AI Trade OS"}
+    return {
+        "status": "ok", 
+        "version": settings.APP_VERSION, 
+        "platform": "AI Trade OS",
+        "environment": settings.ENVIRONMENT
+    }
 
-# Startup Events
-from app.services.followup_service import start_followup_scheduler
-from app.services.ai_worker import AIWorkerService
-import asyncio
+# --- Global Exception Handler ---
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Global exception: {exc}", exc_info=True)
+    
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": {
+                "code": "INTERNAL_SERVER_ERROR",
+                "message": "An unexpected error occurred",
+                "details": {} if settings.ENVIRONMENT == "production" else {"exception": str(exc)}
+            }
+        }
+    )
 
-async def ai_watchdog_loop():
-    """Periodically recover stuck AI jobs (every 5 minutes)."""
-    while True:
-        try:
-            AIWorkerService.recover_stuck_jobs()
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).error(f"AI watchdog error: {e}")
-        await asyncio.sleep(300)  # 5 minutes
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": {
+                "code": f"HTTP_{exc.status_code}",
+                "message": exc.detail,
+                "details": {}
+            }
+        }
+    )
 
+# --- Startup Event ---
 @app.on_event("startup")
 async def startup_event():
-    asyncio.create_task(start_followup_scheduler())
-    # Recover any stuck jobs from previous restart
-    AIWorkerService.recover_stuck_jobs()
-    # Start periodic watchdog
-    asyncio.create_task(ai_watchdog_loop())
+    """Initialize database tables and services."""
+    logger.info("Starting up Artin Smart Trade API...")
+    
+    # Create database tables
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
+    logger.info("Database tables created/verified")
+    logger.info("Artin Smart Trade API started successfully")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown."""
+    logger.info("Shutting down Artin Smart Trade API...")

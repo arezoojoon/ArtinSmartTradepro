@@ -1,0 +1,498 @@
+from datetime import datetime, timedelta
+from typing import Any
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
+from ...db.session import get_db
+from ...models.user import User
+from ...models.auth import Session, PasswordResetToken, EmailVerificationToken
+from ...models.audit import AuditLog
+from ...core.security import (
+    get_password_hash, 
+    verify_password, 
+    validate_password,
+    create_access_token,
+    create_refresh_token,
+    generate_password_reset_token,
+    generate_email_verification_token
+)
+from ...core.config import settings
+from ...schemas.auth import (
+    UserRegisterRequest,
+    UserLoginRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    RefreshTokenRequest,
+    TokenResponse,
+    UserResponse,
+    MeResponse
+)
+from ..deps import get_current_user, get_optional_tenant_context
+import bcrypt
+import hashlib
+import uuid
+
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+@router.post("/register", response_model=UserResponse)
+async def register(
+    user_data: UserRegisterRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """Register a new user."""
+    # Check if user already exists
+    result = await db.execute(
+        select(User).where(User.email == user_data.email)
+    )
+    existing_user = result.scalar_one_or_none()
+    
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Validate password
+    is_valid, message = validate_password(user_data.password)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message
+        )
+    
+    # Create user
+    user = User(
+        email=user_data.email,
+        hashed_password=get_password_hash(user_data.password),
+        full_name=user_data.full_name,
+        email_verified=False  # Require email verification
+    )
+    
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    
+    # Create email verification token
+    token = generate_email_verification_token()
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    
+    verification_token = EmailVerificationToken(
+        user_id=user.id,
+        token_hash=token_hash,
+        expires_at=datetime.utcnow() + timedelta(hours=24)
+    )
+    
+    db.add(verification_token)
+    
+    # Log registration
+    audit_log = AuditLog(
+        actor_user_id=user.id,
+        action="user_register",
+        resource_type="user",
+        resource_id=str(user.id),
+        details={"email": user.email},
+        ip_address=request.client.host,
+        user_agent=request.headers.get("user-agent")
+    )
+    db.add(audit_log)
+    
+    await db.commit()
+    
+    # TODO: Send verification email (stubbed for now)
+    print(f"Email verification token for {user.email}: {token}")
+    
+    return UserResponse.from_orm(user)
+
+
+@router.post("/login", response_model=TokenResponse)
+async def login(
+    user_data: UserLoginRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """Authenticate user and return tokens."""
+    # Find user
+    result = await db.execute(
+        select(User).where(User.email == user_data.email)
+    )
+    user = result.scalar_one_or_none()
+    
+    if not user or not verify_password(user_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
+        )
+    
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Account is disabled"
+        )
+    
+    # Create tokens
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    
+    access_token = create_access_token(
+        subject=str(user.id), 
+        expires_delta=access_token_expires
+    )
+    refresh_token = create_refresh_token(
+        subject=str(user.id), 
+        expires_delta=refresh_token_expires
+    )
+    
+    # Store refresh token in database
+    token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
+    session = Session(
+        user_id=user.id,
+        token_hash=token_hash,
+        expires_at=datetime.utcnow() + refresh_token_expires
+    )
+    
+    db.add(session)
+    
+    # Update last login
+    user.last_login_at = datetime.utcnow()
+    
+    # Log login
+    audit_log = AuditLog(
+        actor_user_id=user.id,
+        action="user_login",
+        resource_type="user",
+        resource_id=str(user.id),
+        details={"email": user.email},
+        ip_address=request.client.host,
+        user_agent=request.headers.get("user-agent")
+    )
+    db.add(audit_log)
+    
+    await db.commit()
+    
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    )
+
+
+@router.post("/refresh", response_model=TokenResponse)
+async def refresh_token(
+    token_data: RefreshTokenRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """Refresh access token using refresh token."""
+    token_hash = hashlib.sha256(token_data.refresh_token.encode()).hexdigest()
+    
+    # Find valid session
+    result = await db.execute(
+        select(Session).where(
+            Session.token_hash == token_hash,
+            Session.expires_at > datetime.utcnow(),
+            Session.revoked_at.is_(None)
+        )
+    )
+    session = result.scalar_one_or_none()
+    
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+    
+    # Get user
+    result = await db.execute(
+        select(User).where(User.id == session.user_id)
+    )
+    user = result.scalar_one_or_none()
+    
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or inactive"
+        )
+    
+    # Create new access token
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        subject=str(user.id), 
+        expires_delta=access_token_expires
+    )
+    
+    # Log token refresh
+    audit_log = AuditLog(
+        actor_user_id=user.id,
+        action="token_refresh",
+        resource_type="session",
+        resource_id=str(session.id),
+        ip_address=request.client.host,
+        user_agent=request.headers.get("user-agent")
+    )
+    db.add(audit_log)
+    await db.commit()
+    
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=token_data.refresh_token,  # Return same refresh token
+        token_type="bearer",
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    )
+
+
+@router.post("/logout")
+async def logout(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """Logout user by revoking refresh token."""
+    # Note: In a real implementation, we'd need to identify which session to revoke
+    # For now, we'll just log the logout
+    audit_log = AuditLog(
+        actor_user_id=current_user.id,
+        action="user_logout",
+        resource_type="user",
+        resource_id=str(current_user.id),
+        ip_address=request.client.host,
+        user_agent=request.headers.get("user-agent")
+    )
+    db.add(audit_log)
+    await db.commit()
+    
+    return {"message": "Successfully logged out"}
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    forgot_data: ForgotPasswordRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """Send password reset email."""
+    # Find user
+    result = await db.execute(
+        select(User).where(User.email == forgot_data.email)
+    )
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        # Don't reveal if email exists
+        return {"message": "If email exists, password reset instructions have been sent"}
+    
+    # Create reset token
+    token = generate_password_reset_token()
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    
+    # Invalidate any existing tokens
+    await db.execute(
+        select(PasswordResetToken).where(
+            PasswordResetToken.user_id == user.id,
+            PasswordResetToken.used_at.is_(None)
+        ).update({"used_at": datetime.utcnow()})
+    )
+    
+    # Create new token
+    reset_token = PasswordResetToken(
+        user_id=user.id,
+        token_hash=token_hash,
+        expires_at=datetime.utcnow() + timedelta(hours=1)
+    )
+    
+    db.add(reset_token)
+    
+    # Log password reset request
+    audit_log = AuditLog(
+        actor_user_id=user.id,
+        action="password_reset_request",
+        resource_type="user",
+        resource_id=str(user.id),
+        details={"email": user.email},
+        ip_address=request.client.host,
+        user_agent=request.headers.get("user-agent")
+    )
+    db.add(audit_log)
+    
+    await db.commit()
+    
+    # TODO: Send password reset email (stubbed for now)
+    print(f"Password reset token for {user.email}: {token}")
+    
+    return {"message": "If email exists, password reset instructions have been sent"}
+
+
+@router.post("/reset-password")
+async def reset_password(
+    reset_data: ResetPasswordRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """Reset password using token."""
+    token_hash = hashlib.sha256(reset_data.token.encode()).hexdigest()
+    
+    # Find valid token
+    result = await db.execute(
+        select(PasswordResetToken).where(
+            PasswordResetToken.token_hash == token_hash,
+            PasswordResetToken.expires_at > datetime.utcnow(),
+            PasswordResetToken.used_at.is_(None)
+        )
+    )
+    reset_token = result.scalar_one_or_none()
+    
+    if not reset_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+    
+    # Validate new password
+    is_valid, message = validate_password(reset_data.password)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message
+        )
+    
+    # Get user
+    result = await db.execute(
+        select(User).where(User.id == reset_token.user_id)
+    )
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Update password
+    user.hashed_password = get_password_hash(reset_data.password)
+    
+    # Mark token as used
+    reset_token.used_at = datetime.utcnow()
+    
+    # Revoke all sessions for this user
+    await db.execute(
+        select(Session).where(Session.user_id == user.id).update({"revoked_at": datetime.utcnow()})
+    )
+    
+    # Log password reset
+    audit_log = AuditLog(
+        actor_user_id=user.id,
+        action="password_reset",
+        resource_type="user",
+        resource_id=str(user.id),
+        details={"email": user.email},
+        ip_address=request.client.host,
+        user_agent=request.headers.get("user-agent")
+    )
+    db.add(audit_log)
+    
+    await db.commit()
+    
+    return {"message": "Password reset successfully"}
+
+
+@router.post("/verify-email")
+async def verify_email(
+    token: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """Verify email using token."""
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    
+    # Find valid token
+    result = await db.execute(
+        select(EmailVerificationToken).where(
+            EmailVerificationToken.token_hash == token_hash,
+            EmailVerificationToken.expires_at > datetime.utcnow(),
+            EmailVerificationToken.verified_at.is_(None)
+        )
+    )
+    verification_token = result.scalar_one_or_none()
+    
+    if not verification_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification token"
+        )
+    
+    # Get user
+    result = await db.execute(
+        select(User).where(User.id == verification_token.user_id)
+    )
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Mark email as verified
+    user.email_verified = True
+    verification_token.verified_at = datetime.utcnow()
+    
+    # Log email verification
+    audit_log = AuditLog(
+        actor_user_id=user.id,
+        action="email_verify",
+        resource_type="user",
+        resource_id=str(user.id),
+        details={"email": user.email},
+        ip_address=request.client.host,
+        user_agent=request.headers.get("user-agent")
+    )
+    db.add(audit_log)
+    
+    await db.commit()
+    
+    return {"message": "Email verified successfully"}
+
+
+@router.get("/me", response_model=MeResponse)
+async def get_me(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """Get current user info with tenant memberships."""
+    from sqlalchemy import select
+    from ...models.tenant import Tenant, TenantMembership
+    
+    # Get user's tenant memberships
+    result = await db.execute(
+        select(TenantMembership, Tenant)
+        .join(Tenant, TenantMembership.tenant_id == Tenant.id)
+        .where(TenantMembership.user_id == current_user.id)
+    )
+    memberships = result.all()
+    
+    tenants = []
+    for membership, tenant in memberships:
+        tenants.append({
+            "id": tenant.id,
+            "name": tenant.name,
+            "slug": tenant.slug,
+            "plan": tenant.plan,
+            "role": membership.role,
+            "created_at": membership.created_at.isoformat()
+        })
+    
+    return MeResponse(
+        id=current_user.id,
+        email=current_user.email,
+        full_name=current_user.full_name,
+        email_verified=current_user.email_verified,
+        is_active=current_user.is_active,
+        current_tenant_id=current_user.current_tenant_id,
+        created_at=current_user.created_at.isoformat(),
+        last_login_at=current_user.last_login_at.isoformat() if current_user.last_login_at else None,
+        tenants=tenants
+    )

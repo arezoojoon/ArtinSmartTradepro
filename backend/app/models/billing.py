@@ -1,7 +1,21 @@
-from sqlalchemy import Column, String, ForeignKey, DateTime, Numeric
+from sqlalchemy import Column, String, ForeignKey, DateTime, Numeric, Boolean, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import Base
+import enum
+
+class SubscriptionStatus(str, enum.Enum):
+    TRIALING = "trialing"
+    ACTIVE = "active"
+    CANCELED = "canceled"
+    INCOMPLETE = "incomplete"
+    INCOMPLETE_EXPIRED = "incomplete_expired"
+    PAST_DUE = "past_due"
+    UNPAID = "unpaid"
+
+class BillingProvider(str, enum.Enum):
+    STRIPE = "stripe"
+    LOCAL_STUB = "local_stub"
 
 class Wallet(Base):
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), unique=True, nullable=False)
@@ -27,10 +41,25 @@ class BillingCustomer(Base):
     Stores payment provider customer IDs (Stripe, etc.)
     """
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, unique=True, index=True)
-    provider = Column(String, default="stripe", nullable=False)
+    provider = Column(String, default=BillingProvider.STRIPE.value, nullable=False)
     provider_customer_id = Column(String, nullable=False, index=True)
     
     tenant = relationship("Tenant", back_populates="billing_customers")
+
+class Subscription(Base):
+    """
+    Active subscriptions for tenants.
+    """
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, unique=True, index=True)
+    provider = Column(String, default=BillingProvider.STRIPE.value, nullable=False)
+    provider_subscription_id = Column(String, nullable=False, unique=True, index=True)
+    plan = Column(String, nullable=False)  # professional, enterprise, whitelabel
+    status = Column(String, default=SubscriptionStatus.TRIALING.value, nullable=False)
+    current_period_end = Column(DateTime(timezone=True), nullable=False)
+    cancel_at_period_end = Column(Boolean, default=False, nullable=False)
+    
+    # Relationships
+    tenant = relationship("Tenant", back_populates="subscriptions")
 
 class Invoice(Base):
     """
