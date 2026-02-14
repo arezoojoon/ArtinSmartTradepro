@@ -1,5 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr, Field
+from datetime import datetime
 import uuid
 
 
@@ -43,8 +44,8 @@ class UserResponse(BaseModel):
     email_verified: bool = Field(..., description="Email verification status")
     is_active: bool = Field(..., description="User active status")
     current_tenant_id: Optional[uuid.UUID] = Field(None, description="Current selected tenant")
-    created_at: str = Field(..., description="Account creation timestamp")
-    last_login_at: Optional[str] = Field(None, description="Last login timestamp")
+    created_at: datetime = Field(..., description="Account creation timestamp")
+    last_login_at: Optional[datetime] = Field(None, description="Last login timestamp")
 
     class Config:
         from_attributes = True
@@ -61,7 +62,7 @@ class TenantResponse(BaseModel):
     slug: str = Field(..., description="Tenant slug")
     plan: str = Field(..., description="Tenant plan")
     role: str = Field(..., description="User's role in this tenant")
-    created_at: str = Field(..., description="Tenant creation timestamp")
+    created_at: datetime = Field(..., description="Tenant creation timestamp")
 
     class Config:
         from_attributes = True

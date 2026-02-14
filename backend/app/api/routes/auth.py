@@ -74,7 +74,7 @@ async def register(
     
     db.add(user)
     await db.commit()
-    await db.refresh(user)
+    await db.refresh(user)  # This ensures created_at/updated_at are populated from DB defaults
     
     # Create email verification token
     token = generate_email_verification_token()
@@ -105,7 +105,7 @@ async def register(
     # TODO: Send verification email (stubbed for now)
     print(f"Email verification token for {user.email}: {token}")
     
-    return UserResponse.from_orm(user)
+    return UserResponse.model_validate(user)
 
 
 @router.post("/login", response_model=TokenResponse)
