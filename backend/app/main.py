@@ -5,7 +5,7 @@ from fastapi.requests import Request
 import logging
 
 from .core.config import settings
-from .api.routes import auth, tenants, trade, toolbox
+from .api.routes import auth, tenants
 from .db.session import engine
 from .db.base import Base
 
@@ -39,8 +39,6 @@ app.add_middleware(
 # --- API Routers ---
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(tenants.router, prefix="/api/v1/tenants", tags=["tenants"])
-app.include_router(trade.router, prefix="/api/v1/trade", tags=["trade"])
-app.include_router(toolbox.router, prefix="/api/v1/toolbox", tags=["toolbox"])
 
 # --- Health Check ---
 @app.get("/health")
