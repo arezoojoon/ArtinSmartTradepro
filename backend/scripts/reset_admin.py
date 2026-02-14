@@ -1,4 +1,9 @@
 import sys
+import os
+
+# Add parent dir to path so we can import 'app'
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 import logging
 import uuid
 from app.database import SessionLocal
