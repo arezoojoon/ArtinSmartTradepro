@@ -62,10 +62,5 @@ EXPOSE 8000
 # Production command: gunicorn with uvicorn workers
 # Workers = WEB_CONCURRENCY env var, or auto-calculate from CPU: min(2*CPU+1, 4)
 # ENV WEB_CONCURRENCY="" <--- REMOVED to prevent gunicorn crash on empty string
-CMD ["sh", "-c", "gunicorn app.main:app \
-    -w ${WEB_CONCURRENCY:-$(python -c 'import os; print(min(2*os.cpu_count()+1, 4))')} \
-    -k uvicorn.workers.UvicornWorker \
-    --bind 0.0.0.0:8000 \
-    --timeout 120 \
-    --graceful-timeout 30 \
-    --access-logfile -"]
+# Production command: Run entrypoint script (which runs migrations then starts gunicorn)
+CMD ["/app/entrypoint.sh"]
