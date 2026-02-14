@@ -19,6 +19,9 @@ email-validator>=2.1.0
 httpx==0.25.2
 requests==2.31.0
 
+# AI/ML Dependencies
+google-generativeai==0.3.2
+
 # Optional: Stripe (if needed in production)
 stripe==7.6.0
 
