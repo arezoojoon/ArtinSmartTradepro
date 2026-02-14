@@ -39,10 +39,16 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
-    # Override URL from settings
+    # Override URL from settings - use sync version for alembic
     settings = get_settings()
     configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = settings.DATABASE_URL
+    
+    # Convert async URL to sync for alembic
+    db_url = settings.DATABASE_URL
+    if db_url.startswith("postgresql+asyncpg://"):
+        db_url = db_url.replace("postgresql+asyncpg://", "postgresql+psycopg2://")
+    
+    configuration["sqlalchemy.url"] = db_url
     
     connectable = engine_from_config(
         configuration,

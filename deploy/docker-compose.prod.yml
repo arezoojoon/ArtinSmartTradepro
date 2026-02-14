@@ -30,7 +30,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    # command: [ "/bin/sh", "-c", "/app/entrypoint.sh" ]
+    ports:
+      - "8000:8000"
     volumes:
       - app_data:/app_data
     restart: unless-stopped
