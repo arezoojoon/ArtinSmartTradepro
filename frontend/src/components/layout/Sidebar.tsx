@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import TenantSwitcher from "./TenantSwitcher";
 import {
     LayoutDashboard,
     Users,
@@ -123,7 +124,7 @@ export default function Sidebar() {
     return (
         <aside className="w-64 h-full bg-navy-900 border-r border-navy-800 flex flex-col">
             {/* Logo */}
-            <div className="p-6 border-b border-navy-800 flex items-center justify-center">
+            <div className="p-6 border-b border-navy-800 flex flex-col items-center justify-center gap-4">
                 <div className="relative w-16 h-16">
                     <Image
                         src="/logo.png"
@@ -133,6 +134,7 @@ export default function Sidebar() {
                         priority
                     />
                 </div>
+                <TenantSwitcher />
             </div>
 
             {/* Navigation */}

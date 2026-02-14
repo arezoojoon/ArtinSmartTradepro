@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.routers import (
-    auth, billing,
+    auth, billing, tenant, users,
     crm, campaigns, whatsapp,
     ai_voice, ai_vision, hunter, ai_brain, toolbox, sourcing, financial, execution, operations, scheduling,
     waha_webhook,
@@ -26,6 +26,8 @@ app = FastAPI(
 
 # --- API Routers ---
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
+app.include_router(tenant.router, prefix=f"{settings.API_V1_STR}/tenants", tags=["tenants"])
+app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["users"])
 app.include_router(hunter.router, prefix=f"{settings.API_V1_STR}/hunter", tags=["Hunter"])
 app.include_router(ai_brain.router, prefix=f"{settings.API_V1_STR}/brain", tags=["Brain"])
 app.include_router(toolbox.router, prefix=f"{settings.API_V1_STR}/toolbox", tags=["Toolbox"])

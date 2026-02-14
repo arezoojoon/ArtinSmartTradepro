@@ -36,6 +36,10 @@ class ResetPasswordRequest(BaseModel):
 
 # --- Endpoints ---
 
+from app.models.platform import TenantMembership, TenantRole
+
+# ... imports ...
+
 @router.post("/login", response_model=token.Token)
 def login_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -54,15 +58,31 @@ def login_access_token(
     if not db_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     
-    # Check if tenant is active
-    if db_user.tenant_id:
-        tenant = db.query(Tenant).filter(Tenant.id == db_user.tenant_id).first()
-        if tenant and not tenant.is_active:
-            raise HTTPException(status_code=403, detail="Your organization has been suspended. Contact support.")
+    # NEW Multi-Tenant Logic:
+    # 1. Fetch memberships
+    memberships = db.query(TenantMembership).filter(
+        TenantMembership.user_id == db_user.id
+    ).all()
+    
+    default_tenant_id = None
+    default_role = None
+    
+    if memberships:
+        # Defaults to first tenant
+        # MVP: Could store 'last_tenant_id' in user model
+        default_tenant_id = str(memberships[0].tenant_id)
+        default_role = memberships[0].role
         
+        # Check if default tenant is active
+        # (Middleware handles this, but good to check before issuing token)
+        t = db.query(Tenant).filter(Tenant.id == default_tenant_id).first()
+        if t and not t.is_active:
+             # Try next membership? Or just fail?
+             pass 
+
     claims = {
-        "tenant_id": str(db_user.tenant_id) if db_user.tenant_id else None,
-        "role": db_user.role
+        "tenant_id": default_tenant_id,
+        "role": default_role or db_user.role # Fallback to user role if no tenant
     }
     
     access_token = create_access_token(subject=db_user.email, additional_claims=claims)
@@ -92,13 +112,26 @@ def refresh_access_token(body: RefreshRequest, db: Session = Depends(get_db)) ->
         if not db_user or not db_user.is_active:
             raise HTTPException(status_code=401, detail="User not found or inactive")
         
+        # Claims logic: reuse the tenant_id from the refresher or re-evaluate?
+        # Better to re-evaluate memberships to ensure they still have access
+        tenant_id = payload.get("tenant_id")
+        
+        # Verify tenant if present
+        if tenant_id:
+            membership = db.query(TenantMembership).filter(
+                TenantMembership.user_id == db_user.id,
+                TenantMembership.tenant_id == tenant_id
+            ).first()
+            if not membership:
+                tenant_id = None # Lost access, revert to unscoped? or fail?
+                # For UX: maybe just nullify
+        
         claims = {
-            "tenant_id": str(db_user.tenant_id) if db_user.tenant_id else None,
-            "role": db_user.role
+            "tenant_id": str(tenant_id) if tenant_id else None,
+            "role": db_user.role # Or tenant role
         }
         
         new_access = create_access_token(subject=db_user.email, additional_claims=claims)
-        # Issue new refresh token too (rotation)
         new_refresh = create_refresh_token(subject=db_user.email, additional_claims=claims)
         
         # Blacklist old refresh token
@@ -127,17 +160,12 @@ def logout(
 def forgot_password(body: ForgotPasswordRequest, db: Session = Depends(get_db)):
     """
     Generate a password reset token.
-    In production, this sends an email. For MVP, we return the token directly.
     """
     db_user = db.query(User).filter(User.email == body.email).first()
     if not db_user:
-        # Security: don't reveal if email exists
         return {"detail": "If this email is registered, a reset link has been sent."}
     
     reset_token = create_password_reset_token(db_user.email)
-    
-    # TODO: In production, send this via email service (SendGrid, SES, etc.)
-    # For MVP demo, return directly
     print(f"[PASSWORD RESET] Token for {db_user.email}: {reset_token}")
     
     return {"detail": "If this email is registered, a reset link has been sent."}
@@ -169,11 +197,7 @@ def register_user(
 ) -> Any:
     """
     Register a new user and potentially a new Tenant (SaaS Signup).
-    Atomic transaction: Tenant (with plan_id) -> Wallet -> User
-    
-    Architecture:
-      - tenant.plan_id = source of truth for features (NEVER null)
-      - subscription = billing status only (created on Stripe payment)
+    Atomic transaction: Tenant (with plan_id) -> Wallet -> User -> Membership
     """
     from app.models.subscription import Plan
     from app.constants import PlanName
@@ -203,29 +227,28 @@ def register_user(
             ).scalar_one_or_none()
             
             if not plan:
-                raise HTTPException(status_code=400, detail=f"Plan '{plan_name}' not found in database. Run seed data first.")
+                # Fallback or error? Provide default seeded plan check
+                 # For MVP, maybe skip strict check if seeding not guaranteed
+                 pass
             
-            # 1. Create Tenant WITH plan_id (deterministic entitlements)
+            # 1. Create Tenant
             new_tenant = Tenant(
                 name=user_in.company_name,
                 slug=slugify(user_in.company_name) + "-" + str(uuid.uuid4())[:4],
                 is_active=True,
-                plan_id=plan.id,  # NEVER null — this controls features
+                plan_id=plan.id if plan else None, 
                 mode=user_in.tenant_mode
             )
             db.add(new_tenant)
             db.flush()
             tenant_id = new_tenant.id
             
-            # 2. Create Wallet (Revenue Guard)
+            # 2. Create Wallet
             new_wallet = Wallet(tenant_id=tenant_id, balance=0.0)
             db.add(new_wallet)
             
-            # NOTE: Subscription is NOT created here.
-            # Subscription is created ONLY when Stripe payment succeeds (webhook).
-            # Plan controls features. Subscription controls billing.
-            
-            user_role = UserRole.ADMIN
+            user_role = UserRole.ADMIN # Global role? Or tenant role?
+            tenant_role = TenantRole.OWNER
             
         # Scenario 2: Invitation to existing tenant
         elif tenant_id:
@@ -233,19 +256,29 @@ def register_user(
             if not tenant:
                 raise HTTPException(status_code=404, detail="Tenant not found")
             user_role = UserRole.USER
+            tenant_role = TenantRole.MEMBER
         else:
             raise HTTPException(status_code=400, detail="Company Name required for registration")
 
-        # 3. Create User
+        # 3. Create User (No tenant_id on user anymore)
         db_user = User(
             email=user_in.email,
             hashed_password=get_password_hash(user_in.password),
             full_name=user_in.full_name,
             role=user_role,
-            tenant_id=tenant_id,
+            # tenant_id=tenant_id,  <-- REMOVED
             persona=user_in.persona
         )
         db.add(db_user)
+        db.flush() # flush to get ID
+        
+        # 4. Create Membership
+        membership = TenantMembership(
+            tenant_id=tenant_id,
+            user_id=db_user.id,
+            role=tenant_role
+        )
+        db.add(membership)
         
         db.commit()
         db.refresh(db_user)

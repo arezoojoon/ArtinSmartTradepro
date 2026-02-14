@@ -23,11 +23,17 @@ class Tenant(Base):
     plan_id = Column(UUID(as_uuid=True), ForeignKey("plans.id"), nullable=True)
     
     # Relationships
-    users = relationship("User", back_populates="tenant")
+    # Multi-Tenancy (Many-to-Many via Membership)
+    memberships = relationship("TenantMembership", back_populates="tenant")
+    invitations = relationship("TenantInvitation", back_populates="tenant")
+    
+    # Relationships
     leads = relationship("Lead", back_populates="tenant")
     wallets = relationship("Wallet", back_populates="tenant")
     whatsapp_messages = relationship("WhatsAppMessage", back_populates="tenant")
     scraped_sources = relationship("ScrapedSource", back_populates="tenant")
     plan = relationship("Plan")  # Plan controls features
     subscription = relationship("Subscription", back_populates="tenant", uselist=False)  # Subscription controls billing
+    billing_customers = relationship("BillingCustomer", back_populates="tenant")
+    invoices = relationship("Invoice", back_populates="tenant")
     products = relationship("Product", back_populates="tenant")

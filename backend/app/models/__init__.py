@@ -1,8 +1,9 @@
 from .base import Base
 from .tenant import Tenant
 from .user import User
-from .billing import Wallet, WalletTransaction
+from .billing import Wallet, WalletTransaction, BillingCustomer, Invoice
 from .subscription import Plan, PlanFeature, Subscription
+from .platform import TenantMembership, TenantInvitation, Session, PasswordResetToken
 from .crm import CRMCompany, CRMContact, CRMPipeline, CRMDeal, CRMNote, CRMTag, CRMConversation, CRMInvoice
 from .campaign import CRMCampaign, CRMCampaignSegment, CRMCampaignMessage
 from .followup import CRMFollowUpRule, CRMFollowUpExecution, CRMRevenueAttribution

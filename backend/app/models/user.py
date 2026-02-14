@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, ForeignKey, Enum
+from sqlalchemy import Column, String, Boolean, ForeignKey, Enum, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import Base
@@ -26,5 +26,15 @@ class User(Base):
     # V3: User Persona for customized UX
     persona = Column(String, default=UserPersona.TRADER.value)
     
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=True)  # Nullable for Super Admins
-    tenant = relationship("Tenant", back_populates="users")
+    # Multi-Tenancy (Many-to-Many via Membership)
+    memberships = relationship("TenantMembership", back_populates="user")
+    
+    # Sessions
+    sessions = relationship("Session", back_populates="user")
+
+    # State
+    last_login_at = Column(DateTime, nullable=True)
+    password_reset_tokens = relationship("PasswordResetToken", back_populates="user")
+
+    # Helper: Current tenant logic is handled at request context level, 
+    # but we can implement helper methods on the model if needed.

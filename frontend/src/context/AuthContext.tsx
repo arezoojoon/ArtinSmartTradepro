@@ -31,6 +31,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     login: (token: string, refresh_token: string) => Promise<void>;
     logout: () => void;
+    switchTenant: (tenantId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -39,6 +40,7 @@ const AuthContext = createContext<AuthContextType>({
     isAuthenticated: false,
     login: async () => { },
     logout: () => { },
+    switchTenant: async () => { },
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -113,8 +115,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         router.push("/login");
     };
 
+    const switchTenant = async (tenantId: string) => {
+        setLoading(true);
+        try {
+            const res = await api.post(`/tenants/${tenantId}/switch`);
+            const { access_token } = res.data;
+
+            // Store new token (scoped to new tenant)
+            localStorage.setItem("token", access_token);
+
+            // Refresh User
+            const userRes = await api.get("/users/me");
+            const userData = userRes.data;
+            setUser(userData);
+
+            // Redirect
+            const mode = userData.tenant?.mode || "hybrid";
+            console.log(`[Auth] Switched to tenant mode: ${mode}`);
+
+            if (mode === "buyer") {
+                router.push("/buyer");
+            } else if (mode === "seller") {
+                router.push("/seller");
+            } else {
+                router.push("/dashboard");
+            }
+        } catch (error) {
+            console.error("Switch tenant failed", error);
+            // Stay put or show error toast
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, login, logout }}>
+        <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, login, logout, switchTenant }}>
             {children}
         </AuthContext.Provider>
     );

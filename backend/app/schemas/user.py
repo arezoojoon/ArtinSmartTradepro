@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from uuid import UUID
 from app.models.user import UserRole
+from app.schemas.tenant import TenantRead
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -26,6 +27,7 @@ class UserInDBBase(UserBase):
     is_active: bool
     is_superuser: bool
     tenant_id: Optional[UUID] = None
+    tenant: Optional[TenantRead] = None
 
     class Config:
         from_attributes = True
