@@ -78,7 +78,7 @@ export default function Sidebar() {
 
     if (mode === "buyer") {
         displayedItems = [
-            { label: "Control Tower", href: "/buyer", icon: LayoutDashboard },
+            { label: "Dashboard", href: "/buyer", icon: LayoutDashboard },
             { label: "Sourcing OS", href: "/sourcing/rfqs", icon: Package },
             { label: "Trade Intelligence", href: "/trade", icon: Globe },
             { label: "Deal Flow (AI)", href: "/brain/opportunities", icon: Briefcase },
@@ -87,7 +87,7 @@ export default function Sidebar() {
         ];
     } else if (mode === "seller") {
         displayedItems = [
-            { label: "Control Tower", href: "/seller", icon: LayoutDashboard },
+            { label: "Dashboard", href: "/seller", icon: LayoutDashboard },
             { label: "CRM", href: "/crm", icon: Users },
             { label: "Hunter (Leads)", href: "/hunter", icon: Search },
             { label: "Campaigns", href: "/crm/campaigns", icon: Megaphone },
