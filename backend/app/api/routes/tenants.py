@@ -26,7 +26,7 @@ from ...schemas.tenant import (
 from ..deps import get_current_user, get_current_tenant_context
 from ...core.tenant import require_tenant_role
 
-router = APIRouter(prefix="/tenants", tags=["tenants"])
+router = APIRouter(tags=["tenants"])
 
 
 @router.get("", response_model=TenantListResponse)
