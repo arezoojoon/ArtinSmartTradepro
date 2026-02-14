@@ -7,7 +7,7 @@ from app.models.tenant import Tenant
 from app.models.platform import TenantMembership, TenantInvitation, TenantRole
 from app.schemas import tenant as tenant_schema
 from app.security import create_access_token
-from app.middleware.auth import get_current_active_user, get_current_tenant
+from app.middleware.auth import get_current_active_user
 from app.config import get_settings
 from slugify import slugify
 import uuid
