@@ -5,7 +5,8 @@ import os
 # Add parent directory to path so we can import app modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.database import engine, Base
+from app.database import engine
+from app.models.base import Base
 from app.models.financial import TradeScenario, CostComponent, RiskFactor
 
 def init_db():

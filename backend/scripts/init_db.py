@@ -7,7 +7,8 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from sqlalchemy import text
-from app.database import engine, Base
+from app.database import engine
+from app.models.base import Base
 
 # Import all models to ensure they are registered with Base.metadata
 # This registration is what allows create_all to see all tables and resolve ForeignKeys

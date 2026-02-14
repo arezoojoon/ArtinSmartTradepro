@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Time, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from app.database import Base
+from app.models.base import Base
 
 
 class AvailabilitySlot(Base):
