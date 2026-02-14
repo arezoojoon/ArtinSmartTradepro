@@ -13,6 +13,7 @@ from .audit import AuditLog
 from .voice import CRMVoiceRecording, CRMVoiceInsight
 from .vision import ScannedCard
 from .ai_job import AIJob, AIUsage
+from .product import Product
 from .hunter import HunterRun, HunterResult, TradeSignal
 from .brain import ArbitrageResult, RiskAssessment, DemandForecast, CulturalStrategy
 from .execution import OutreachQueue

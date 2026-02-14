@@ -7,6 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import logging
 import uuid
 from app.database import SessionLocal
+import app.models # Force load all models (including Product) to resolve relationships
 from app.models.user import User, UserRole, UserPersona
 from app.models.tenant import Tenant, TenantMode
 from app.models.billing import Wallet
