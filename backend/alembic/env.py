@@ -46,7 +46,7 @@ def run_migrations_online() -> None:
     # Convert async URL to sync for alembic
     db_url = settings.DATABASE_URL
     if db_url.startswith("postgresql+asyncpg://"):
-        db_url = db_url.replace("postgresql+asyncpg://", "postgresql+psycopg2://")
+        db_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
     
     configuration["sqlalchemy.url"] = db_url
     
