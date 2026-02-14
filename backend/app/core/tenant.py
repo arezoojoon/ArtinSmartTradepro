@@ -119,15 +119,44 @@ async def require_tenant_role(
     return tenant_context
 
 
-# Role-specific dependencies
-def require_tenant_owner():
-    return Depends(require_tenant_role(["owner"]))
+# Role-specific dependencies - create proper callable dependencies
+async def require_tenant_owner_dependency(
+    tenant_context: TenantContext = Depends(get_tenant_context)
+) -> TenantContext:
+    """Require owner role to access a resource."""
+    if tenant_context.user_role != "owner":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. Owner role required",
+        )
+    return tenant_context
 
-def require_tenant_admin():
-    return Depends(require_tenant_role(["owner", "admin"]))
+async def require_tenant_admin_dependency(
+    tenant_context: TenantContext = Depends(get_tenant_context)
+) -> TenantContext:
+    """Require admin or owner role to access a resource."""
+    if tenant_context.user_role not in ["owner", "admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. Admin or owner role required",
+        )
+    return tenant_context
 
-def require_tenant_member():
-    return Depends(require_tenant_role(["owner", "admin", "member"]))
+async def require_tenant_member_dependency(
+    tenant_context: TenantContext = Depends(get_tenant_context)
+) -> TenantContext:
+    """Require member, admin, or owner role to access a resource."""
+    if tenant_context.user_role not in ["owner", "admin", "member"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. Member role required",
+        )
+    return tenant_context
+
+# Export as dependencies
+require_tenant_owner = require_tenant_owner_dependency
+require_tenant_admin = require_tenant_admin_dependency
+require_tenant_member = require_tenant_member_dependency
 
 
 class BaseTenantModel:
