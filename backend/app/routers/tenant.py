@@ -7,6 +7,7 @@ from app.models.tenant import Tenant
 from app.models.platform import TenantMembership, TenantInvitation, TenantRole
 from app.schemas import tenant as tenant_schema
 from app.security import create_access_token
+from app.services.audit import log_audit_event
 from app.middleware.auth import get_current_active_user
 from app.config import get_settings
 from slugify import slugify
@@ -70,6 +71,9 @@ def create_new_tenant(
     db.add(membership)
     db.commit()
     db.refresh(tenant)
+    
+    log_audit_event(db, "tenant.create", user_id=current_user.id, tenant_id=tenant.id, details={"name": tenant.name})
+    
     return tenant
 
 @router.post("/{tenant_id}/switch")
@@ -100,6 +104,8 @@ def switch_tenant(
         subject=current_user.email,
         additional_claims=claims
     )
+    
+    log_audit_event(db, "tenant.switch", user_id=current_user.id, tenant_id=tenant_id)
     
     return {
         "access_token": access_token,
@@ -145,5 +151,7 @@ def invite_member(
     
     # STUB: Send email
     print(f"[EMAIL STUB] Invitation to {email} for tenant {tenant_id}: Token={token}")
+    
+    log_audit_event(db, "tenant.invite", user_id=current_user.id, tenant_id=tenant_id, details={"email": email, "role": role})
     
     return {"detail": "Invitation sent"}

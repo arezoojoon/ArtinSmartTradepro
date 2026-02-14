@@ -21,6 +21,7 @@ class User(Base):
     full_name = Column(String)
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
+    email_verified = Column(Boolean, default=False)
     role = Column(String, default=UserRole.USER.value)
     
     # V3: User Persona for customized UX

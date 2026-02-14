@@ -2,17 +2,114 @@
 Billing Router — Wallet balance, transactions, and credit management.
 This endpoint serves the frontend wallet/dashboard pages.
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import select, desc
 from app.database import get_db
 from app.models.user import User
-from app.models.billing import Wallet, WalletTransaction
+from app.models.tenant import Tenant
+from app.models.billing import Wallet, WalletTransaction, Invoice, BillingCustomer
+from app.models.subscription import Subscription, Plan
 from app.middleware.auth import get_current_active_user
+from app.services.audit import log_audit_event
 from pydantic import BaseModel
 from typing import Optional, List
+import datetime
+import uuid
 
 router = APIRouter()
+
+class CheckoutSessionRequest(BaseModel):
+    plan_name: str # professional, enterprise, white_label
+    interval: str = "monthly" # monthly, yearly
+
+@router.post("/checkout-session")
+async def create_checkout_session(
+    data: CheckoutSessionRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a Stripe Checkout Session (or Stub).
+    """
+    # 1. Get Tenant
+    tenant_id = current_user.tenant_id
+    if not tenant_id:
+        raise HTTPException(status_code=400, detail="No active tenant context")
+    
+    # 2. Get Plan
+    plan = db.query(Plan).filter(Plan.name == data.plan_name).first()
+    if not plan:
+        # Fallback stub plan if not seeded
+        plan = Plan(name=data.plan_name, display_name=data.plan_name.title()) 
+        # In real app, this should error if plan doesn't exist.
+    
+    # 3. Create/Get Billing Customer
+    customer = db.query(BillingCustomer).filter(BillingCustomer.tenant_id == tenant_id).first()
+    if not customer:
+        customer = BillingCustomer(
+            tenant_id=tenant_id,
+            provider="stripe",
+            provider_customer_id=f"cus_stub_{uuid.uuid4()}" # Stub
+        )
+        db.add(customer)
+        db.commit()
+    
+    # 4. Create Session Stub
+    session_id = f"cs_stub_{uuid.uuid4()}"
+    checkout_url = f"http://localhost:3000/success?session_id={session_id}" 
+    
+    log_audit_event(db, "billing.checkout_session_created", user_id=current_user.id, tenant_id=tenant_id, details={"plan": data.plan_name})
+    
+    return {"url": checkout_url, "session_id": session_id}
+
+@router.get("/subscription")
+async def get_subscription(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get current subscription status.
+    """
+    if not current_user.tenant_id:
+        raise HTTPException(status_code=400, detail="No active tenant")
+        
+    sub = db.query(Subscription).filter(Subscription.tenant_id == current_user.tenant_id).first()
+    
+    if not sub:
+        return {"status": "free", "plan": "Trial", "current_period_end": None}
+        
+    plan = db.query(Plan).filter(Plan.id == sub.plan_id).first()
+    
+    return {
+        "status": sub.status,
+        "plan": plan.display_name if plan else "Unknown",
+        "current_period_end": sub.current_period_end,
+        "cancel_at_period_end": sub.cancel_at_period_end
+    }
+
+@router.get("/invoices")
+async def get_invoices(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    if not current_user.tenant_id:
+         raise HTTPException(status_code=400, detail="No active tenant")
+         
+    invoices = db.query(Invoice).filter(Invoice.tenant_id == current_user.tenant_id).order_by(desc(Invoice.created_at)).all()
+    return invoices
+
+@router.post("/webhook")
+async def billing_webhook(request: Request):
+    """
+    Handle Stripe Webhooks (Stub).
+    """
+    # body = await request.body()
+    # In real implementation: verify signature
+    return {"status": "success"}
+
+
+
 
 
 @router.get("/wallet")

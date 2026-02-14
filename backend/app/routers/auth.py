@@ -15,6 +15,7 @@ from app.security import (
 )
 from app.middleware.auth import oauth2_scheme, get_current_active_user
 from app.config import get_settings
+from app.services.audit import log_audit_event
 from jose import jwt, JWTError
 from slugify import slugify
 from pydantic import BaseModel, EmailStr
@@ -88,6 +89,8 @@ def login_access_token(
     access_token = create_access_token(subject=db_user.email, additional_claims=claims)
     refresh_token = create_refresh_token(subject=db_user.email, additional_claims=claims)
     
+    log_audit_event(db, "auth.login", user_id=db_user.id, tenant_id=default_tenant_id, ip_address="unknown")
+    
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -148,12 +151,14 @@ def refresh_access_token(body: RefreshRequest, db: Session = Depends(get_db)) ->
 @router.post("/logout")
 def logout(
     token: str = Depends(oauth2_scheme),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
 ):
     """
     Invalidate the current access token.
     """
     blacklist_token(token)
+    log_audit_event(db, "auth.logout", user_id=current_user.id) # Session is tricky here if blacklisting doesn't use DB
     return {"detail": "Successfully logged out"}
 
 @router.post("/forgot-password")
@@ -281,7 +286,11 @@ def register_user(
         db.add(membership)
         
         db.commit()
+        db.commit()
         db.refresh(db_user)
+        
+        log_audit_event(db, "auth.register", user_id=db_user.id, tenant_id=tenant_id, details={"company": user_in.company_name})
+        
         return db_user
         
     except HTTPException:
