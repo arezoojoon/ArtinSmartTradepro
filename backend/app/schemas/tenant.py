@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, Any, Dict, List
 from uuid import UUID
 from datetime import datetime
-import enum
+from typing import List, Optional, enum
 
 class TenantPlan(str, enum.Enum):
     PROFESSIONAL = "professional"
@@ -60,7 +60,7 @@ class TenantMembershipResponse(BaseModel):
     tenant_id: UUID = Field(..., description="Tenant ID")
     tenant_name: str = Field(..., description="Tenant name")
     role: TenantRole = Field(..., description="User role in tenant")
-    created_at: datetime = Field(..., description="Membership creation timestamp")
+    created_at: Optional[datetime] = Field(None, description="Membership creation timestamp")
 
     class Config:
         from_attributes = True
