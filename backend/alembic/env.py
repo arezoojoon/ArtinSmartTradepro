@@ -2,6 +2,12 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
+import sys
+import os
+
+# Add parent directory to path so we can import 'app'
+sys.path.append(os.getcwd())
+
 from app.models.base import Base
 from app.config import get_settings
 

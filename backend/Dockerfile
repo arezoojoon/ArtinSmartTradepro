@@ -32,6 +32,7 @@ RUN pip install --no-cache-dir "fastapi[all]" gunicorn
 FROM python:3.11-slim AS runtime
 
 WORKDIR /app
+ENV PYTHONPATH=/app
 
 # Install only runtime system dependencies (no build tools)
 RUN apt-get update && apt-get install -y \
