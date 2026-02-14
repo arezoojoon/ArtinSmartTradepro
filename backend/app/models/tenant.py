@@ -42,6 +42,7 @@ class Tenant(Base):
     billing_customers = relationship("BillingCustomer", back_populates="tenant")
     subscriptions = relationship("Subscription", back_populates="tenant")
     invoices = relationship("Invoice", back_populates="tenant")
+    wallets = relationship("Wallet", back_populates="tenant")
 
 
 class TenantMembership(Base):
