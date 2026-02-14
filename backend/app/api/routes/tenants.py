@@ -95,7 +95,7 @@ async def create_tenant(
     
     db.add(tenant)
     await db.commit()
-    await db.refresh(tenant)
+    await db.refresh(tenant)  # Ensure created_at/updated_at are populated
     
     # Create owner membership
     membership = TenantMembership(
@@ -124,7 +124,7 @@ async def create_tenant(
     
     await db.commit()
     
-    return TenantResponse.from_orm(tenant)
+    return TenantResponse.model_validate(tenant)
 
 
 @router.get("/{tenant_id}", response_model=TenantResponse)
