@@ -120,9 +120,14 @@ async def require_tenant_role(
 
 
 # Role-specific dependencies
-require_tenant_owner = Depends(require_tenant_role(["owner"]))
-require_tenant_admin = Depends(require_tenant_role(["owner", "admin"]))
-require_tenant_member = Depends(require_tenant_role(["owner", "admin", "member"]))
+def require_tenant_owner():
+    return Depends(require_tenant_role(["owner"]))
+
+def require_tenant_admin():
+    return Depends(require_tenant_role(["owner", "admin"]))
+
+def require_tenant_member():
+    return Depends(require_tenant_role(["owner", "admin", "member"]))
 
 
 class BaseTenantModel:
