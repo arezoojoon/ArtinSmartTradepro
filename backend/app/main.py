@@ -85,12 +85,17 @@ async def startup_event():
     """Initialize database tables and services."""
     logger.info("Starting up Artin Smart Trade API...")
     
-    # Create database tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    
-    logger.info("Database tables created/verified")
-    logger.info("Artin Smart Trade API started successfully")
+    try:
+        # Create database tables
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        
+        logger.info("Database tables created/verified")
+        logger.info("Artin Smart Trade API started successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
+        # Don't fail startup - let the app start and handle DB errors per request
+        logger.warning("API starting without database verification")
 
 @app.on_event("shutdown")
 async def shutdown_event():

@@ -119,44 +119,32 @@ async def require_tenant_role(
     return tenant_context
 
 
+from typing import Callable
+from fastapi import Depends, HTTPException, status
+
 # Role-specific dependencies - create proper callable dependencies
-async def require_tenant_owner_dependency(
-    tenant_context: TenantContext = Depends(get_tenant_context)
-) -> TenantContext:
-    """Require owner role to access a resource."""
-    if tenant_context.user_role != "owner":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. Owner role required",
-        )
-    return tenant_context
-
-async def require_tenant_admin_dependency(
-    tenant_context: TenantContext = Depends(get_tenant_context)
-) -> TenantContext:
-    """Require admin or owner role to access a resource."""
-    if tenant_context.user_role not in ["owner", "admin"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. Admin or owner role required",
-        )
-    return tenant_context
-
-async def require_tenant_member_dependency(
-    tenant_context: TenantContext = Depends(get_tenant_context)
-) -> TenantContext:
-    """Require member, admin, or owner role to access a resource."""
-    if tenant_context.user_role not in ["owner", "admin", "member"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. Member role required",
-        )
-    return tenant_context
+def require_tenant_role(*allowed_roles: str) -> Callable:
+    """Factory function to create role-based dependencies."""
+    async def _checker(tenant_context = Depends(get_tenant_context)):
+        role = getattr(tenant_context, "user_role", None)
+        if role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "error": {
+                        "code": "FORBIDDEN",
+                        "message": "Insufficient tenant role",
+                        "details": {"required": list(allowed_roles), "actual": role},
+                    }
+                },
+            )
+        return tenant_context
+    return _checker
 
 # Export as dependencies
-require_tenant_owner = require_tenant_owner_dependency
-require_tenant_admin = require_tenant_admin_dependency
-require_tenant_member = require_tenant_member_dependency
+require_tenant_owner = require_tenant_role("owner")
+require_tenant_admin = require_tenant_role("owner", "admin")
+require_tenant_member = require_tenant_role("owner", "admin", "member")
 
 
 class BaseTenantModel:

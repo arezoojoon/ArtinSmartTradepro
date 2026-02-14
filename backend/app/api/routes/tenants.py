@@ -24,7 +24,7 @@ from ...schemas.tenant import (
     TenantInvitationResponse
 )
 from ..deps import get_current_user, get_current_tenant_context
-from ...core.tenant import require_tenant_admin, require_tenant_owner
+from ...core.tenant import require_tenant_role
 
 router = APIRouter(prefix="/tenants", tags=["tenants"])
 
@@ -159,7 +159,7 @@ async def update_tenant(
     tenant_id: uuid.UUID,
     tenant_data: TenantUpdateRequest,
     request: Request,
-    tenant_context = Depends(require_tenant_admin),
+    tenant_context = Depends(require_tenant_role("owner", "admin")),
     db: AsyncSession = Depends(get_db)
 ) -> Any:
     """Update tenant details."""
@@ -261,7 +261,7 @@ async def invite_user(
     tenant_id: uuid.UUID,
     invite_data: TenantInviteRequest,
     request: Request,
-    tenant_context = Depends(require_tenant_admin),
+    tenant_context = Depends(require_tenant_role("owner", "admin")),
     db: AsyncSession = Depends(get_db)
 ) -> Any:
     """Invite a user to join the tenant."""
@@ -344,7 +344,7 @@ async def invite_user(
 @router.get("/{tenant_id}/invitations", response_model=List[TenantInvitationResponse])
 async def get_tenant_invitations(
     tenant_id: uuid.UUID,
-    tenant_context = Depends(require_tenant_admin),
+    tenant_context = Depends(require_tenant_role("owner", "admin")),
     db: AsyncSession = Depends(get_db)
 ) -> Any:
     """Get all pending invitations for the tenant."""
