@@ -21,8 +21,19 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     # Create Enums
     # Postgres needs explicit Enum creation
-    op.execute("CREATE TYPE tenantmode AS ENUM ('buyer', 'seller', 'hybrid')")
-    op.execute("CREATE TYPE userpersona AS ENUM ('trader', 'logistics', 'finance', 'admin')")
+    # Create Enums safely
+    # Postgres needs explicit Enum creation, but check if they exist first to avoid errors
+    connection = op.get_bind()
+    
+    try:
+        op.execute("CREATE TYPE tenantmode AS ENUM ('buyer', 'seller', 'hybrid')")
+    except sa.exc.ProgrammingError:
+        connection.rollback() # Type likely exists
+        
+    try:
+        op.execute("CREATE TYPE userpersona AS ENUM ('trader', 'logistics', 'finance', 'admin')")
+    except sa.exc.ProgrammingError:
+        connection.rollback() # Type likely exists
 
     # Add Columns
     op.add_column('tenants', sa.Column('mode', sa.String(), nullable=True))
