@@ -109,6 +109,15 @@ export default function Sidebar() {
         ];
     }
 
+    // Add Admin Panel for Super Admins
+    if (user?.role === "super_admin" || user?.role === "admin") {
+        // Check if already added (to avoid dupes in hybrid)
+        const hasAdmin = displayedItems.some(i => i.href === "/admin");
+        if (!hasAdmin) {
+            displayedItems.push({ label: "Admin Panel", href: "/admin", icon: Settings });
+        }
+    }
+
     if (!user) return null; // Don't render sidebar if not logged in
 
     return (
