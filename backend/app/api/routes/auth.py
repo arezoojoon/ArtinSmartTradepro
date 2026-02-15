@@ -482,7 +482,7 @@ async def get_me(
             "slug": tenant.slug,
             "plan": tenant.plan,
             "role": membership.role,
-            "created_at": membership.created_at.isoformat()
+            "created_at": membership.created_at.isoformat() if membership.created_at else None
         })
     
     return MeResponse(
