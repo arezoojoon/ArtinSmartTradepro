@@ -105,6 +105,8 @@ async def create_tenant(
     )
     
     db.add(membership)
+    await db.commit()
+    await db.refresh(membership)  # Ensure created_at/updated_at are populated
     
     # Set as current tenant for user
     current_user.current_tenant_id = tenant.id
