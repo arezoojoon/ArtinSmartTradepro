@@ -62,7 +62,7 @@ class TenantResponse(BaseModel):
     slug: str = Field(..., description="Tenant slug")
     plan: str = Field(..., description="Tenant plan")
     role: str = Field(..., description="User's role in this tenant")
-    created_at: datetime = Field(..., description="Tenant creation timestamp")
+    created_at: Optional[datetime] = Field(None, description="Tenant creation timestamp")
 
     class Config:
         from_attributes = True
