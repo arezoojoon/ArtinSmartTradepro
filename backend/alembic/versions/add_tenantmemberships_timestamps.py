@@ -1,7 +1,7 @@
 """Add timestamps to tenantmemberships
 
 Revision ID: add_tenantmemberships_timestamps
-Revises: 4191d5e
+Revises: 7fe17c8
 Create Date: 2026-02-15 13:41:00.000000
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_tenantmemberships_timestamps'
-down_revision = '4191d5e'
+down_revision = '7fe17c8'
 branch_labels = None
 depends_on = None
 

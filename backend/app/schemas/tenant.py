@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, Any, Dict, List
 from uuid import UUID
 from datetime import datetime
-from typing import List, Optional, enum
+import enum
 
 class TenantPlan(str, enum.Enum):
     PROFESSIONAL = "professional"
