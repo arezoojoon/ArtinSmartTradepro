@@ -34,10 +34,6 @@ class Tenant(Base):
     # Plan = source of truth for features (NEVER null after registration)
     plan = Column(String, default=TenantPlan.PROFESSIONAL.value, nullable=False)
     
-    # Timestamps
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
-    
     # Relationships
     # Multi-Tenancy (Many-to-Many via Membership)
     memberships = relationship("TenantMembership", back_populates="tenant")

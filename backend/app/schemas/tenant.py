@@ -60,7 +60,7 @@ class TenantMembershipResponse(BaseModel):
     tenant_id: UUID = Field(..., description="Tenant ID")
     tenant_name: str = Field(..., description="Tenant name")
     role: TenantRole = Field(..., description="User role in tenant")
-    created_at: Optional[datetime] = Field(None, description="Membership creation timestamp")
+    created_at: datetime = Field(..., description="Membership creation timestamp")
 
     class Config:
         from_attributes = True
