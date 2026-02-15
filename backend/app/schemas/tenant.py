@@ -50,8 +50,8 @@ class TenantResponse(BaseModel):
     mode: TenantMode = Field(..., description="Operating mode")
     is_active: bool = Field(..., description="Tenant active status")
     settings: Dict[str, Any] = Field(default_factory=dict, description="Tenant settings")
-    created_at: datetime = Field(..., description="Creation timestamp")
-    updated_at: datetime = Field(..., description="Last update timestamp")
+    created_at: Optional[datetime] = Field(None, description="Creation timestamp")
+    updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     class Config:
         from_attributes = True
