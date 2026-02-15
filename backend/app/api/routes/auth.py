@@ -110,11 +110,17 @@ async def register(
 
 @router.post("/login", response_model=TokenResponse)
 async def login(
-    user_data: UserLoginRequest,
     request: Request,
     db: AsyncSession = Depends(get_db)
 ) -> Any:
     """Authenticate user and return tokens."""
+    # Handle both JSON and form data
+    if request.headers.get("content-type", "").startswith("application/json"):
+        data = await request.json()
+    else:
+        data = await request.form()
+    
+    user_data = UserLoginRequest(email=data["email"], password=data["password"])
     # Find user
     result = await db.execute(
         select(User).where(User.email == user_data.email)
