@@ -2,7 +2,7 @@ from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.email.base import EmailService
 from app.models.email import EmailOutbox
-from app.db.session import async_session_factory
+from app.db.session import AsyncSessionLocal
 
 class LocalStubEmailService(EmailService):
     """
@@ -17,7 +17,7 @@ class LocalStubEmailService(EmailService):
         content: str,
         from_email: Optional[str] = None
     ) -> bool:
-        async with async_session_factory() as session:
+        async with AsyncSessionLocal() as session:
             email = EmailOutbox(
                 to_email=to_email,
                 subject=subject,
@@ -32,7 +32,7 @@ class LocalStubEmailService(EmailService):
 
     async def send_batch(self, emails: List[dict]) -> dict:
         results = {"success": 0, "failed": 0}
-        async with async_session_factory() as session:
+        async with AsyncSessionLocal() as session:
             for email_data in emails:
                 email = EmailOutbox(
                     to_email=email_data["to_email"],

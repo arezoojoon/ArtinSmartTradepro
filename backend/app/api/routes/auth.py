@@ -30,7 +30,7 @@ from ...schemas.auth import (
     MeResponse
 )
 from ..deps import get_current_user, get_optional_tenant_context, get_email_service
-from ..services.email.base import EmailService
+from app.services.email.base import EmailService
 import bcrypt
 import hashlib
 import uuid

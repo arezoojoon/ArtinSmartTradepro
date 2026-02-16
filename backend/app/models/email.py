@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Text, DateTime, func
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
-from app.db.base import Base
+from app.models.base import Base
 
 class EmailOutbox(Base):
     __tablename__ = "email_outbox"

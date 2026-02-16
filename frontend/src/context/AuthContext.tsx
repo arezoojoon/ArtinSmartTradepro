@@ -118,18 +118,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const switchTenant = async (tenantId: string) => {
         setLoading(true);
         try {
-            const res = await api.post(`/tenants/${tenantId}/switch`);
-            const { access_token } = res.data;
+            await api.post(`/tenants/${tenantId}/switch`);
 
-            // Store new token (scoped to new tenant)
-            localStorage.setItem("token", access_token);
+            // Backend updates user.current_tenant_id in DB.
+            // No new token is returned, current token is still valid.
+            // We just need to refresh the user profile to see the new tenant context.
 
             // Refresh User
             const userRes = await api.get("/users/me");
             const userData = userRes.data;
             setUser(userData);
 
-            // Redirect
+            // Redirect based on new tenant mode
             const mode = userData.tenant?.mode || "hybrid";
             console.log(`[Auth] Switched to tenant mode: ${mode}`);
 

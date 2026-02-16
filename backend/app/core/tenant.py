@@ -106,18 +106,6 @@ async def get_tenant_context(
     )
 
 
-async def require_tenant_role(
-    required_roles: list[str],
-    tenant_context: TenantContext = Depends(get_tenant_context)
-) -> TenantContext:
-    """Require specific tenant role(s) to access a resource."""
-    if tenant_context.user_role not in required_roles:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Access denied. Required role: {', '.join(required_roles)}",
-        )
-    return tenant_context
-
 
 from typing import Callable
 from fastapi import Depends, HTTPException, status

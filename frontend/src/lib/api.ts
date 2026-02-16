@@ -1,18 +1,89 @@
-import axios from "axios";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1";
 
-const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1",
-});
+interface ApiOptions extends RequestInit {
+    token?: string;
+    body?: any;
+}
 
-api.interceptors.request.use((config) => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+export class ApiError extends Error {
+    status: number;
+    data: any;
+
+    constructor(status: number, data: any) {
+        super(`API Error: ${status}`);
+        this.status = status;
+        this.data = data;
     }
-    return config;
-});
+}
 
-// Support both: `import api` (default) and `import { api }` (named)
+export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
+    const { token, body, headers, ...rest } = options;
+
+    const config: RequestInit = {
+        ...rest,
+        headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...(headers as any),
+        },
+    };
+
+    if (body) {
+        config.body = JSON.stringify(body);
+    }
+
+    // Ensure path starts with /
+    const endpoint = path.startsWith("/") ? path : `/${path}`;
+    const url = `${BASE_URL}${endpoint}`;
+
+    const response = await fetch(url, config);
+
+    let data;
+    try {
+        data = await response.json();
+    } catch (e) {
+        data = null;
+    }
+
+    if (!response.ok) {
+        if (response.status === 401 && typeof window !== 'undefined') {
+            // Optional: dispatch event or redirect
+            // window.location.href = '/auth/login';
+        }
+        throw new ApiError(response.status, data);
+    }
+
+    return data as T;
+}
+
+// Legacy support for AuthContext and other components
+const api = {
+    get: async <T = any>(path: string, config?: any) => {
+        const token = localStorage.getItem("token");
+        const data = await apiFetch<T>(path, { method: "GET", token: token || undefined, ...config });
+        return { data };
+    },
+    post: async <T = any>(path: string, body?: any, config?: any) => {
+        const token = localStorage.getItem("token");
+        const data = await apiFetch<T>(path, { method: "POST", body, token: token || undefined, ...config });
+        return { data };
+    },
+    put: async <T = any>(path: string, body?: any, config?: any) => {
+        const token = localStorage.getItem("token");
+        const data = await apiFetch<T>(path, { method: "PUT", body, token: token || undefined, ...config });
+        return { data };
+    },
+    patch: async <T = any>(path: string, body?: any, config?: any) => {
+        const token = localStorage.getItem("token");
+        const data = await apiFetch<T>(path, { method: "PATCH", body, token: token || undefined, ...config });
+        return { data };
+    },
+    delete: async <T = any>(path: string, config?: any) => {
+        const token = localStorage.getItem("token");
+        const data = await apiFetch<T>(path, { method: "DELETE", token: token || undefined, ...config });
+        return { data };
+    }
+};
+
 export { api };
 export default api;
-

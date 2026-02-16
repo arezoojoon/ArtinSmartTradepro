@@ -1,9 +1,10 @@
 import os
 from typing import Optional
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(extra='ignore', env_file=".env", case_sensitive=True)
     # App
     APP_NAME: str = "Artin Smart Trade"
     APP_VERSION: str = "1.0.0"
@@ -48,10 +49,6 @@ class Settings(BaseSettings):
     # Rate Limiting
     LOGIN_RATE_LIMIT: int = 5  # attempts per minute
     FORGOT_PASSWORD_RATE_LIMIT: int = 3  # attempts per hour
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
 
 
 def get_settings() -> Settings:
