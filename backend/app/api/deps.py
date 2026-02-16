@@ -59,3 +59,15 @@ async def get_optional_tenant_context(
         return await get_tenant_context(current_user, db)
     except HTTPException:
         return None
+
+
+from ..services.email.base import EmailService
+from ..services.email.local_stub import LocalStubEmailService
+from ..core.config import settings
+
+def get_email_service() -> EmailService:
+    """Get the configured email service."""
+    if settings.EMAIL_PROVIDER == "local_stub":
+        return LocalStubEmailService()
+    # Add other providers here as needed
+    return LocalStubEmailService()

@@ -1,49 +1,22 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
-from datetime import datetime
+from typing import List, Optional, Any
 
-
-class EmailProvider(ABC):
-    """Abstract base class for email providers."""
-    
+class EmailService(ABC):
     @abstractmethod
     async def send_email(
         self,
         to_email: str,
         subject: str,
-        html_body: str,
-        text_body: Optional[str] = None,
-        from_email: Optional[str] = None,
-        reply_to: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """Send an email and return delivery details."""
+        content: str,
+        from_email: Optional[str] = None
+    ) -> bool:
+        """Send a single email."""
         pass
-    
+
     @abstractmethod
-    async def send_template_email(
+    async def send_batch(
         self,
-        to_email: str,
-        template_name: str,
-        template_data: Dict[str, Any],
-        subject: Optional[str] = None,
-        from_email: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """Send an email using a template."""
+        emails: List[dict]
+    ) -> dict:
+        """Send a batch of emails."""
         pass
-
-
-class EmailError(Exception):
-    """Base exception for email errors."""
-    pass
-
-
-class EmailDeliveryError(EmailError):
-    """Raised when email delivery fails."""
-    pass
-
-
-class EmailTemplateNotFoundError(EmailError):
-    """Raised when email template is not found."""
-    pass

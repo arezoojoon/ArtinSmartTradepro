@@ -29,7 +29,8 @@ from ...schemas.auth import (
     UserResponse,
     MeResponse
 )
-from ..deps import get_current_user, get_optional_tenant_context
+from ..deps import get_current_user, get_optional_tenant_context, get_email_service
+from ..services.email.base import EmailService
 import bcrypt
 import hashlib
 import uuid
@@ -41,7 +42,8 @@ router = APIRouter(tags=["auth"])
 async def register(
     user_data: UserRegisterRequest,
     request: Request,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    email_service: EmailService = Depends(get_email_service)
 ) -> Any:
     """Register a new user."""
     # Check if user already exists
@@ -102,8 +104,12 @@ async def register(
     
     await db.commit()
     
-    # TODO: Send verification email (stubbed for now)
-    print(f"Email verification token for {user.email}: {token}")
+    # Send verification email
+    await email_service.send_email(
+        to_email=user.email,
+        subject="Verify your email - Artin Smart Trade",
+        content=f"Please verify your email by clicking: {settings.APP_URL if hasattr(settings, 'APP_URL') else 'http://localhost:3000'}/verify-email?token={token}"
+    )
     
     return UserResponse.model_validate(user)
 
@@ -285,7 +291,8 @@ async def logout(
 async def forgot_password(
     forgot_data: ForgotPasswordRequest,
     request: Request,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    email_service: EmailService = Depends(get_email_service)
 ) -> Any:
     """Send password reset email."""
     # Find user
@@ -333,8 +340,12 @@ async def forgot_password(
     
     await db.commit()
     
-    # TODO: Send password reset email (stubbed for now)
-    print(f"Password reset token for {user.email}: {token}")
+    # Send password reset email
+    await email_service.send_email(
+        to_email=user.email,
+        subject="Reset your password - Artin Smart Trade",
+        content=f"Reset your password by clicking: {settings.APP_URL if hasattr(settings, 'APP_URL') else 'http://localhost:3000'}/reset-password?token={token}"
+    )
     
     return {"message": "If email exists, password reset instructions have been sent"}
 

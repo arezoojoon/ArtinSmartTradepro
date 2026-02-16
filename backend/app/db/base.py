@@ -5,6 +5,10 @@ import uuid
 
 Base = declarative_base()
 
+# Import all models here so Alembic can see them
+# from app.models.user import User  # Example
+from app.models.email import EmailOutbox
+
 
 class BaseModel(Base):
     """Base model with common fields."""
