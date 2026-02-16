@@ -1,10 +1,11 @@
 {
-    "name": "Artin Smart Trade",
+    "name": "Artin Smart Trade - AI Trade Operating System",
     "short_name": "Artin Trade",
-    "start_url": "/mobile",
+    "description": "Mobile-first AI Trade Operating System for data-driven exporters and importers: opportunities, risk alerts, cash flow status, leads, and market shocks.",
+    "start_url": "/",
     "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#ffffff",
+    "background_color": "#061B2D",
+    "theme_color": "#0A2A43",
     "scope": "/",
     "orientation": "portrait",
     "categories": [
@@ -16,12 +17,12 @@
         {
             "src": "/logo.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png", "purpose": "any maskable"
         },
         {
             "src": "/logo.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png", "purpose": "any maskable"
         }
     ]
 }

@@ -13,9 +13,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Artin Smart Trade OS",
-  description: "AI-Powered Global Trade Intelligence Platform",
+  title: "Artin Smart Trade - AI Trade Operating System",
+  description: "The World's First AI Trade OS. Automate B2B sales, generate leads, and close deals on WhatsApp 24/7. Powered by Gemini Vision & Voice.",
   manifest: "/manifest.json",
+  keywords: ["AI Trading", "B2B Automation", "Lead Generation", "Trade OS", "WhatsApp Business"],
+  authors: [{ name: "Artin Smart Trade" }],
+  openGraph: {
+    title: "Artin Smart Trade - AI Trade Operating System",
+    description: "Automate your B2B sales with AI-powered lead generation and WhatsApp automation",
+    type: "website",
+    url: "https://trade.artinsmartagent.com",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Artin Smart Trade - AI Trade Operating System",
+    description: "The World's First AI Trade OS for B2B automation",
+  },
 };
 
 export const viewport: Viewport = {
