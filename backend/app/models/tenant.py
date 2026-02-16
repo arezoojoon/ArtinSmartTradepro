@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, ForeignKey, DateTime, Text, JSON
+from sqlalchemy import Column, String, Boolean, ForeignKey, DateTime, Text, JSON, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import Base
@@ -34,6 +34,10 @@ class Tenant(Base):
     # Plan = source of truth for features (NEVER null after registration)
     plan = Column(String, default=TenantPlan.PROFESSIONAL.value, nullable=False)
     
+    # Explicit timestamp columns (matching Base)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    
     # Relationships
     # Multi-Tenancy (Many-to-Many via Membership)
     memberships = relationship("TenantMembership", back_populates="tenant")
@@ -51,6 +55,10 @@ class TenantMembership(Base):
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     role = Column(String, default=TenantRole.MEMBER.value, nullable=False)
+    
+    # Explicit timestamp columns (matching Base)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     
     # Relationships
     tenant = relationship("Tenant", back_populates="memberships")
