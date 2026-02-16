@@ -155,11 +155,12 @@ async def login(
     # Store refresh token in database
     token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
     
-    # Delete existing sessions for this user to prevent duplicates
+    # Enforce single-session policy: delete existing sessions for this user
     await db.execute(
         delete(Session).where(Session.user_id == user.id)
     )
     
+    # Create new session
     session = Session(
         user_id=user.id,
         token_hash=token_hash,
@@ -389,9 +390,9 @@ async def reset_password(
     # Mark token as used
     reset_token.used_at = datetime.utcnow()
     
-    # Revoke all sessions for this user
+    # Revoke all sessions for this user (single-session policy)
     await db.execute(
-        select(Session).where(Session.user_id == user.id).update({"revoked_at": datetime.utcnow()})
+        delete(Session).where(Session.user_id == user.id)
     )
     
     # Log password reset

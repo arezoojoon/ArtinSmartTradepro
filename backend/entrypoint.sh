@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Add venv to PATH for alembic CLI availability
+export PATH="/opt/venv/bin:$PATH"
+
 echo "[entrypoint] waiting for db..."
 python /app/deploy/scripts/wait_for_db.py
 
