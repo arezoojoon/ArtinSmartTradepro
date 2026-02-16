@@ -75,7 +75,14 @@ def create_refresh_token(
             days=settings.REFRESH_TOKEN_EXPIRE_DAYS
         )
     
-    to_encode = {"exp": expire, "sub": str(subject), "type": "refresh"}
+    # Add random nonce to ensure uniqueness even for same user/time
+    nonce = secrets.token_hex(16)
+    to_encode = {
+        "exp": expire, 
+        "sub": str(subject), 
+        "type": "refresh",
+        "nonce": nonce
+    }
     encoded_jwt = jwt.encode(
         to_encode, 
         settings.SECRET_KEY, 
