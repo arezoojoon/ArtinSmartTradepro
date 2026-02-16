@@ -24,11 +24,15 @@ def upgrade() -> None:
         ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     """)
     
-    # Update existing NULL values
+    # Update existing NULL values separately for each column
     op.execute("""
         UPDATE tenantmemberships 
-        SET created_at = NOW() WHERE created_at IS NULL,
-            updated_at = NOW() WHERE updated_at IS NULL
+        SET created_at = NOW() WHERE created_at IS NULL
+    """)
+    
+    op.execute("""
+        UPDATE tenantmemberships 
+        SET updated_at = NOW() WHERE updated_at IS NULL
     """)
 
 
