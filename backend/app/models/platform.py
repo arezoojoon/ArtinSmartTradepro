@@ -37,17 +37,6 @@ class TenantInvitation(Base):
     
     tenant = relationship("Tenant", back_populates="invitations")
 
-class Session(Base):
-    """
-    Active user session (Refresh Token storage).
-    """
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
-    token_hash = Column(String, unique=True, nullable=False, index=True)
-    expires_at = Column(DateTime, nullable=False)
-    revoked_at = Column(DateTime, nullable=True)
-    
-    user = relationship("User", back_populates="sessions")
-
 class PasswordResetToken(Base):
     """
     Token for password reset flow.
