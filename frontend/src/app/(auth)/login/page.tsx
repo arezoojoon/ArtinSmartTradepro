@@ -22,9 +22,9 @@ export default function LoginPage() {
         setError("");
 
         try {
-            // Create form data as expected by OAuth2PasswordRequestForm
+            // Create form data as expected by backend
             const formData = new FormData();
-            formData.append("username", email);
+            formData.append("email", email);
             formData.append("password", password);
 
             const response = await api.post("/auth/login", formData);

@@ -3,7 +3,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from ...db.session import get_db
 from ...models.user import User
@@ -154,6 +154,12 @@ async def login(
     
     # Store refresh token in database
     token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
+    
+    # Delete existing sessions for this user to prevent duplicates
+    await db.execute(
+        delete(Session).where(Session.user_id == user.id)
+    )
+    
     session = Session(
         user_id=user.id,
         token_hash=token_hash,
