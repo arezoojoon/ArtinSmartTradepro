@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+echo "--- Restarting Backend to Load New Files ---"
+docker restart artinsmarttrade-backend-1
+sleep 5
+
 echo "--- Generating Missing Migrations ---"
 # 1. Run alembic to detect missing tables (User, Tenant, CRM, etc.)
 docker exec -it artinsmarttrade-backend-1 alembic revision --autogenerate -m "restore_missing_tables"
