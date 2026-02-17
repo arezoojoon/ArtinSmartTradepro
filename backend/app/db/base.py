@@ -6,3 +6,4 @@ from app.models.email import EmailOutbox
 from app.models.user import User
 from app.models.tenant import Tenant, TenantMembership, TenantInvitation
 from app.models.crm import CRMCompany
+from app.models.whatsapp import WhatsAppMessage
