@@ -33,28 +33,28 @@ if [ $UP_RC -ne 0 ]; then
   fi
 fi
 
-echo "--- Autogenerate Migration (only if needed) ---"
-set +e
-AUTO_OUT="$(alembic revision --autogenerate -m "restore_missing_tables_v2" 2>&1)"
-AUTO_RC=$?
-set -e
-echo "$AUTO_OUT"
+# echo "--- Autogenerate Migration (only if needed) ---"
+# set +e
+# AUTO_OUT="$(alembic revision --autogenerate -m "restore_missing_tables_v2" 2>&1)"
+# AUTO_RC=$?
+# set -e
+# echo "$AUTO_OUT"
 
-if [ $AUTO_RC -ne 0 ]; then
-  # If autogenerate fails, stop. (No false positives)
-  echo "ERROR: alembic revision --autogenerate failed."
-  exit 1
-fi
+# if [ $AUTO_RC -ne 0 ]; then
+#   # If autogenerate fails, stop. (No false positives)
+#   echo "ERROR: alembic revision --autogenerate failed."
+#   exit 1
+# fi
 
-if echo "$AUTO_OUT" | grep -q "No changes in schema detected"; then
-  echo "No schema changes detected. Skipping migration copy/apply."
-else
-  echo "Schema changes detected. Copying migration(s) to host..."
-  docker cp artinsmarttrade-backend-1:/app/alembic/versions/. backend/alembic/versions/
-
-  echo "--- Applying New Migration (upgrade head) ---"
-  alembic upgrade head
-fi
+# if echo "$AUTO_OUT" | grep -q "No changes in schema detected"; then
+#   echo "No schema changes detected. Skipping migration copy/apply."
+# else
+#   echo "Schema changes detected. Copying migration(s) to host..."
+#   docker cp artinsmarttrade-backend-1:/app/alembic/versions/. backend/alembic/versions/
+#
+#   echo "--- Applying New Migration (upgrade head) ---"
+#   alembic upgrade head
+# fi
 
 echo "--- Seeding Superuser ---"
 docker exec -i artinsmarttrade-backend-1 bash -lc "cd /app && /opt/venv/bin/python app/initial_data.py"
