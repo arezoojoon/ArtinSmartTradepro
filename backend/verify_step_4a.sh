@@ -9,9 +9,18 @@ pwd
 
 # 1) Authentication
 echo "--- Login ---"
-TOKEN=$(curl -sS -X POST http://localhost:8000/api/v1/auth/login \
+RES=$(curl -sS -X POST http://localhost:8000/api/v1/auth/login \
   -F "email=superadmin@artin.com" \
-  -F "password=Super@1234" | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+  -F "password=Super@1234")
+
+# Check if response contains access_token
+if [[ "$RES" != *"access_token"* ]]; then
+  echo "LOGIN FAILED. Response:"
+  echo "$RES"
+  exit 1
+fi
+
+TOKEN=$(echo "$RES" | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
 echo "TOKEN_LEN=${#TOKEN}"
 
 # 2) Create Tenants
