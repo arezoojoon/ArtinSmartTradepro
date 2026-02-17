@@ -1,39 +1,63 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 echo "--- Rebuilding Backend to Load New Files ---"
-# We must build because docker-compose.yml uses 'build', not volume mount for code
-docker compose up -d --build backend
-# wait for it to be healthy/ready
-sleep 10
+docker compose up -d --build backend db redis
 
-echo "--- Generating Missing Migrations ---"
-# 1. Run alembic to detect missing tables. 
-# Attempt to upgrade/generate.
-if ! docker exec artinsmarttrade-backend-1 alembic upgrade head; then
-    echo "Alembic error detected (likely missing revision file)."
-    echo "Clearing 'alembic_version' table to remove ghost revisions..."
-    # Unconditionally clear the table so 'stamp head' treats DB as 'base' state and doesn't crash looking for the ghost file.
-    docker exec artinsmarttrade-db-1 psql -U artin -d artin_trade -c "DELETE FROM alembic_version;"
-    
-    echo "Stamping DB to current codebase head..."
-    docker exec artinsmarttrade-backend-1 alembic stamp head
+# Helper: run alembic inside container with correct venv path
+alembic() {
+  docker exec -i artinsmarttrade-backend-1 bash -lc "cd /app && /opt/venv/bin/alembic $*"
+}
+
+echo "--- Applying Existing Migrations (upgrade head) ---"
+set +e
+UP_OUT="$(alembic upgrade head 2>&1)"
+UP_RC=$?
+set -e
+echo "$UP_OUT"
+
+if [ $UP_RC -ne 0 ]; then
+  if echo "$UP_OUT" | grep -q "Can't locate revision identified by"; then
+    echo "Alembic error detected (missing/ghost revision)."
+    echo "Clearing 'alembic_version' table..."
+    docker exec -i artinsmarttrade-db-1 psql -U artin -d artin_trade -c "DELETE FROM alembic_version;"
+
+    echo "Stamping DB to codebase head..."
+    alembic stamp head
+
+    echo "Retrying upgrade head..."
+    alembic upgrade head
+  else
+    echo "ERROR: alembic upgrade head failed for an unexpected reason."
+    exit 1
+  fi
 fi
 
-docker exec -it artinsmarttrade-backend-1 alembic revision --autogenerate -m "restore_missing_tables_v2"
+echo "--- Autogenerate Migration (only if needed) ---"
+set +e
+AUTO_OUT="$(alembic revision --autogenerate -m "restore_missing_tables_v2" 2>&1)"
+AUTO_RC=$?
+set -e
+echo "$AUTO_OUT"
 
+if [ $AUTO_RC -ne 0 ]; then
+  # If autogenerate fails, stop. (No false positives)
+  echo "ERROR: alembic revision --autogenerate failed."
+  exit 1
+fi
 
-# Copy the generated migration back to host so it's not lost on next rebuild/pull
-# (The user pointed out that without this, we lose the file and get into a loop)
-docker cp artinsmarttrade-backend-1:/app/alembic/versions/. backend/alembic/versions/
+if echo "$AUTO_OUT" | grep -q "No changes in schema detected"; then
+  echo "No schema changes detected. Skipping migration copy/apply."
+else
+  echo "Schema changes detected. Copying migration(s) to host..."
+  docker cp artinsmarttrade-backend-1:/app/alembic/versions/. backend/alembic/versions/
 
-echo "--- Applying Migrations ---"
-# 2. Apply them
-docker exec -it artinsmarttrade-backend-1 alembic upgrade head
+  echo "--- Applying New Migration (upgrade head) ---"
+  alembic upgrade head
+fi
 
 echo "--- Seeding Superuser ---"
-# 3. Create superuser
-docker exec -it artinsmarttrade-backend-1 python3 app/initial_data.py
+docker exec -i artinsmarttrade-backend-1 bash -lc "cd /app && /opt/venv/bin/python app/initial_data.py"
 
 echo "--- DONE ---"
 echo "Now run: bash backend/verify_step_4a.sh"
