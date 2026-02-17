@@ -22,6 +22,11 @@ fi
 
 docker exec -it artinsmarttrade-backend-1 alembic revision --autogenerate -m "restore_missing_tables_v2"
 
+  Generating /app/alembic/versions/b7a07aa1d1a2_restore_missing_tables_v2.py ...  done
+# Copy the generated migration back to host so it's not lost on next rebuild/pull
+# (The user pointed out that without this, we lose the file and get into a loop)
+docker cp artinsmarttrade-backend-1:/app/alembic/versions/. backend/alembic/versions/
+
 echo "--- Applying Migrations ---"
 # 2. Apply them
 docker exec -it artinsmarttrade-backend-1 alembic upgrade head

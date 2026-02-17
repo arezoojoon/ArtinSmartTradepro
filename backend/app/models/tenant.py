@@ -42,6 +42,7 @@ class Tenant(Base):
     # Multi-Tenancy (Many-to-Many via Membership)
     memberships = relationship("TenantMembership", back_populates="tenant")
     invitations = relationship("TenantInvitation", back_populates="tenant")
+    whatsapp_messages = relationship("WhatsAppMessage", back_populates="tenant")
     
     # Billing relationships
     billing_customers = relationship("BillingCustomer", back_populates="tenant")
