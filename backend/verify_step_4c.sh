@@ -16,16 +16,21 @@ login() {
   local email=$1
   local password=$2
   
-  RESPONSE=$(curl -s -X POST "$BASE_URL/auth/access-token" \
-    -H "Content-Type: application/x-www-form-urlencoded" \
-    -d "username=$email&password=$password")
+  # Use /auth/login as seen in verify_step_4a.sh
+  RESPONSE=$(curl -s -X POST "$BASE_URL/auth/login" \
+    -F "email=$email" \
+    -F "password=$password")
   
-  TOKEN=$(echo $RESPONSE | grep -o '"access_token":"[^"]*' | cut -d'"' -f4)
-  echo $TOKEN
+  if [[ "$RESPONSE" == *"access_token"* ]]; then
+      TOKEN=$(echo $RESPONSE | grep -o '"access_token":"[^"]*' | cut -d'"' -f4)
+      echo $TOKEN
+  else
+      echo ""
+  fi
 }
 
-# Assume Superuser exists from previous steps
-TOKEN=$(login "arezoom@artinwebs.org" "Arezoo123!")
+# Use superadmin credentials from verify_step_4a.sh
+TOKEN=$(login "superadmin@artin.com" "Super@1234")
 
 if [ -z "$TOKEN" ]; then
   echo "Login failed. Run generate_schema.sh first."
