@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
+    # Superuser (for initial seeding)
+    FIRST_SUPERUSER: str = "superadmin@artin.com"
+    FIRST_SUPERUSER_PASSWORD: str = "Super@1234"
+    
     # CORS
     ALLOWED_ORIGINS: list[str] = [
         "http://localhost:3000",
