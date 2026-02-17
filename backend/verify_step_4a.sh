@@ -28,14 +28,14 @@ echo "--- Create Tenants ---"
 TENANT_A_JSON=$(curl -sS -X POST http://localhost:8000/api/v1/tenants \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name":"Tenant A","plan":"free"}')
+  -d '{"name":"Tenant A","plan":"professional"}')
 echo "Tenant A Response: $TENANT_A_JSON"
 TENANT_A=$(echo $TENANT_A_JSON | python3 -c "import sys,json; print(json.load(sys.stdin).get('id') or '')")
 
 TENANT_B_JSON=$(curl -sS -X POST http://localhost:8000/api/v1/tenants \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name":"Tenant B","plan":"free"}')
+  -d '{"name":"Tenant B","plan":"professional"}')
 echo "Tenant B Response: $TENANT_B_JSON"
 TENANT_B=$(echo $TENANT_B_JSON | python3 -c "import sys,json; print(json.load(sys.stdin).get('id') or '')")
 
