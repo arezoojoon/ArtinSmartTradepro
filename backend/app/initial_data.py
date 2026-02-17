@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from sqlalchemy import select
-from app.db.session import async_session_maker
+from app.db.session import AsyncSessionLocal
 from app.models.user import User
 from app.core.config import settings
 from app.core.security import get_password_hash
@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 async def init_db() -> None:
-    async with async_session_maker() as session:
+    async with AsyncSessionLocal() as session:
         result = await session.execute(
             select(User).where(User.email == settings.FIRST_SUPERUSER)
         )
