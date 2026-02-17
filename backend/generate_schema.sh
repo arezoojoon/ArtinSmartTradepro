@@ -1,9 +1,11 @@
 #!/bin/bash
 set -e
 
-echo "--- Restarting Backend to Load New Files ---"
-docker restart artinsmarttrade-backend-1
-sleep 5
+echo "--- Rebuilding Backend to Load New Files ---"
+# We must build because docker-compose.yml uses 'build', not volume mount for code
+docker compose up -d --build backend
+# wait for it to be healthy/ready
+sleep 10
 
 echo "--- Generating Missing Migrations ---"
 # 1. Run alembic to detect missing tables (User, Tenant, CRM, etc.)

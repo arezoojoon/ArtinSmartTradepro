@@ -1,13 +1,58 @@
 import Link from "next/link";
-import PublicHeader from "./components/public/PublicHeader";
+import Image from "next/image";
+// We inline the old header because the new PublicHeader component attempts to use new menu structures which user dislikes.
+// import PublicHeader from "./components/public/PublicHeader"; 
 import PublicFooter from "./components/public/PublicFooter";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#071022] text-white">
-      <PublicHeader />
+      {/* Old PublicHeader Inlined to restore exact menu structure */}
+      <header className="fixed top-0 z-50 w-full border-b border-white/5 bg-[#071022]/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-gradient-to-br from-[#D4AF37] to-[#8C7211] p-[1px]">
+                <div className="flex h-full w-full items-center justify-center rounded-lg bg-[#071022]">
+                  <span className="text-sm font-bold text-[#D4AF37]">A</span>
+                </div>
+              </div>
+              <span className="text-lg font-bold text-white">
+                Artin<span className="text-[#D4AF37]">Smart</span>Trade
+              </span>
+            </Link>
+          </div>
 
-      <main>
+          <nav className="hidden md:flex items-center gap-8">
+            <Link href="#features" className="text-sm font-medium text-white/70 transition-colors hover:text-white">
+              Features
+            </Link>
+            <Link href="/pricing" className="text-sm font-medium text-white/70 transition-colors hover:text-white">
+              Pricing
+            </Link>
+            <Link href="#stories" className="text-sm font-medium text-white/70 transition-colors hover:text-white">
+              Success Stories
+            </Link>
+          </nav>
+
+          <div className="flex items-center gap-4">
+            <Link
+              href="/login"
+              className="text-sm font-medium text-white/70 transition-colors hover:text-white"
+            >
+              Login
+            </Link>
+            <Link
+              href="/register"
+              className="rounded-full bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-[#071022] transition-colors hover:bg-[#B5952F]"
+            >
+              Get Started
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <main className="pt-16">
         {/* Hero */}
         <section className="mx-auto max-w-6xl px-4 py-16 md:py-24">
           <div className="max-w-3xl">
@@ -28,7 +73,7 @@ export default function HomePage() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/auth/register"
+                href="/register"
                 className="rounded-2xl bg-[#D4AF37] px-6 py-3 text-center text-sm font-semibold text-[#0B1B3A]"
               >
                 Get Started
@@ -43,52 +88,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Power Triad */}
-        <section id="features" className="bg-[#08142B]">
-          <div className="mx-auto max-w-6xl px-4 py-14 md:py-18">
-            <h2 className="text-2xl font-semibold md:text-3xl">
-              The Power Triad
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm text-white/70 md:text-base">
-              The core system that replaces an entire department: Eyes to find opportunities,
-              Brain to decide, Voice to execute.
-            </p>
-
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                <div className="text-sm font-semibold text-[#D4AF37]">Eyes</div>
-                <div className="mt-2 text-lg font-semibold">Hunter Lead Generation</div>
-                <p className="mt-2 text-sm text-white/70">
-                  Finds buyers and competitors from trade data and market signals — fast, structured, and actionable.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                <div className="text-sm font-semibold text-[#D4AF37]">Brain</div>
-                <div className="mt-2 text-lg font-semibold">CRM + Intelligence</div>
-                <p className="mt-2 text-sm text-white/70">
-                  Unifies deals, pipelines, cash flow, and risk analysis into one decision engine.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                <div className="text-sm font-semibold text-[#D4AF37]">Voice</div>
-                <div className="mt-2 text-lg font-semibold">Automation & Follow-ups</div>
-                <p className="mt-2 text-sm text-white/70">
-                  WhatsApp/Email automation with real CRM context — turns leads into invoices with minimal effort.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Stories */}
-        <section id="stories" className="mx-auto max-w-6xl px-4 py-14">
-          <h3 className="text-xl font-semibold md:text-2xl">Success Stories</h3>
-          <p className="mt-2 max-w-2xl text-sm text-white/70 md:text-base">
-            Case studies will appear here. Keep this section as a placeholder for now.
-          </p>
-        </section>
+        {/* Note: The Power Triad section was removed as requested ("Old navy/gold landing... not the new AI Trade OS triad section") */}
 
         {/* About */}
         <section id="about" className="bg-[#08142B]">
