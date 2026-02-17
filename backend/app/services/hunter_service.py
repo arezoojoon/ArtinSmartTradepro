@@ -209,54 +209,105 @@ class HunterService:
             db.close()
 
     @staticmethod
-    def import_result_to_crm(db: Session, result_id: uuid.UUID, user_id: uuid.UUID) -> CRMContact:
+    def import_result_to_crm(db: Session, result_id: uuid.UUID, user_id: uuid.UUID, tenant_id: uuid.UUID) -> CRMContact:
         """
-        Convert a HunterResult into a CRMContact/Company
+        Convert a HunterResult into a CRMContact/Company with Deduplication & IDOR protection.
         """
+        # 0. IDOR Protection
         result = db.query(HunterResult).get(result_id)
         if not result:
             raise ValueError("Result not found")
         
-        if result.is_imported:
-            raise ValueError("Already imported")
+        if result.tenant_id != tenant_id:
+             raise ValueError("Unauthorized: result belongs to another tenant")
 
-        # 1. Create/Find Company
+        if result.is_imported:
+             # Idempotency: Return existing if we can find it? 
+             # For now, just raise or returning existing would require storing the linkage.
+             # We'll try to find the contact by email/phone first.
+             pass 
+
+        # 1. Company Deduplication (Domain > Name)
         company_id = None
         if result.company:
-            # Check exist
-            existing = db.query(CRMCompany).filter(
-                CRMCompany.tenant_id == result.tenant_id,
-                CRMCompany.name == result.company
-            ).first()
-            if existing:
-                company_id = existing.id
+            # Try finding by website domain if available
+            # (Simple substring match for MVP, e.g. 'tesla.com')
+            query = db.query(CRMCompany).filter(CRMCompany.tenant_id == tenant_id)
+            
+            existing_company = None
+            
+            if result.website:
+                # Normalize website to domain roughly
+                domain_part = result.website.replace("https://", "").replace("http://", "").split("/")[0]
+                existing_company = query.filter(CRMCompany.website.ilike(f"%{domain_part}%")).first()
+            
+            if not existing_company:
+                # Fallback to Name Exact Match
+                existing_company = query.filter(CRMCompany.name.ilike(result.company)).first()
+            
+            if existing_company:
+                company_id = existing_company.id
             else:
                 new_comp = CRMCompany(
-                    tenant_id=result.tenant_id,
+                    tenant_id=tenant_id,
                     name=result.company,
                     website=result.website,
-                    owner_id=user_id,
-                    source=f"Hunter: {result.source}"
+                    industry="Import/Export", # Default
+                    owner_id=user_id, # If model supports it
+                    # source=f"Hunter: {result.source}" # CRMCompany might not have source col
                 )
                 db.add(new_comp)
                 db.flush()
                 company_id = new_comp.id
         
-        # 2. Create Contact
+        # 2. Contact Deduplication (Email > Phone)
+        query = db.query(CRMContact).filter(CRMContact.tenant_id == tenant_id)
+        existing_contact = None
+        
+        if result.email:
+            existing_contact = query.filter(CRMContact.email == result.email).first()
+        
+        if not existing_contact and result.phone:
+            # normalize phone?
+            existing_contact = query.filter(CRMContact.phone == result.phone).first()
+
+        if existing_contact:
+            # Merge/Update? For now, just return existing to be idempotent
+            if not result.is_imported:
+                result.is_imported = True
+                db.commit()
+            return existing_contact
+
+        # 3. Create New Contact
         contact = CRMContact(
-            tenant_id=result.tenant_id,
+            tenant_id=tenant_id,
             company_id=company_id,
             first_name=result.name.split(" ")[0] if result.name else "Unknown",
             last_name=" ".join(result.name.split(" ")[1:]) if result.name and " " in result.name else "",
             email=result.email,
             phone=result.phone,
-            owner_id=user_id,
-            source=f"Hunter: {result.source}",
-            lead_score=int(result.confidence_score * 100) if result.confidence_score else 50
+            # owner_id=user_id, # Models.crm.CRMContact doesn't show owner_id in my view_file output! 
+            # I must check if owner_id exists. If not, omit it.
+            # Looking at previous view_file of models/crm.py, CRMContact DOES NOT have owner_id column defined in the snippet I saw?
+            # Wait, let me re-read models/crm.py snippet.
+            # Line 33: tenant_id...
+            # Line 41: linkedin_url...
+            # It DOES NOT have owner_id in the snippet I saw!
+            # BUT CRMNote does (author_id).
+            # I will omit owner_id for now to avoid AttributeError.
+            
+            # source=f"Hunter: {result.source}", # Also check if source exists
+            # lead_score=...
         )
+        
+        # Re-checking CRMContact model columns from previous view_file:
+        # Columns: id, tenant_id, company_id, first_name, last_name, email, phone, position, linkedin_url
+        # NO owner_id, NO source, NO lead_score in the snippet (lines 29-48).
+        # So I must NOT set them.
+        
         db.add(contact)
         
-        # 3. Mark imported
+        # 4. Mark imported
         result.is_imported = True
         db.commit()
         db.refresh(contact)

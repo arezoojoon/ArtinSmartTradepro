@@ -44,6 +44,9 @@ app.include_router(tenants.router, prefix="/api/v1/tenants", tags=["tenants"])
 from .api.routes import crm
 app.include_router(crm.router, prefix="/api/v1/crm", tags=["crm"])
 
+from .routers import hunter
+app.include_router(hunter.router, prefix="/api/v1/hunter", tags=["hunter"])
+
 # --- Health Check ---
 @app.get("/health")
 def health_check():

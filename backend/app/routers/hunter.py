@@ -114,7 +114,12 @@ async def import_lead(
     db: Session = Depends(get_db)
 ):
     try:
-        contact = HunterService.import_result_to_crm(db, uuid.UUID(req.result_id), current_user.id)
+        contact = HunterService.import_result_to_crm(
+            db, 
+            uuid.UUID(req.result_id), 
+            current_user.id,
+            current_user.tenant_id
+        )
         return {"status": "success", "contact_id": str(contact.id)}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
