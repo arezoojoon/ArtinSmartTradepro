@@ -7,6 +7,11 @@ docker compose up -d --build backend
 # wait for it to be healthy/ready
 sleep 10
 
+echo "--- Fixing Alembic State (SQL-level) ---"
+# Force-reset the alembic version if it's set to the missing revision 'd57aff0b9c5f'.
+# We delete the version row so 'stamp head' treats it as clean/diverged.
+docker exec artinsmarttrade-db-1 psql -U artin -d artin_trade -c "DELETE FROM alembic_version WHERE version_num = 'd57aff0b9c5f';"
+
 echo "--- Generating Missing Migrations ---"
 # 1. Run alembic to detect missing tables. 
 # If DB says it has a revision that we don't have (file missing), we must STAMP it to 'base' or current to fix the sync.
