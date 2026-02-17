@@ -22,6 +22,13 @@ from uuid import UUID
 router = APIRouter()
 
 
+def _assert_owned(db: Session, model, entity_id, tenant_id, label: str):
+    obj = db.query(model).filter(model.id == entity_id, model.tenant_id == tenant_id).first()
+    if not obj:
+        raise HTTPException(status_code=404, detail=f"{label} not found")
+    return obj
+
+
 # ─── Schemas ──────────────────────────────────────────────────────────
 
 class ContactCreate(BaseModel):
@@ -118,6 +125,9 @@ async def create_contact(
     db: Session = Depends(get_db),
 ):
     """Create a new contact."""
+    if data.company_id:
+        _assert_owned(db, CRMCompany, data.company_id, current_user.tenant_id, "Company")
+
     contact = CRMContact(
         tenant_id=current_user.tenant_id,
         first_name=data.first_name,
@@ -363,6 +373,9 @@ async def create_deal(
     db: Session = Depends(get_db),
 ):
     """Create a new deal."""
+    _assert_owned(db, CRMContact, data.contact_id, current_user.tenant_id, "Contact")
+    _assert_owned(db, CRMPipeline, data.pipeline_id, current_user.tenant_id, "Pipeline")
+
     deal = CRMDeal(
         tenant_id=current_user.tenant_id,
         title=data.title,
@@ -414,6 +427,11 @@ async def create_note(
     """Add a note to a contact or deal."""
     if not data.contact_id and not data.deal_id:
         raise HTTPException(status_code=400, detail="contact_id or deal_id is required")
+
+    if data.contact_id:
+        _assert_owned(db, CRMContact, data.contact_id, current_user.tenant_id, "Contact")
+    if data.deal_id:
+        _assert_owned(db, CRMDeal, data.deal_id, current_user.tenant_id, "Deal")
 
     note = CRMNote(
         tenant_id=current_user.tenant_id,
