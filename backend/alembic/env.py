@@ -8,7 +8,8 @@ import os
 # Add parent directory to path so we can import 'app'
 sys.path.append(os.getcwd())
 
-from app.models.base import Base
+# Import Base from app.db.base so that all models start being discovered (User, Tenant, CRM, etc.)
+from app.db.base import Base
 from app.config import get_settings
 
 # this is the Alembic Config object, which provides
