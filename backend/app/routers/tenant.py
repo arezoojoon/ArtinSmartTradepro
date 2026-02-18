@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
 from app.models.tenant import Tenant
-from app.models.platform import TenantMembership, TenantInvitation, TenantRole
+from app.models.tenant import Tenant, TenantMembership, TenantInvitation, TenantRole
 from app.schemas import tenant as tenant_schema
 from app.security import create_access_token
 from app.services.audit import log_audit_event

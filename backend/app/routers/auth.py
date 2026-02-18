@@ -37,7 +37,7 @@ class ResetPasswordRequest(BaseModel):
 
 # --- Endpoints ---
 
-from app.models.platform import TenantMembership, TenantRole
+from app.models.tenant import TenantMembership, TenantRole
 
 # ... imports ...
 

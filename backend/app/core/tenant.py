@@ -6,7 +6,7 @@ from sqlalchemy import select
 
 from ..db.session import get_db
 from ..models.user import User
-from ..models.tenant import Tenant, TenantMembership
+from app.models.tenant import Tenant, TenantMembership
 from .security import verify_token
 
 

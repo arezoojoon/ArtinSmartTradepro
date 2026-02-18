@@ -11,7 +11,7 @@ from app.security import is_token_blacklisted
 settings = get_settings()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
-from app.models.platform import TenantMembership
+from app.models.tenant import TenantMembership
 
 def _check_tenant_active(db: Session, user: User, tenant_id_str: str = None):
     """
