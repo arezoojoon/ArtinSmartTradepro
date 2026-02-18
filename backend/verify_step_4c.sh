@@ -49,12 +49,22 @@ echo "Token: ${TOKEN:0:10}..."
 # Get Tenant A ID
 # We need to know Tenant A's ID. 
 # Let's fetch tenants and pick the first one as "Tenant A" and second as "Tenant B"
-TENANTS_JSON=$(curl -s -H "Authorization: Bearer $TOKEN" "$BASE_URL/tenants/")
-# echo "DEBUG TENANTS_JSON: $TENANTS_JSON"
+TENANTS_JSON=$(curl -s -H "Authorization: Bearer $TOKEN" "$BASE_URL/tenants")
+echo "DEBUG TENANTS_JSON: $TENANTS_JSON"
 
 # Parse using python for robustness (grep is fragile)
-TENANT_A_ID=$(echo "$TENANTS_JSON" | python3 -c "import sys, json; d=json.load(sys.stdin); print(d[0]['id'] if len(d)>0 else '')")
-TENANT_B_ID=$(echo "$TENANTS_JSON" | python3 -c "import sys, json; d=json.load(sys.stdin); print(d[1]['id'] if len(d)>1 else '')")
+TENANT_A_ID=$(echo "$TENANTS_JSON" | python3 -c "import sys, json; 
+try:
+  d=json.load(sys.stdin)
+  print(d[0]['id'] if isinstance(d, list) and len(d)>0 else '')
+except:
+  print('')")
+TENANT_B_ID=$(echo "$TENANTS_JSON" | python3 -c "import sys, json; 
+try:
+  d=json.load(sys.stdin)
+  print(d[1]['id'] if isinstance(d, list) and len(d)>1 else '')
+except:
+  print('')")
 
 echo "Tenant A: $TENANT_A_ID"
 echo "Tenant B: $TENANT_B_ID"
