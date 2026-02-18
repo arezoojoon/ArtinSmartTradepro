@@ -142,7 +142,7 @@ def process_voice_job(job_id: UUID, recording_id: UUID, tenant_id: UUID, file_pa
             key_topics=result.get("key_topics", []),
             urgency=result.get("urgency", "medium"),
             confidence_score=result.get("confidence", 0.0),
-            model_used="gemini-2.0-pro",
+            model_used="gemini-2.5-flash",
             model_version="v1",
             processing_time_seconds=round(processing_time, 2),
             contains_sensitive_data=False,

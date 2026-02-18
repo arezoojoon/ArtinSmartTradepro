@@ -106,12 +106,19 @@ echo "Inserted Mock HunterResult for Tenant A."
 curl -s -X POST -H "Authorization: Bearer $TOKEN" "$BASE_URL/auth/switch-tenant/$TENANT_B_ID" > /dev/null
 echo "Switched to Tenant B."
 
-RESPONSE_IDOR=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"result_id": "22222222-2222-2222-2222-222222222222"}' "$BASE_URL/hunter/import-to-crm")
+RESPONSE_BODY=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"result_id": "22222222-2222-2222-2222-222222222222"}' "$BASE_URL/hunter/import-to-crm")
+# Get the status code by making a separate call or parsing headers? 
+# Easier to just make the call, get body, and use a separate call for code? 
+# Or use -w "%{http_code}" with -o response.txt
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"result_id": "22222222-2222-2222-2222-222222222222"}' -w "%{http_code}" -o response_idor.txt "$BASE_URL/hunter/import-to-crm" > http_code.txt
+RESPONSE_IDOR=$(cat http_code.txt)
+RESPONSE_BODY=$(cat response_idor.txt)
 
 if [ "$RESPONSE_IDOR" == "400" ] || [ "$RESPONSE_IDOR" == "404" ] || [ "$RESPONSE_IDOR" == "403" ]; then
   echo "✅ IDOR Check Passed (Code: $RESPONSE_IDOR) - Tenant B blocked from importing A's result."
 else
   echo "❌ IDOR Check FAILED (Code: $RESPONSE_IDOR) - Tenant B was able to access A's result!"
+  echo "Response Body: $RESPONSE_BODY"
   exit 1
 fi
 

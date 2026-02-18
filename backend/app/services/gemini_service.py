@@ -18,7 +18,7 @@ _api_keys = [k for k in [settings.GEMINI_API_KEY_1, settings.GEMINI_API_KEY_2, s
 _key_index = 0
 _key_lock = threading.Lock()
 
-def _get_model(model_name: str = "gemini-2.0-pro") -> genai.GenerativeModel:
+def _get_model(model_name: str = "gemini-2.5-flash") -> genai.GenerativeModel:
     """Get a Gemini model with rotated API key (thread-safe)."""
     global _key_index
     if not _api_keys:
@@ -212,7 +212,7 @@ Respond in this exact JSON format:
         """
         Vision: Extract contact info from business card image.
         """
-        model = _get_model("gemini-2.0-pro")
+        model = _get_model("gemini-2.5-flash")
         
         prompt = """Extract all contact information from this business card image.
 
@@ -241,7 +241,7 @@ Respond in this exact JSON format:
         Enhanced Vision: Extract contact info with per-field confidence.
         Used by D2 async vision pipeline.
         """
-        model = _get_model("gemini-2.0-pro")
+        model = _get_model("gemini-2.5-flash")
 
         prompt = """Extract all contact information from this business card image.
 Analyze each field carefully and rate your confidence for each extraction.
@@ -317,7 +317,7 @@ Respond in this exact JSON format:
         import os
         import time
         
-        model = _get_model("gemini-2.0-pro")
+        model = _get_model("gemini-2.5-flash")
         
         # Save to temp file for upload
         suffix = ".wav"

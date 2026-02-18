@@ -47,7 +47,7 @@ class ScannedCard(Base):
     # Audit
     is_ai_suggested = Column(Boolean, default=True)
     contact_created_id = Column(UUID(as_uuid=True), ForeignKey("crm_contacts.id"), nullable=True)
-    model_used = Column(String, default="gemini-2.0-pro")
+    model_used = Column(String, default="gemini-2.5-flash")
     processing_time_seconds = Column(Numeric(6, 2))
 
     created_at = Column(DateTime, default=datetime.datetime.utcnow)

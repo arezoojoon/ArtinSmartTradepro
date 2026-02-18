@@ -39,7 +39,7 @@ class CulturalNegotiationEngine:
         from app.services.gemini_service import _get_model, _extract_json
         from app.models.brain import CulturalStrategy
 
-        model = _get_model("gemini-2.0-pro")
+        model = _get_model("gemini-2.5-flash")
 
         prompt = f"""You are an expert international trade negotiation consultant with 20 years of experience.
 

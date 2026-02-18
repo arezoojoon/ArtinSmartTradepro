@@ -52,7 +52,7 @@ class CRMVoiceInsight(Base):
     urgency = Column(String, default="medium")
     confidence_score = Column(Numeric(3, 2), default=0.0)
 
-    model_used = Column(String, default="gemini-2.0-pro")
+    model_used = Column(String, default="gemini-2.5-flash")
     model_version = Column(String, nullable=True)
     processing_time_seconds = Column(Numeric(6, 2))
 
