@@ -4,8 +4,16 @@ from app.config import get_settings
 
 settings = get_settings()
 
+# Normalize DATABASE_URL for synchronous engine
+# Docker production sets postgresql+asyncpg:// but this module uses sync create_engine
+_sync_url = settings.DATABASE_URL
+if "+asyncpg" in _sync_url:
+    _sync_url = _sync_url.replace("postgresql+asyncpg", "postgresql+psycopg2")
+elif _sync_url.startswith("postgresql://"):
+    pass  # Already compatible with sync
+
 engine = create_engine(
-    settings.DATABASE_URL,
+    _sync_url,
     pool_size=10,
     max_overflow=20,
     pool_pre_ping=True,
