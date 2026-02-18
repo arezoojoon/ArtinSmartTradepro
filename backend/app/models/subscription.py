@@ -40,5 +40,5 @@ class Subscription(Base):
     current_period_end = Column(DateTime, nullable=True)
     cancel_at_period_end = Column(Boolean, default=False)
     
-    tenant = relationship("Tenant", back_populates="subscription")
+    tenant = relationship("Tenant", back_populates="subscriptions")
     plan = relationship("Plan", back_populates="subscriptions")
