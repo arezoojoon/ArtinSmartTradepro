@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Boolean, Numeric, JSON
+from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Boolean, Numeric, JSON, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import Base
@@ -23,7 +23,7 @@ class HunterRun(Base):
     status = Column(String, default="pending") # pending, completed, failed
     leads_found = Column(Integer, default=0)
     
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, server_default=text('now()'), nullable=False)
     completed_at = Column(DateTime, nullable=True)
 
     results = relationship("HunterResult", back_populates="run", cascade="all, delete-orphan")
@@ -57,7 +57,8 @@ class HunterResult(Base):
     confidence_score = Column(Numeric(5, 2), default=0.0)
     is_imported = Column(Boolean, default=False) # If true, already added to CRM
     
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, server_default=text('now()'), nullable=False)
+    updated_at = Column(DateTime, server_default=text('now()'), onupdate=datetime.datetime.utcnow, nullable=False)
 
     run = relationship("HunterRun", back_populates="results")
 
@@ -79,4 +80,4 @@ class TradeSignal(Base):
     valid_from = Column(DateTime, default=datetime.datetime.utcnow)
     valid_until = Column(DateTime, nullable=True)
     
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, server_default=text('now()'), nullable=False)
