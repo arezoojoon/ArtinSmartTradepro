@@ -30,7 +30,14 @@ login() {
 }
 
 # Use superadmin credentials from verify_step_4a.sh
+# Try default superadmin
 TOKEN=$(login "superadmin@artin.com" "Super@1234")
+
+# Fallback to server env credentials if default failed
+if [ -z "$TOKEN" ]; then
+  echo "Default login failed. Trying server credentials..."
+  TOKEN=$(login "arezoom@artinwebs.org" "Arezoo123!")
+fi
 
 if [ -z "$TOKEN" ]; then
   echo "Login failed. Run generate_schema.sh first."
