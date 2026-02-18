@@ -28,7 +28,7 @@ done
 # ── Login ───────────────────────────────────────────────
 LOGIN_RESP=$(curl -s -X POST "$BASE_URL/auth/login" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=$EMAIL&password=$PASSWORD")
+  -d "email=$EMAIL&password=$PASSWORD")
 TOKEN=$(echo "$LOGIN_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('access_token',''))" 2>/dev/null || echo "")
 
 if [ -z "$TOKEN" ]; then
