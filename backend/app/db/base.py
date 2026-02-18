@@ -2,6 +2,9 @@ from app.models.base import Base
 
 # Import all models here so SQLAlchemy mappers can resolve all relationships.
 # This file serves as a central registry for all models.
+# NOTE: Only import models that are actually used by registered routers.
+# Importing models with orphaned back_populates (e.g. Lead -> Tenant.leads)
+# will crash the mapper.
 from app.models.email import EmailOutbox
 from app.models.user import User
 from app.models.tenant import Tenant, TenantMembership, TenantInvitation
@@ -13,8 +16,4 @@ from app.models.campaign import CRMCampaign, CRMCampaignSegment, CRMCampaignMess
 from app.models.followup import CRMFollowUpRule, CRMFollowUpExecution, CRMRevenueAttribution
 from app.models.hunter import HunterRun, HunterResult, TradeSignal
 from app.models.bot_session import BotSession, BotEvent, BotDeeplinkRef
-from app.models.audit import AuditLog
 from app.models.ai_job import AIJob
-from app.models.lead import Lead
-from app.models.scheduling import AvailabilitySlot, Appointment
-
