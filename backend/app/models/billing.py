@@ -46,20 +46,7 @@ class BillingCustomer(Base):
     
     tenant = relationship("Tenant", back_populates="billing_customers")
 
-class Subscription(Base):
-    """
-    Active subscriptions for tenants.
-    """
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, unique=True, index=True)
-    provider = Column(String, default=BillingProvider.STRIPE.value, nullable=False)
-    provider_subscription_id = Column(String, nullable=False, unique=True, index=True)
-    plan = Column(String, nullable=False)  # professional, enterprise, whitelabel
-    status = Column(String, default=SubscriptionStatus.TRIALING.value, nullable=False)
-    current_period_end = Column(DateTime(timezone=True), nullable=False)
-    cancel_at_period_end = Column(Boolean, default=False, nullable=False)
-    
-    # Relationships
-    tenant = relationship("Tenant", back_populates="subscriptions")
+
 
 class Invoice(Base):
     """

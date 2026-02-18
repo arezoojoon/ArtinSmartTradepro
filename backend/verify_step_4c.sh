@@ -36,7 +36,7 @@ TOKEN=$(login "superadmin@artin.com" "Super@1234")
 # Fallback to server env credentials if default failed
 if [ -z "$TOKEN" ]; then
   echo "Default login failed. Trying server credentials..."
-  TOKEN=$(login "arezoom@artinwebs.org" "Arezoo123!")
+  TOKEN=$(login "arezoom@artinwebs.org" "5KvBVgC1u3g(GWhGA")
 fi
 
 if [ -z "$TOKEN" ]; then
