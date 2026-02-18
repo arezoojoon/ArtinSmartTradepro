@@ -22,9 +22,10 @@ login() {
     -F "password=$password")
   
   if [[ "$RESPONSE" == *"access_token"* ]]; then
-      TOKEN=$(echo $RESPONSE | grep -o '"access_token":"[^"]*' | cut -d'"' -f4)
-      echo $TOKEN
+      TOKEN=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('access_token',''))")
+      echo "$TOKEN"
   else
+      echo "DEBUG LOGIN FAILURE: $RESPONSE"
       echo ""
   fi
 }
