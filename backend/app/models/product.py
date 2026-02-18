@@ -18,6 +18,6 @@ class Product(Base):
     images = Column(JSON, default=[])
     specifications = Column(JSON, default={})
 
-    tenant = relationship("Tenant", back_populates="products")
+    tenant = relationship("Tenant")
 
 # RFQ model moved to models/sourcing.py to avoid duplicate table 'rfqs' registration

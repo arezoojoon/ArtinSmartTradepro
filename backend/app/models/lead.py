@@ -22,5 +22,5 @@ class Lead(Base):
     status = Column(String, default="new")  # new, contacted, interested, closed
     tags = Column(JSON, default=[])
     
-    tenant = relationship("Tenant", back_populates="leads")
+    tenant = relationship("Tenant")
     scraped_source = relationship("ScrapedSource", back_populates="leads")

@@ -16,5 +16,5 @@ class Trade(Base):
     total_value = Column(Float, nullable=True)
     currency = Column(String, default="USD")
     
-    tenant = relationship("Tenant", back_populates="trades")
+    tenant = relationship("Tenant")
     product = relationship("Product")

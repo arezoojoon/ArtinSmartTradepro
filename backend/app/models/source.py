@@ -12,5 +12,5 @@ class ScrapedSource(Base):
     lead_count = Column(Integer, default=0)
     status = Column(String, default="completed")
     
-    tenant = relationship("Tenant", back_populates="scraped_sources")
+    tenant = relationship("Tenant")
     leads = relationship("Lead", back_populates="scraped_source")
