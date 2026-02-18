@@ -50,6 +50,12 @@ class Tenant(Base):
     invoices = relationship("Invoice", back_populates="tenant")
     wallets = relationship("Wallet", back_populates="tenant")
 
+    # Other module relationships (required by models that have back_populates -> Tenant)
+    products = relationship("Product", back_populates="tenant")
+    leads = relationship("Lead", back_populates="tenant")
+    trades = relationship("Trade", back_populates="tenant")
+    scraped_sources = relationship("ScrapedSource", back_populates="tenant")
+
 
 class TenantMembership(Base):
     """Many-to-many relationship between users and tenants."""
