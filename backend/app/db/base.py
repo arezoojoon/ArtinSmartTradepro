@@ -16,5 +16,5 @@ from app.models.bot_session import BotSession, BotEvent, BotDeeplinkRef
 from app.models.audit import AuditLog
 from app.models.ai_job import AIJob
 from app.models.lead import Lead
-from app.models.scheduling import Meeting
+from app.models.scheduling import AvailabilitySlot, Appointment
 
