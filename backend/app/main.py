@@ -68,7 +68,7 @@ async def global_exception_handler(request: Request, exc: Exception):
             "error": {
                 "code": "INTERNAL_SERVER_ERROR",
                 "message": "An unexpected error occurred",
-                "details": {} if settings.ENVIRONMENT == "production" else {"exception": str(exc)}
+                "details": {"exception": str(exc), "type": type(exc).__name__}
             }
         }
     )

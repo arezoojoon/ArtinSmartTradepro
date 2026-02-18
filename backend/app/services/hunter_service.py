@@ -253,7 +253,7 @@ class HunterService:
                     name=result.company,
                     website=result.website,
                     industry="Import/Export", # Default
-                    owner_id=user_id, # If model supports it
+                    # owner_id=user_id, # Model does not support this field yet
                     # source=f"Hunter: {result.source}" # CRMCompany might not have source col
                 )
                 db.add(new_comp)
