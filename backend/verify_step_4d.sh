@@ -5,8 +5,6 @@ echo "--- Verifying Step 4D: WAHA Bot + CRM Follow-Ups ---"
 
 # ── Config ──────────────────────────────────────────────
 BASE_URL="http://localhost:8000/api/v1"
-EMAIL="arezoom@artinwebs.org"
-PASSWORD="Arezoo@2025@@"
 DB_USER="artin"
 DB_NAME="artin_trade"
 DB_CONTAINER="artinsmarttrade-db-1"
@@ -25,14 +23,29 @@ for i in $(seq 1 30); do
   sleep 1
 done
 
-# ── Login ───────────────────────────────────────────────
-LOGIN_RESP=$(curl -s -X POST "$BASE_URL/auth/login" \
-  -F "email=$EMAIL" \
-  -F "password=$PASSWORD")
+# ── Login (same creds as verify_step_4c.sh) ─────────────
+login_attempt() {
+  local email=$1
+  local password=$2
+  RESP=$(curl -s -X POST "$BASE_URL/auth/login" \
+    -F "email=$email" \
+    -F "password=$password")
+  echo "$RESP"
+}
+
+# Try superadmin first
+LOGIN_RESP=$(login_attempt "superadmin@artin.com" "Super@1234")
 TOKEN=$(echo "$LOGIN_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('access_token',''))" 2>/dev/null || echo "")
 
+# Fallback to server credentials
 if [ -z "$TOKEN" ]; then
-  echo "❌ Login failed."
+  echo "Default login failed, trying fallback..."
+  LOGIN_RESP=$(login_attempt "arezoom@artinwebs.org" '5KvBVgC1u3g(GWhGA')
+  TOKEN=$(echo "$LOGIN_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('access_token',''))" 2>/dev/null || echo "")
+fi
+
+if [ -z "$TOKEN" ]; then
+  echo "❌ Login failed with both credential sets."
   echo "$LOGIN_RESP"
   exit 1
 fi
