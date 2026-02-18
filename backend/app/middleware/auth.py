@@ -2,14 +2,14 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session
-from app.config import get_settings
+from app.core.config import settings  # Use same config as auth routes
 from app.database import get_db
 from app.models.user import User
 from app.models.tenant import Tenant
 from app.security import is_token_blacklisted
+import uuid
 
-settings = get_settings()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/api/v1/auth/login")
 
 from app.models.tenant import TenantMembership
 
@@ -63,17 +63,17 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         )
     
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        email: str = payload.get("sub")
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        user_id_str: str = payload.get("sub")  # sub contains user.id (UUID)
         token_type: str = payload.get("type", "access")
         tenant_id_str: str = payload.get("tenant_id") # Extract tenant context
         
-        if email is None or token_type != "access":
+        if user_id_str is None or token_type != "access":
             raise credentials_exception
     except JWTError:
         raise credentials_exception
         
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(User.id == user_id_str).first()
     if user is None:
         raise credentials_exception
         
