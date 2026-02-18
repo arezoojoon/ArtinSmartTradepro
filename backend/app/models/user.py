@@ -39,3 +39,8 @@ class User(Base):
     
     # Current tenant selection
     current_tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=True)
+
+    @property
+    def tenant_id(self):
+        """Alias for current_tenant_id used by plan_gate and routers."""
+        return self.current_tenant_id
