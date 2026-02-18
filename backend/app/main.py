@@ -47,6 +47,12 @@ app.include_router(crm.router, prefix="/api/v1/crm", tags=["crm"])
 from .routers import hunter
 app.include_router(hunter.router, prefix="/api/v1/hunter", tags=["hunter"])
 
+# Step 4D: WAHA Bot + CRM Follow-Ups
+from .routers import followups, whatsapp, waha_webhook
+app.include_router(followups.router, prefix="/api/v1/followups", tags=["followups"])
+app.include_router(whatsapp.router, prefix="/api/v1/whatsapp", tags=["whatsapp"])
+app.include_router(waha_webhook.router, prefix="/api/v1/waha", tags=["waha"])
+
 # --- Health Check ---
 @app.get("/health")
 def health_check():
