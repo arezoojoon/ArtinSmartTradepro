@@ -12,6 +12,22 @@ echo "--- Verifying Step 4C: Hunter Pipeline ---"
 # Let's borrow the login logic from verify_step_4a.sh quickly.
 
 # --- Helper Functions ---
+wait_for_health() {
+  echo "Waiting for backend to be ready..."
+  for i in {1..30}; do
+    if curl -s "$BASE_URL/health" > /dev/null; then
+      echo "Backend is ready!"
+      return 0
+    fi
+    sleep 2
+    echo -n "."
+  done
+  echo "Backend failed to start."
+  exit 1
+}
+
+wait_for_health
+
 login() {
   local email=$1
   local password=$2
