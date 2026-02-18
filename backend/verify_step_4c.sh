@@ -110,6 +110,10 @@ echo "Switched to Tenant A."
 # 2. Simulate a Hunter Result (Fake)
 # We can't easily Insert via API because Hunter runs are async.
 # We will cheat and Insert a HunterResult via SQL (using docker exec) to ensure we have a controllled test case.
+# DELETE first to handle re-runs cleanly (stale data from previous tenants)
+
+CLEANUP_SQL="DELETE FROM hunter_results WHERE id = '22222222-2222-2222-2222-222222222222'; DELETE FROM hunter_runs WHERE id = '11111111-1111-1111-1111-111111111111';"
+docker exec -i artinsmarttrade-db-1 psql -U artin -d artin_trade -c "$CLEANUP_SQL" > /dev/null 2>&1
 
 SQL="INSERT INTO hunter_runs (id, tenant_id, target_keyword, sources, status, created_at) VALUES ('11111111-1111-1111-1111-111111111111', '$TENANT_A_ID', 'test', '[\"manual\"]', 'completed', NOW());"
 SQL+="INSERT INTO hunter_results (id, run_id, tenant_id, source, type, name, company, email, phone, website, confidence_score, is_imported) VALUES ('22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', '$TENANT_A_ID', 'manual', 'lead', 'Alice Target', 'Target Corp', 'alice@target.com', '+15550001', 'target.com', 0.9, false);"
