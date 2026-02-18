@@ -104,7 +104,7 @@ fi
 # We need to switch context? 
 # Using the switch endpoint updates the user's active_tenant_id usually?
 # Let's use the /auth/switch-tenant endpoint.
-curl -s -X POST -H "Authorization: Bearer $TOKEN" "$BASE_URL/auth/switch-tenant/$TENANT_A_ID" > /dev/null
+curl -s -X POST -H "Authorization: Bearer $TOKEN" "$BASE_URL/tenants/$TENANT_A_ID/switch" > /dev/null
 echo "Switched to Tenant A."
 
 # 2. Simulate a Hunter Result (Fake)
@@ -120,7 +120,7 @@ echo "Inserted Mock HunterResult for Tenant A."
 
 # 3. Test Validation: Tenant B attempts to Import Tenant A's result (IDOR)
 # Switch to B
-curl -s -X POST -H "Authorization: Bearer $TOKEN" "$BASE_URL/auth/switch-tenant/$TENANT_B_ID" > /dev/null
+curl -s -X POST -H "Authorization: Bearer $TOKEN" "$BASE_URL/tenants/$TENANT_B_ID/switch" > /dev/null
 echo "Switched to Tenant B."
 
 RESPONSE_BODY=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"result_id": "22222222-2222-2222-2222-222222222222"}' "$BASE_URL/hunter/import-to-crm")
@@ -141,7 +141,7 @@ fi
 
 # 4. Test Success: Tenant A imports
 # Switch back to A
-curl -s -X POST -H "Authorization: Bearer $TOKEN" "$BASE_URL/auth/switch-tenant/$TENANT_A_ID" > /dev/null
+curl -s -X POST -H "Authorization: Bearer $TOKEN" "$BASE_URL/tenants/$TENANT_A_ID/switch" > /dev/null
 echo "Switched to Tenant A."
 
 IMPORT_RESP=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"result_id": "22222222-2222-2222-2222-222222222222"}' "$BASE_URL/hunter/import-to-crm")
