@@ -50,19 +50,28 @@ echo "Token: ${TOKEN:0:10}..."
 # We need to know Tenant A's ID. 
 # Let's fetch tenants and pick the first one as "Tenant A" and second as "Tenant B"
 TENANTS_JSON=$(curl -s -H "Authorization: Bearer $TOKEN" "$BASE_URL/tenants")
-echo "DEBUG TENANTS_JSON: $TENANTS_JSON"
+# echo "DEBUG TENANTS_JSON: $TENANTS_JSON"
 
-# Parse using python for robustness (grep is fragile)
+# Parse using python for robustness
 TENANT_A_ID=$(echo "$TENANTS_JSON" | python3 -c "import sys, json; 
 try:
   d=json.load(sys.stdin)
-  print(d[0]['id'] if isinstance(d, list) and len(d)>0 else '')
+  ts=d.get('tenants', [])
+  # Find by name 'Tenant A', else take first
+  t = next((x for x in ts if x.get('tenant_name') == 'Tenant A'), None)
+  if not t and len(ts) > 0: t = ts[0]
+  print(t['tenant_id'] if t else '')
 except:
   print('')")
+
 TENANT_B_ID=$(echo "$TENANTS_JSON" | python3 -c "import sys, json; 
 try:
   d=json.load(sys.stdin)
-  print(d[1]['id'] if isinstance(d, list) and len(d)>1 else '')
+  ts=d.get('tenants', [])
+  # Find by name 'Tenant B', else take second
+  t = next((x for x in ts if x.get('tenant_name') == 'Tenant B'), None)
+  if not t and len(ts) > 1: t = ts[1]
+  print(t['tenant_id'] if t else '')
 except:
   print('')")
 
