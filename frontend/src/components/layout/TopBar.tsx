@@ -15,12 +15,12 @@ const TopBar = ({ onMenuClick }: TopBarProps) => {
             <div className="flex items-center gap-4">
                 <button
                     onClick={onMenuClick}
-                    className="text-gray-300 hover:text-white md:hidden focus:outline-none"
+                    className="text-gray-100 hover:text-white md:hidden focus:outline-none"
                     aria-label="Toggle Menu"
                 >
                     <Menu className="h-6 w-6" />
                 </button>
-                <span className="text-gray-300 text-sm truncate">
+                <span className="text-gray-100 text-sm truncate">
                     Welcome back, <span className="text-gold-400 font-semibold">{user?.full_name || "Trader"}</span>
                 </span>
             </div>
