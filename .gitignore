@@ -62,3 +62,6 @@ frontend/out/
 
 # Unignore frontend lib
 !frontend/src/lib/
+
+.env
+**/.env
