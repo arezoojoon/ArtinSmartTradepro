@@ -20,7 +20,7 @@ export function removeAccessToken() {
 export function requireAuth() {
     const token = getAccessToken();
     if (!token) {
-        redirect("/auth/login");
+        redirect("/login");
     }
     return token;
 }

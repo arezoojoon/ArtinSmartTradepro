@@ -19,7 +19,7 @@ export default function AppLayout({
     useEffect(() => {
         const token = getAccessToken();
         if (!token) {
-            router.push("/auth/login");
+            router.push("/login");
         } else {
             setMounted(true);
         }

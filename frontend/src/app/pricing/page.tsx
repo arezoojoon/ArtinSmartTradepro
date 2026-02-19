@@ -8,7 +8,7 @@ const TIERS = [
     price: "$299/mo",
     highlight: false,
     features: ["Hunter (Lead Scraper)", "WhatsApp Bot (Single-channel)", "Basic CRM"],
-    cta: { label: "Start Professional", href: "/auth/register" },
+    cta: { label: "Start Professional", href: "/register" },
   },
   {
     name: "Enterprise",
@@ -20,7 +20,7 @@ const TIERS = [
       "Broadcast Campaigns",
       "Competitor Tracking",
     ],
-    cta: { label: "Start Enterprise", href: "/auth/register" },
+    cta: { label: "Start Enterprise", href: "/register" },
   },
   {
     name: "White Label",

@@ -53,6 +53,31 @@ app.include_router(followups.router, prefix="/api/v1/followups", tags=["followup
 app.include_router(whatsapp.router, prefix="/api/v1/whatsapp", tags=["whatsapp"])
 app.include_router(waha_webhook.router, prefix="/api/v1/waha", tags=["waha"])
 
+# --- Remaining Feature Routers ---
+from .routers import (
+    admin, ai_brain, ai_vision, ai_voice,
+    billing, campaigns, execution, financial,
+    leads, operations, scheduling, sourcing,
+    stripe, toolbox, trade, users,
+)
+app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
+app.include_router(ai_brain.router, prefix="/api/v1/brain", tags=["brain"])
+app.include_router(ai_vision.router, prefix="/api/v1/vision", tags=["vision"])
+app.include_router(ai_voice.router, prefix="/api/v1/voice", tags=["voice"])
+app.include_router(billing.router, prefix="/api/v1/billing", tags=["billing"])
+app.include_router(campaigns.router, prefix="/api/v1/campaigns", tags=["campaigns"])
+app.include_router(execution.router, prefix="/api/v1/execution", tags=["execution"])
+app.include_router(financial.router, prefix="/api/v1/financial", tags=["financial"])
+app.include_router(leads.router, prefix="/api/v1/leads", tags=["leads"])
+app.include_router(operations.router, prefix="/api/v1/operations", tags=["operations"])
+app.include_router(scheduling.router, prefix="/api/v1/scheduling", tags=["scheduling"])
+app.include_router(sourcing.router, prefix="/api/v1/sourcing", tags=["sourcing"])
+app.include_router(stripe.router, prefix="/api/v1/stripe", tags=["stripe"])
+app.include_router(toolbox.router, prefix="/api/v1/toolbox", tags=["toolbox"])
+app.include_router(trade.router, prefix="/api/v1/trade", tags=["trade"])
+app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
+
+
 # --- Health Check ---
 @app.get("/health")
 def health_check():

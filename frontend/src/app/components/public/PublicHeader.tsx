@@ -39,13 +39,13 @@ export default function PublicHeader() {
 
                 <div className="hidden items-center gap-3 md:flex">
                     <Link
-                        href="/auth/login"
+                        href="/login"
                         className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white hover:border-white/25"
                     >
                         Login
                     </Link>
                     <Link
-                        href="/auth/register"
+                        href="/register"
                         className="rounded-xl bg-[#D4AF37] px-4 py-2 text-sm font-medium text-[#0B1B3A] hover:opacity-95"
                     >
                         Get Started
@@ -78,14 +78,14 @@ export default function PublicHeader() {
                             ))}
                             <div className="mt-2 grid grid-cols-2 gap-2">
                                 <Link
-                                    href="/auth/login"
+                                    href="/login"
                                     className="rounded-xl border border-white/15 px-3 py-2 text-center text-sm text-white"
                                     onClick={() => setOpen(false)}
                                 >
                                     Login
                                 </Link>
                                 <Link
-                                    href="/auth/register"
+                                    href="/register"
                                     className="rounded-xl bg-[#D4AF37] px-3 py-2 text-center text-sm font-medium text-[#0B1B3A]"
                                     onClick={() => setOpen(false)}
                                 >
