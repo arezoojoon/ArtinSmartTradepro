@@ -19,7 +19,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             {/* Mobile Drawer - High Z-index with explicit background */}
             <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
                 <SheetContent side="left" className="p-0 w-72 bg-navy-900 border-navy-800 z-[100]">
-                    <Sidebar forceExpanded={true} />
+                    <Sidebar forceExpanded={true} onItemClick={() => setIsMobileOpen(false)} />
                 </SheetContent>
             </Sheet>
 

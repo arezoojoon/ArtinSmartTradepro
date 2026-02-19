@@ -13,9 +13,10 @@ import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
     forceExpanded?: boolean;
+    onItemClick?: () => void;
 }
 
-export default function Sidebar({ forceExpanded = false }: SidebarProps) {
+export default function Sidebar({ forceExpanded = false, onItemClick }: SidebarProps) {
     const pathname = usePathname();
     const { user, logout } = useAuth();
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -110,6 +111,7 @@ export default function Sidebar({ forceExpanded = false }: SidebarProps) {
                         <LinkComponent
                             key={item.href}
                             {...props}
+                            onClick={onItemClick}
                             className={cn(
                                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative",
                                 isActive ? "bg-gold-400/10 text-gold-400" : "text-gray-100 hover:text-white hover:bg-navy-800",
@@ -127,7 +129,10 @@ export default function Sidebar({ forceExpanded = false }: SidebarProps) {
             {/* Footer / Logout */}
             <div className="p-4 border-t border-navy-800 space-y-4">
                 <button
-                    onClick={logout}
+                    onClick={() => {
+                        onItemClick?.();
+                        logout();
+                    }}
                     className={cn(
                         "flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-400/10 transition-colors",
                         effectiveCollapsed && "justify-center"
