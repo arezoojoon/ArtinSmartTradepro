@@ -76,6 +76,15 @@ def require_feature(feature: str):
         async def analyze(...):
     """
     def decorator(func):
+        import asyncio, inspect
+
+        _is_async = asyncio.iscoroutinefunction(func)
+
+        def _call_func(*a, **kw):
+            """Call func, awaiting only if it's async."""
+            result = func(*a, **kw)
+            return result
+
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             db: Session = kwargs.get("db")
@@ -87,18 +96,21 @@ def require_feature(feature: str):
             if not current_user.tenant_id:
                 # Super Admins might not have a tenant, allow them if they are superuser
                 if current_user.is_superuser or current_user.role == "super_admin":
-                     return await func(*args, **kwargs)
+                    result = func(*args, **kwargs)
+                    return await result if _is_async else result
                 raise HTTPException(status_code=403, detail="No organization associated")
             
             # BYPASS: Super Admins get all features
             if current_user.is_superuser or current_user.role == "super_admin":
-                return await func(*args, **kwargs)
+                result = func(*args, **kwargs)
+                return await result if _is_async else result
 
             features = _get_tenant_features(db, current_user.tenant_id)
             
             # Wildcard = White Label (all features)
             if "*" in features:
-                return await func(*args, **kwargs)
+                result = func(*args, **kwargs)
+                return await result if _is_async else result
             
             if feature not in features:
                 raise HTTPException(
@@ -106,6 +118,8 @@ def require_feature(feature: str):
                     detail=f"This feature requires a plan upgrade. Missing: {feature}"
                 )
             
-            return await func(*args, **kwargs)
+            result = func(*args, **kwargs)
+            return await result if _is_async else result
         return wrapper
     return decorator
+
