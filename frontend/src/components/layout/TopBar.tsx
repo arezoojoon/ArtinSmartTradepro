@@ -1,16 +1,28 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { Bell, User } from "lucide-react";
+import { Bell, User, Menu } from "lucide-react";
 
-const TopBar = () => {
+interface TopBarProps {
+    onMenuClick?: () => void;
+}
+
+const TopBar = ({ onMenuClick }: TopBarProps) => {
     const { user } = useAuth();
 
     return (
-        <header className="flex h-16 items-center justify-between border-b border-navy-800 bg-navy-900 px-6 shadow-sm">
-            <div className="flex items-center">
-                {/* Mobile trigger could go here */}
-                <span className="text-gray-400 text-sm">Welcome back, <span className="text-gold-400 font-semibold">{user?.full_name || "Trader"}</span></span>
+        <header className="flex h-16 items-center justify-between border-b border-navy-800 bg-navy-900 px-4 md:px-6 shadow-sm shrink-0">
+            <div className="flex items-center gap-4">
+                <button
+                    onClick={onMenuClick}
+                    className="text-gray-400 hover:text-white md:hidden focus:outline-none"
+                    aria-label="Toggle Menu"
+                >
+                    <Menu className="h-6 w-6" />
+                </button>
+                <span className="text-gray-400 text-sm truncate">
+                    Welcome back, <span className="text-gold-400 font-semibold">{user?.full_name || "Trader"}</span>
+                </span>
             </div>
 
             <div className="flex items-center space-x-4">

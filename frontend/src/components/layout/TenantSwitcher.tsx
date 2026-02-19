@@ -21,7 +21,7 @@ interface Tenant {
     mode: string;
 }
 
-export default function TenantSwitcher() {
+export default function TenantSwitcher({ collapsed = false }: { collapsed?: boolean }) {
     const { user, switchTenant } = useAuth();
     const [tenants, setTenants] = useState<Tenant[]>([]);
     const [loading, setLoading] = useState(false);
@@ -31,7 +31,11 @@ export default function TenantSwitcher() {
             if (!user) return;
             try {
                 const res = await api.get("/tenants");
-                setTenants(res.data);
+                // Deduplicate tenants based on ID
+                const uniqueTenants = Array.from(
+                    new Map(res.data.map((t: Tenant) => [t.id, t])).values()
+                ) as Tenant[];
+                setTenants(uniqueTenants);
             } catch (err) {
                 console.error("Failed to fetch tenants", err);
             }
@@ -42,12 +46,7 @@ export default function TenantSwitcher() {
     const currentTenant = tenants.find(t => user?.tenant_id === t.id) || tenants[0];
 
     const handleSwitch = async (tenantId: string) => {
-        if (tenantId === "create_new") {
-            // Redirect to create tenant page or open modal
-            // TODO: Implement create tenant flow
-            console.log("Create tenant clicked");
-            return;
-        }
+        if (tenantId === "create_new") return;
 
         setLoading(true);
         try {
@@ -58,6 +57,14 @@ export default function TenantSwitcher() {
     };
 
     if (!user) return null;
+
+    if (collapsed) {
+        return (
+            <div className="h-10 w-10 rounded bg-navy-800 flex items-center justify-center border border-navy-600 shrink-0" title={currentTenant?.name}>
+                <Building2 className="h-5 w-5 text-gold-400" />
+            </div>
+        );
+    }
 
     return (
         <Select
@@ -95,15 +102,6 @@ export default function TenantSwitcher() {
                         </SelectItem>
                     ))}
                 </SelectGroup>
-                {/* 
-                <SelectGroup>
-                     <SelectItem value="create_new" className="text-gold-400 font-medium cursor-pointer focus:bg-navy-800">
-                        <span className="flex items-center gap-2">
-                            <Plus className="h-3 w-3" /> Create Organization
-                        </span>
-                     </SelectItem>
-                </SelectGroup>
-                */}
             </SelectContent>
         </Select>
     );
