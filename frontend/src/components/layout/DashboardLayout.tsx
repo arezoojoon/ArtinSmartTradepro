@@ -11,28 +11,30 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
     return (
         <div className="flex h-screen overflow-hidden bg-background">
-            {/* Desktop Sidebar - Hidden on mobile, flex on desktop */}
-            <div className="hidden md:flex h-full shrink-0">
+            {/* Desktop Sidebar - Explicitly set width and visibility */}
+            <div className="hidden md:flex h-full shrink-0 relative z-20">
                 <Sidebar />
             </div>
 
-            {/* Mobile Drawer */}
+            {/* Mobile Drawer - High Z-index with explicit background */}
             <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-                <SheetContent side="left" className="p-0 w-72 bg-navy-900 border-navy-800">
+                <SheetContent side="left" className="p-0 w-72 bg-navy-900 border-navy-800 z-50">
                     <Sidebar forceExpanded={true} />
                 </SheetContent>
             </Sheet>
 
-            <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+            <div className="flex flex-1 flex-col overflow-hidden min-w-0 relative z-0">
                 <TopBar onMenuClick={() => setIsMobileOpen(true)} />
 
-                {/* Main Content - Add bottom padding on mobile for BottomNav */}
+                {/* Main Content */}
                 <main className="flex-1 overflow-y-auto bg-navy-950 p-4 md:p-6 text-white pb-20 md:pb-6 relative">
                     {children}
                 </main>
 
                 {/* Mobile Bottom Nav */}
-                <BottomNav />
+                <div className="md:hidden">
+                    <BottomNav onMenuClick={() => setIsMobileOpen(true)} />
+                </div>
             </div>
         </div>
     );

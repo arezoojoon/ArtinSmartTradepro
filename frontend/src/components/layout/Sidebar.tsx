@@ -42,11 +42,13 @@ export default function Sidebar({ forceExpanded = false }: SidebarProps) {
     const effectiveCollapsed = forceExpanded ? false : isCollapsed;
 
     if (!mounted) return null; // Avoid hydration mismatch
-    if (!user) return null;
-
-    // Determine Nav Items based on Mode
-    const mode = (user?.tenant?.mode || "hybrid") as keyof typeof navItems;
+    // SAFETY: Default to hybrid if user/mode is missing to prevent disappearance
+    const safeUser = user || { role: "user", tenant: { mode: "hybrid" } };
+    const mode = (safeUser.tenant?.mode || "hybrid") as keyof typeof navItems;
     const items: NavItem[] = navItems[mode] || navItems.hybrid;
+
+    if (!mounted) return null; // Hydration
+    // REMOVED: if (!user) return null; -> causing sidebar to vanish if auth context is slightly delayed or malformed
 
     // Add Admin Panel for Super Admins if not present
     let displayedItems: NavItem[] = [...items];
