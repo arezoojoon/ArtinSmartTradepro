@@ -34,9 +34,6 @@ npm-debug.log
 yarn-error.log
 .next/
 out/
-build/
-dist/
-
 # Environment Variables
 .env
 .env.prod
@@ -45,26 +42,17 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
-
 # IDEs
 .idea/
 .vscode/
 *.swp
 *.swo
-
 # OS
 .DS_Store
 Thumbs.db
-
 # Project specific
 backend/app/static/exports/
 frontend/out/
-
 # Unignore frontend lib
 !frontend/src/lib/
-
-.env
-**/.env
-
-.env
 **/.env
