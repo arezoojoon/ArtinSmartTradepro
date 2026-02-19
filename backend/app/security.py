@@ -4,19 +4,44 @@ from jose import jwt
 from passlib.context import CryptContext
 from app.config import get_settings
 import time
+import logging
+import redis
+
+logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Token blacklist with TTL — auto-expires entries after ACCESS_TOKEN_EXPIRE_MINUTES.
-# In production, replace with Redis: redis.setex(token, TTL, "1")
+# Redis-backed token blacklist (persistent, shared across workers)
+_redis_client = None
+
+
+def _get_redis():
+    """Lazy-init Redis connection for token blacklist."""
+    global _redis_client
+    if _redis_client is None:
+        try:
+            _redis_client = redis.from_url(
+                settings.REDIS_URL,
+                decode_responses=True,
+                socket_connect_timeout=2,
+            )
+            _redis_client.ping()
+            logger.info("Token blacklist: using Redis")
+        except Exception as e:
+            logger.warning(f"Token blacklist: Redis unavailable ({e}), falling back to in-memory")
+            _redis_client = False  # Sentinel: tried and failed
+    return _redis_client if _redis_client else None
+
+
+# In-memory fallback (only used if Redis is unavailable)
 _BLACKLIST_MAX_SIZE = 10_000
 _token_blacklist: Dict[str, float] = {}  # token -> expiry_timestamp
 
 
 def _cleanup_blacklist():
-    """Remove expired tokens from blacklist."""
+    """Remove expired tokens from in-memory blacklist."""
     now = time.time()
     expired = [k for k, v in _token_blacklist.items() if v < now]
     for k in expired:
@@ -62,24 +87,39 @@ def verify_password_reset_token(token: str) -> str:
         raise ValueError("Invalid or expired reset token")
 
 def blacklist_token(token: str):
-    """Add token to blacklist with TTL (auto-expires)."""
-    # Cleanup periodically
+    """Add token to blacklist. Uses Redis if available, else in-memory."""
+    ttl_seconds = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    
+    r = _get_redis()
+    if r:
+        try:
+            r.setex(f"blacklist:{token}", ttl_seconds, "1")
+            return
+        except Exception:
+            pass  # Fall through to in-memory
+    
+    # In-memory fallback
     if len(_token_blacklist) > _BLACKLIST_MAX_SIZE:
         _cleanup_blacklist()
-    # If still over limit after cleanup, evict oldest
     if len(_token_blacklist) > _BLACKLIST_MAX_SIZE:
         oldest_key = min(_token_blacklist, key=_token_blacklist.get)
         del _token_blacklist[oldest_key]
-    
-    ttl_seconds = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     _token_blacklist[token] = time.time() + ttl_seconds
 
 def is_token_blacklisted(token: str) -> bool:
-    """Check if token has been invalidated (with auto-expiry)."""
+    """Check if token has been invalidated."""
+    r = _get_redis()
+    if r:
+        try:
+            return r.exists(f"blacklist:{token}") > 0
+        except Exception:
+            pass  # Fall through to in-memory
+    
+    # In-memory fallback
     if token not in _token_blacklist:
         return False
     if _token_blacklist[token] < time.time():
-        del _token_blacklist[token]  # Expired, remove
+        del _token_blacklist[token]
         return False
     return True
 

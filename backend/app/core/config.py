@@ -15,13 +15,13 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://postgres:password@localhost:5432/artin_trade"
     
     # Security
-    SECRET_KEY: str = "your-secret-key-change-in-production"
+    SECRET_KEY: str = ""
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # Superuser (for initial seeding)
     FIRST_SUPERUSER: str = "superadmin@artin.com"
-    FIRST_SUPERUSER_PASSWORD: str = "Super@1234"
+    FIRST_SUPERUSER_PASSWORD: str = ""
     
     # CORS
     ALLOWED_ORIGINS: list[str] = [
@@ -56,7 +56,19 @@ class Settings(BaseSettings):
 
 
 def get_settings() -> Settings:
-    return Settings()
+    s = Settings()
+    # Block unsafe defaults in production
+    if s.ENVIRONMENT == "production":
+        if not s.SECRET_KEY:
+            raise RuntimeError("FATAL: SECRET_KEY must be set in production")
+        if not s.FIRST_SUPERUSER_PASSWORD:
+            raise RuntimeError("FATAL: FIRST_SUPERUSER_PASSWORD must be set in production")
+    # Dev-only fallback
+    if not s.SECRET_KEY:
+        s.SECRET_KEY = "dev-only-secret-key-NOT-FOR-PRODUCTION"
+    if not s.FIRST_SUPERUSER_PASSWORD:
+        s.FIRST_SUPERUSER_PASSWORD = "DevPass@1234"
+    return s
 
 
 settings = get_settings()

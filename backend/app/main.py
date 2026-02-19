@@ -93,13 +93,18 @@ def health_check():
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Global exception: {exc}", exc_info=True)
     
+    # Hide details in production
+    details = {}
+    if settings.ENVIRONMENT != "production":
+        details = {"exception": str(exc), "type": type(exc).__name__}
+    
     return JSONResponse(
         status_code=500,
         content={
             "error": {
                 "code": "INTERNAL_SERVER_ERROR",
                 "message": "An unexpected error occurred",
-                "details": {"exception": str(exc), "type": type(exc).__name__}
+                "details": details
             }
         }
     )

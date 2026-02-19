@@ -5,7 +5,6 @@ from .base import Base
 
 class Lead(Base):
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
-    scraped_source_id = Column(UUID(as_uuid=True), ForeignKey("scraped_sources.id"), nullable=True)
     
     # Core Data
     company_name = Column(String, index=True)
@@ -17,10 +16,10 @@ class Lead(Base):
     city = Column(String, nullable=True)
     
     # Enrichment
-    source = Column(String)  # google_maps, linkedin, etc. (Redundant but useful for quick filters)
+    source = Column(String)  # google_maps, linkedin, etc.
     intent_score = Column(Float, default=0.0)
     status = Column(String, default="new")  # new, contacted, interested, closed
     tags = Column(JSON, default=[])
     
     tenant = relationship("Tenant")
-    scraped_source = relationship("ScrapedSource", back_populates="leads")
+
