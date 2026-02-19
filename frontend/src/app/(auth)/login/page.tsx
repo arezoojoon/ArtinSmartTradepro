@@ -22,12 +22,8 @@ export default function LoginPage() {
         setError("");
 
         try {
-            // Create form data as expected by backend
-            const formData = new FormData();
-            formData.append("email", email);
-            formData.append("password", password);
-
-            const response = await api.post("/auth/login", formData);
+            // Send as JSON object (api.post serializes with JSON.stringify)
+            const response = await api.post("/auth/login", { email, password });
             login(response.data.access_token, response.data.refresh_token);
         } catch (err: any) {
             setError(err.response?.data?.detail || "Failed to login");
