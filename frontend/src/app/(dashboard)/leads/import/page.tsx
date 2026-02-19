@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { api } from "@/lib/api";
+import { BASE_URL } from "@/lib/api";
 import { Upload, FileDown, CheckCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -28,9 +28,18 @@ export default function LeadImportPage() {
         formData.append("file", file);
 
         try {
-            const { data } = await api.post("/leads/import/csv", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
+            const token = localStorage.getItem("token"); // Assuming token is stored here, check AuthContext if needed
+            const res = await fetch(`${BASE_URL}/leads/import/csv`, {
+                method: "POST",
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: formData,
             });
+
+            if (!res.ok) throw new Error("Upload failed");
+
+            const data = await res.json();
             setStats(data);
             toast({ title: "Import Successful", description: `Imported ${data.imported} leads.` });
         } catch (error) {

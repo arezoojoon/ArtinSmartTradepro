@@ -12,6 +12,10 @@ from app.models.user import User, UserRole, UserPersona
 from app.models.tenant import Tenant, TenantMode
 from app.models.billing import Wallet
 from app.models.subscription import Plan
+from app.models.whatsapp import WhatsAppMessage
+# Import other potentially related models to ensure registry is populated
+import app.models.crm
+import app.models.hunter
 from app.security import get_password_hash
 from app.config import get_settings
 

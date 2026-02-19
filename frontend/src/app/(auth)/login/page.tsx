@@ -22,8 +22,13 @@ export default function LoginPage() {
         setError("");
 
         try {
-            // Send as JSON object (api.post serializes with JSON.stringify)
-            const response = await api.post("/auth/login", { email, password });
+            // Send plain object as API expects JSON
+            const payload = {
+                email,
+                password
+            };
+
+            const response = await api.post("/auth/login", payload);
             login(response.data.access_token, response.data.refresh_token);
         } catch (err: any) {
             setError(err.response?.data?.detail || "Failed to login");
