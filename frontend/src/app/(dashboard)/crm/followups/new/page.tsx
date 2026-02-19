@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Clock, AlertTriangle } from "lucide-react";
+import { BASE_URL } from "@/lib/api";
 
 export default function NewFollowUpRulePage() {
     const [name, setName] = useState("");
@@ -26,7 +27,7 @@ export default function NewFollowUpRulePage() {
                 max_attempts: 1 // Default to 1 for MVP
             };
 
-            const res = await fetch("http://localhost:8000/api/v1/crm/followups/rules", {
+            const res = await fetch(`${BASE_URL}/crm/followups/rules`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`,

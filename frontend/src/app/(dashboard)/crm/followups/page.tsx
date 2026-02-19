@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Zap, Clock, CheckCircle2, XCircle, PauseCircle, PlayCircle, History } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
+import { BASE_URL } from "@/lib/api";
 
 export default function FollowUpRulesPage() {
     const [rules, setRules] = useState([]);
@@ -17,7 +18,7 @@ export default function FollowUpRulesPage() {
     const fetchRules = async () => {
         try {
             const token = localStorage.getItem("access_token");
-            const res = await fetch("http://localhost:8000/api/v1/crm/followups/rules", {
+            const res = await fetch(`${BASE_URL}/crm/followups/rules`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (res.ok) {
@@ -34,7 +35,7 @@ export default function FollowUpRulesPage() {
     const toggleRule = async (id: string) => {
         try {
             const token = localStorage.getItem("access_token");
-            const res = await fetch(`http://localhost:8000/api/v1/crm/followups/rules/${id}/toggle`, {
+            const res = await fetch(`${BASE_URL}/crm/followups/rules/${id}/toggle`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Search, TrendingUp, Globe, Package, Ship, Brain, Camera, Loader2, AlertTriangle, Sparkles } from "lucide-react";
+import { BASE_URL } from "@/lib/api";
 
 type AnalysisType = "seasonal" | "market" | "brand" | "shipping" | "card-scan" | "insights";
 
@@ -29,7 +30,7 @@ export default function TradePage() {
     const [destination, setDestination] = useState("");
     const [dataSummary, setDataSummary] = useState("");
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 
     const runAnalysis = async () => {
         setLoading(true);
@@ -47,29 +48,29 @@ export default function TradePage() {
 
         switch (active) {
             case "seasonal":
-                endpoint = "/api/v1/trade/analyze/seasonal";
+                endpoint = "/trade/analyze/seasonal";
                 body = { product, region: region || "global" };
                 break;
             case "market":
-                endpoint = "/api/v1/trade/analyze/market";
+                endpoint = "/trade/analyze/market";
                 body = { product, season };
                 break;
             case "brand":
-                endpoint = "/api/v1/trade/analyze/brand";
+                endpoint = "/trade/analyze/brand";
                 body = { brand_name: brand };
                 break;
             case "shipping":
-                endpoint = "/api/v1/trade/shipping";
+                endpoint = "/trade/shipping";
                 body = { product, origin, destination };
                 break;
             case "insights":
-                endpoint = "/api/v1/trade/insights";
+                endpoint = "/trade/insights";
                 body = { data_summary: dataSummary };
                 break;
         }
 
         try {
-            const res = await fetch(`${apiUrl}${endpoint}`, {
+            const res = await fetch(`${BASE_URL}${endpoint}`, {
                 method: "POST",
                 headers,
                 body: JSON.stringify(body),
@@ -112,8 +113,8 @@ export default function TradePage() {
                         key={tool.type}
                         onClick={() => { setActive(tool.type); setResult(null); setError(null); }}
                         className={`p-4 rounded-xl border transition-all text-left ${active === tool.type
-                                ? "bg-navy-800 border-gold-400/50 shadow-lg shadow-gold-400/5"
-                                : "bg-navy-900/50 border-navy-700/30 hover:border-navy-600"
+                            ? "bg-navy-800 border-gold-400/50 shadow-lg shadow-gold-400/5"
+                            : "bg-navy-900/50 border-navy-700/30 hover:border-navy-600"
                             }`}
                     >
                         <tool.icon className={`h-5 w-5 mb-2 ${tool.color}`} />

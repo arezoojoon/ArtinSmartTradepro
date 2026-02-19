@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Upload, Eye, CreditCard, Building2, User, Phone, Mail, Globe, Linkedin, MapPin, CheckCircle, AlertTriangle, Zap, Shield, XCircle, TrendingUp } from "lucide-react";
+import { BASE_URL } from "@/lib/api";
 
 interface ScanResult {
     job_id: string;
@@ -57,7 +58,7 @@ export default function VisionIntelligencePage() {
     const fetchCards = async () => {
         try {
             const token = localStorage.getItem("access_token");
-            const res = await fetch("http://localhost:8000/api/v1/crm/ai/vision/cards", {
+            const res = await fetch(`${BASE_URL}/crm/ai/vision/cards`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) setCards(await res.json());
@@ -68,7 +69,7 @@ export default function VisionIntelligencePage() {
         pollingRef.current = setInterval(async () => {
             try {
                 const token = localStorage.getItem("access_token");
-                const res = await fetch(`http://localhost:8000/api/v1/crm/ai/vision/status/${jobId}`, {
+                const res = await fetch(`${BASE_URL}/crm/ai/vision/status/${jobId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (!res.ok) return;
@@ -110,7 +111,7 @@ export default function VisionIntelligencePage() {
             const formData = new FormData();
             formData.append("file", file);
 
-            const res = await fetch("http://localhost:8000/api/v1/crm/ai/vision/scan", {
+            const res = await fetch(`${BASE_URL}/crm/ai/vision/scan`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` },
                 body: formData
@@ -146,7 +147,7 @@ export default function VisionIntelligencePage() {
             const firstName = nameParts[0] || "Unknown";
             const lastName = nameParts.slice(1).join(" ") || undefined;
 
-            const res = await fetch(`http://localhost:8000/api/v1/crm/ai/vision/confirm/${result.card_id}`, {
+            const res = await fetch(`${BASE_URL}/crm/ai/vision/confirm/${result.card_id}`, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${token}`,

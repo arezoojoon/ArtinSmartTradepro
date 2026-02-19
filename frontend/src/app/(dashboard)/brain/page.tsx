@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Brain, TrendingUp, Shield, Calendar, Globe2, Loader2, AlertTriangle, ChevronRight, DollarSign, Package, MapPin, Users, Zap } from "lucide-react";
+import { BASE_URL } from "@/lib/api";
 
 interface TradeDecision {
     verdict: {
@@ -135,7 +136,7 @@ export default function BrainDashboard() {
         setError(null);
         try {
             const token = localStorage.getItem("access_token");
-            const res = await fetch("http://localhost:8000/api/v1/brain/decide", {
+            const res = await fetch(`${BASE_URL}/brain/decide`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify(form),

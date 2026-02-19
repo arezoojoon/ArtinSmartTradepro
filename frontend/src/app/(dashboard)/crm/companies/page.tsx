@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Plus, Search, Filter, MoreHorizontal, Building2, MapPin, Globe, Linkedin } from "lucide-react";
+import { BASE_URL } from "@/lib/api";
 
 export default function CompaniesPage() {
     const [companies, setCompanies] = useState([]);
@@ -17,7 +18,7 @@ export default function CompaniesPage() {
         try {
             const token = localStorage.getItem("access_token");
             const query = search ? `?search=${search}` : "";
-            const res = await fetch(`http://localhost:8000/api/v1/crm/companies${query}`, {
+            const res = await fetch(`${BASE_URL}/crm/companies${query}`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (res.ok) {

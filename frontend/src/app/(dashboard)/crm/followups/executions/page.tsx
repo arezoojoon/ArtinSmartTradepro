@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { BASE_URL } from "@/lib/api";
 import { formatDistanceToNow } from "date-fns";
 
 export default function ExecutionsPage() {
@@ -19,7 +20,7 @@ export default function ExecutionsPage() {
     const fetchExecutions = async () => {
         try {
             const token = localStorage.getItem("access_token");
-            const res = await fetch("http://localhost:8000/api/v1/crm/followups/executions", {
+            const res = await fetch(`${BASE_URL}/crm/followups/executions`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (res.ok) {

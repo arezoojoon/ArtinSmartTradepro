@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Upload, Mic, FileAudio, Brain, Clock, CheckCircle, AlertTriangle, TrendingUp, MessageSquare, Target, Zap, XCircle, CalendarPlus, ClipboardList, StickyNote, Shield } from "lucide-react";
+import { BASE_URL } from "@/lib/api";
 
 export default function VoiceIntelligencePage() {
     const [file, setFile] = useState<File | null>(null);
@@ -21,7 +22,7 @@ export default function VoiceIntelligencePage() {
     const fetchRecordings = async () => {
         try {
             const token = localStorage.getItem("access_token");
-            const res = await fetch("http://localhost:8000/api/v1/crm/ai/voice/recordings", {
+            const res = await fetch(`${BASE_URL}/crm/ai/voice/recordings`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (res.ok) setRecordings(await res.json());
@@ -33,7 +34,7 @@ export default function VoiceIntelligencePage() {
         pollingRef.current = setInterval(async () => {
             try {
                 const token = localStorage.getItem("access_token");
-                const res = await fetch(`http://localhost:8000/api/v1/crm/ai/voice/status/${jid}`, {
+                const res = await fetch(`${BASE_URL}/crm/ai/voice/status/${jid}`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
                 if (!res.ok) return;
@@ -68,7 +69,7 @@ export default function VoiceIntelligencePage() {
             const formData = new FormData();
             formData.append("file", file);
 
-            const res = await fetch("http://localhost:8000/api/v1/crm/ai/voice/analyze", {
+            const res = await fetch(`${BASE_URL}/crm/ai/voice/analyze`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` },
                 body: formData
