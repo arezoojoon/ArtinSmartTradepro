@@ -80,3 +80,6 @@ class TenantInvitationResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+# Alias used by schemas/user.py
+TenantRead = TenantResponse
