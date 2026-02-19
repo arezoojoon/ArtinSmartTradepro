@@ -30,7 +30,7 @@ export default function BottomNav({ onMenuClick }: BottomNavProps) {
                         <Link
                             key={tab.href}
                             href={tab.href}
-                            className={`flex flex-col items-center justify-center w-full h-full space-y-1 active:scale-95 transition-transform ${isActive ? "text-gold-400" : "text-gray-400 hover:text-gray-200"
+                            className={`flex flex-col items-center justify-center w-full h-full space-y-1 active:scale-95 transition-transform ${isActive ? "text-gold-400" : "text-gray-300 hover:text-white"
                                 }`}
                         >
                             <tab.icon className={`h-6 w-6 ${isActive ? "stroke-[2.5px]" : "stroke-2"}`} />
@@ -42,7 +42,7 @@ export default function BottomNav({ onMenuClick }: BottomNavProps) {
                 {/* Menu Drawer Trigger */}
                 <button
                     onClick={onMenuClick}
-                    className="flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-400 hover:text-gray-200 active:scale-95 transition-transform"
+                    className="flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-300 hover:text-white active:scale-95 transition-transform"
                 >
                     <Menu className="h-6 w-6" />
                     <span className="text-[10px] font-medium">Menu</span>

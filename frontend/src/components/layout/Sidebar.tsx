@@ -112,7 +112,7 @@ export default function Sidebar({ forceExpanded = false }: SidebarProps) {
                             {...props}
                             className={cn(
                                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative",
-                                isActive ? "bg-gold-400/10 text-gold-400" : "text-navy-400 hover:text-white hover:bg-navy-800",
+                                isActive ? "bg-gold-400/10 text-gold-400" : "text-gray-300 hover:text-white hover:bg-navy-800",
                                 effectiveCollapsed && "justify-center px-2"
                             )}
                             title={effectiveCollapsed ? item.label : undefined}

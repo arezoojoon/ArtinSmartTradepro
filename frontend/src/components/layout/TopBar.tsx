@@ -15,18 +15,18 @@ const TopBar = ({ onMenuClick }: TopBarProps) => {
             <div className="flex items-center gap-4">
                 <button
                     onClick={onMenuClick}
-                    className="text-gray-400 hover:text-white md:hidden focus:outline-none"
+                    className="text-gray-300 hover:text-white md:hidden focus:outline-none"
                     aria-label="Toggle Menu"
                 >
                     <Menu className="h-6 w-6" />
                 </button>
-                <span className="text-gray-400 text-sm truncate">
+                <span className="text-gray-300 text-sm truncate">
                     Welcome back, <span className="text-gold-400 font-semibold">{user?.full_name || "Trader"}</span>
                 </span>
             </div>
 
             <div className="flex items-center space-x-4">
-                <button className="relative p-1 text-gray-400 hover:text-white">
+                <button className="relative p-1 text-gray-300 hover:text-white">
                     <Bell className="h-6 w-6" />
                     <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
                 </button>
