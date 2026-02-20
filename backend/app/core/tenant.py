@@ -72,20 +72,26 @@ async def get_tenant_context(
         )
     
     # Verify user has access to this tenant
-    result = await db.execute(
-        select(TenantMembership)
-        .where(
-            TenantMembership.tenant_id == current_user.current_tenant_id,
-            TenantMembership.user_id == current_user.id
-        )
-    )
-    membership = result.scalar_one_or_none()
+    user_role = None
     
-    if not membership:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied to this tenant",
+    if current_user.is_superuser or current_user.role == "super_admin":
+        user_role = "owner"
+    else:
+        result = await db.execute(
+            select(TenantMembership)
+            .where(
+                TenantMembership.tenant_id == current_user.current_tenant_id,
+                TenantMembership.user_id == current_user.id
+            )
         )
+        membership = result.scalar_one_or_none()
+        
+        if not membership:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied to this tenant",
+            )
+        user_role = membership.role
     
     # Verify tenant exists
     result = await db.execute(
@@ -102,7 +108,7 @@ async def get_tenant_context(
     return TenantContext(
         tenant_id=tenant.id,
         user_id=current_user.id,
-        user_role=membership.role
+        user_role=user_role
     )
 
 

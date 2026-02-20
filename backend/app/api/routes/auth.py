@@ -490,24 +490,42 @@ async def get_me(
     from sqlalchemy import select
     from ...models.tenant import Tenant, TenantMembership
     
-    # Get user's tenant memberships
-    result = await db.execute(
-        select(TenantMembership, Tenant)
-        .join(Tenant, TenantMembership.tenant_id == Tenant.id)
-        .where(TenantMembership.user_id == current_user.id)
-    )
-    memberships = result.all()
-    
     tenants = []
-    for membership, tenant in memberships:
-        tenants.append({
-            "id": tenant.id,
-            "name": tenant.name,
-            "slug": tenant.slug,
-            "plan": tenant.plan,
-            "role": membership.role,
-            "created_at": membership.created_at.isoformat() if membership.created_at else None
-        })
+    
+    if current_user.is_superuser or current_user.role == "super_admin":
+        # Super admin gets all tenants
+        result = await db.execute(
+            select(Tenant).order_by(Tenant.created_at.desc())
+        )
+        all_tenants = result.scalars().all()
+        
+        for tenant in all_tenants:
+            tenants.append({
+                "id": tenant.id,
+                "name": tenant.name,
+                "slug": tenant.slug,
+                "plan": tenant.plan,
+                "role": "owner",
+                "created_at": tenant.created_at.isoformat() if tenant.created_at else None
+            })
+    else:
+        # Normal user
+        result = await db.execute(
+            select(TenantMembership, Tenant)
+            .join(Tenant, TenantMembership.tenant_id == Tenant.id)
+            .where(TenantMembership.user_id == current_user.id)
+        )
+        memberships = result.all()
+        
+        for membership, tenant in memberships:
+            tenants.append({
+                "id": tenant.id,
+                "name": tenant.name,
+                "slug": tenant.slug,
+                "plan": tenant.plan,
+                "role": membership.role,
+                "created_at": membership.created_at.isoformat() if membership.created_at else None
+            })
     
     return MeResponse(
         id=current_user.id,
