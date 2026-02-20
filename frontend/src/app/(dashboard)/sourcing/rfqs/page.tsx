@@ -52,7 +52,7 @@ export default function RFQPage() {
     };
 
     return (
-        <div className="p-8 space-y-8 bg-black min-h-screen text-white">
+        <div className="p-8 space-y-8 min-h-screen text-white">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold text-white flex items-center gap-2">

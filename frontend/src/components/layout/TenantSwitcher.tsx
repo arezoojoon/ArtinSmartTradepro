@@ -31,9 +31,12 @@ export default function TenantSwitcher({ collapsed = false }: { collapsed?: bool
             if (!user) return;
             try {
                 const res = await api.get("/tenants");
+                // Handle response format change (array vs object)
+                const tenantList = Array.isArray(res.data) ? res.data : (res.data.tenants || []);
+
                 // Deduplicate tenants based on ID
                 const uniqueTenants = Array.from(
-                    new Map(res.data.map((t: Tenant) => [t.id, t])).values()
+                    new Map(tenantList.map((t: Tenant) => [t.id, t])).values()
                 ) as Tenant[];
                 setTenants(uniqueTenants);
             } catch (err) {

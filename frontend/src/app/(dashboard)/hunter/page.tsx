@@ -133,7 +133,7 @@ export default function HunterPage() {
     const dataPoints = results.filter(r => r.type === "trade_data");
 
     return (
-        <div className="p-8 space-y-8 bg-black min-h-screen text-white">
+        <div className="p-8 space-y-8 min-h-screen text-white">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold text-white">Hunter <span className="text-gold-400">AI</span></h1>

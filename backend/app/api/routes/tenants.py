@@ -36,12 +36,33 @@ async def get_user_tenants(
 ) -> Any:
     """Get all tenants for the current user."""
     """Get all tenants for the current user."""
-    result = await db.execute(
-        select(TenantMembership, Tenant)
-        .join(Tenant, TenantMembership.tenant_id == Tenant.id)
-        .where(TenantMembership.user_id == current_user.id)
-        .order_by(TenantMembership.created_at.desc())
-    )
+    
+    # Check for Super Admin (Defensive)
+    is_super = getattr(current_user, "is_superuser", False)
+    role_str = getattr(current_user, "role", "")
+    
+    if is_super or role_str == "super_admin":
+        # Super admin gets all tenants
+        result = await db.execute(
+            select(Tenant).order_by(Tenant.created_at.desc())
+        )
+        tenants = result.scalars().all()
+        
+        tenant_memberships = []
+        for tenant in tenants:
+            tenant_memberships.append(TenantMembershipResponse(
+                tenant_id=tenant.id,
+                tenant_name=tenant.name,
+                role="owner", # Grant owner view to super admin
+                created_at=tenant.created_at
+            ))
+            
+        return TenantListResponse(
+            tenants=tenant_memberships,
+            current_tenant_id=current_user.current_tenant_id
+        )
+    
+    # Normal user
     memberships = result.all()
     
     tenant_memberships = []
@@ -219,21 +240,29 @@ async def switch_tenant(
     """Switch to a different tenant."""
     # Verify user has access to this tenant
     # Verify user has access to this tenant
-    result = await db.execute(
-        select(TenantMembership).where(
-            and_(
-                TenantMembership.tenant_id == tenant_id,
-                TenantMembership.user_id == current_user.id
+    
+    # Check for Super Admin
+    is_super = getattr(current_user, "is_superuser", False)
+    role_str = getattr(current_user, "role", "")
+    
+    if is_super or role_str == "super_admin":
+        pass # Allow access
+    else:
+        result = await db.execute(
+            select(TenantMembership).where(
+                and_(
+                    TenantMembership.tenant_id == tenant_id,
+                    TenantMembership.user_id == current_user.id
+                )
             )
         )
-    )
-    membership = result.scalar_one_or_none()
-    
-    if not membership:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied to this tenant"
-        )
+        membership = result.scalar_one_or_none()
+        
+        if not membership:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied to this tenant"
+            )
     
     # Update user's current tenant
     old_tenant_id = current_user.current_tenant_id
