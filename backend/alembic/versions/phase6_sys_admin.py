@@ -7,6 +7,7 @@ Table names: sys_audit_logs, sys_plans, tenant_subscriptions, usage_counters,
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 import uuid
 
 revision = 'phase6_sys_admin'
@@ -16,6 +17,22 @@ depends_on = None
 
 
 def upgrade():
+    # ── 0. Enum types (Idempotent) ──────────────────────────────────────────────
+    types = [
+        ('sub_status_enum', "('active', 'past_due', 'canceled')"),
+        ('domain_status_enum', "('pending_dns', 'active', 'disabled')"),
+        ('prompt_status_enum', "('draft', 'approved', 'deprecated')"),
+        ('prompt_run_status_enum', "('success', 'guardrail_rejected', 'error')"),
+    ]
+    for type_name, values in types:
+        op.execute(f"""
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = '{type_name}') THEN
+                    CREATE TYPE {type_name} AS ENUM {values};
+                END IF;
+            END $$;
+        """)
+
     # ── system_admins ───────────────────────────────────────────────────────────
     op.create_table('system_admins',
         sa.Column('id',            sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
@@ -73,7 +90,7 @@ def upgrade():
         sa.Column('id',                   sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
         sa.Column('tenant_id',            sa.UUID(as_uuid=True), nullable=False, unique=True),
         sa.Column('plan_id',              sa.UUID(as_uuid=True), sa.ForeignKey('sys_plans.id'), nullable=False),
-        sa.Column('status',               sa.Enum('active', 'past_due', 'canceled', name='sub_status_enum'), nullable=False, server_default='active'),
+        sa.Column('status',               postgresql.ENUM('active', 'past_due', 'canceled', name='sub_status_enum', create_type=False), nullable=False, server_default='active'),
         sa.Column('current_period_start', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
         sa.Column('current_period_end',   sa.DateTime(timezone=True), nullable=True),
         sa.Column('created_at',           sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -121,7 +138,7 @@ def upgrade():
         sa.Column('id',                 sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
         sa.Column('tenant_id',          sa.UUID(as_uuid=True), nullable=False),
         sa.Column('domain',             sa.String(255), nullable=False, unique=True),
-        sa.Column('status',             sa.Enum('pending_dns', 'active', 'disabled', name='domain_status_enum'), nullable=False, server_default='pending_dns'),
+        sa.Column('status',             postgresql.ENUM('pending_dns', 'active', 'disabled', name='domain_status_enum', create_type=False), nullable=False, server_default='pending_dns'),
         sa.Column('verification_token', sa.String(255), nullable=True),
         sa.Column('verified_at',        sa.DateTime(timezone=True), nullable=True),
         sa.Column('config_id',          sa.UUID(as_uuid=True), sa.ForeignKey('whitelabel_configs.id'), nullable=True),
@@ -165,7 +182,7 @@ def upgrade():
         sa.Column('id',                   sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
         sa.Column('family_id',            sa.UUID(as_uuid=True), sa.ForeignKey('prompt_families.id'), nullable=False),
         sa.Column('version',              sa.Integer(), nullable=False),
-        sa.Column('status',               sa.Enum('draft', 'approved', 'deprecated', name='prompt_status_enum'), nullable=False, server_default='draft'),
+        sa.Column('status',               postgresql.ENUM('draft', 'approved', 'deprecated', name='prompt_status_enum', create_type=False), nullable=False, server_default='draft'),
         sa.Column('model_target',         sa.String(100), nullable=False, server_default='gemini-1.5-pro'),
         sa.Column('system_prompt',        sa.Text(), nullable=False),
         sa.Column('user_prompt_template', sa.Text(), nullable=False),
@@ -192,7 +209,7 @@ def upgrade():
         sa.Column('output',            sa.JSON(), nullable=True),
         sa.Column('token_usage',       sa.JSON(), nullable=True),
         sa.Column('guardrail_result',  sa.JSON(), nullable=True),
-        sa.Column('status',            sa.Enum('success', 'guardrail_rejected', 'error', name='prompt_run_status_enum'), nullable=False, server_default='success'),
+        sa.Column('status',            postgresql.ENUM('success', 'guardrail_rejected', 'error', name='prompt_run_status_enum', create_type=False), nullable=False, server_default='success'),
         sa.Column('error_message',     sa.Text(), nullable=True),
         sa.Column('created_at',        sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
         sa.Column('updated_at',        sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),

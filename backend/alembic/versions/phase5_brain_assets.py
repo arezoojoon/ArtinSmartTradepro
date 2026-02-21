@@ -3,6 +3,7 @@ Asset databases for arbitrage history, supplier reliability, buyer payment behav
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 import uuid
 
 # revision identifiers
@@ -43,7 +44,7 @@ def upgrade():
         sa.Column('fx_rate', sa.Numeric(precision=10, scale=6), nullable=True),
         sa.Column('estimated_margin_pct', sa.Numeric(precision=5, scale=2), nullable=True),
         sa.Column('realized_margin_pct', sa.Numeric(precision=5, scale=2), nullable=True),
-        sa.Column('outcome', sa.Enum(arbitrage_outcome, name='arbitrage_outcome'), nullable=True),
+        sa.Column('outcome', postgresql.ENUM('won', 'lost', 'no_go', 'unknown', name='arbitrage_outcome', create_type=False), nullable=True),
         sa.Column('decision_reason', sa.Text(), nullable=True),
         sa.Column('data_used', sa.JSON(), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False)
@@ -122,11 +123,11 @@ def upgrade():
     op.create_table('brain_engine_runs',
         sa.Column('id', sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
         sa.Column('tenant_id', sa.UUID(as_uuid=True), nullable=False),
-        sa.Column('engine_type', sa.Enum(brain_engine_type, name='brain_engine_type'), nullable=False),
+        sa.Column('engine_type', postgresql.ENUM('arbitrage', 'risk', 'demand', 'cultural', name='brain_engine_type', create_type=False), nullable=False),
         sa.Column('input_payload', sa.JSON(), nullable=False),
         sa.Column('output_payload', sa.JSON(), nullable=True),
         sa.Column('explainability', sa.JSON(), nullable=True),
-        sa.Column('status', sa.Enum(brain_run_status, name='brain_run_status'), nullable=False),
+        sa.Column('status', postgresql.ENUM('success', 'insufficient_data', 'failed', name='brain_run_status', create_type=False), nullable=False),
         sa.Column('error', sa.JSON(), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False)
     )
