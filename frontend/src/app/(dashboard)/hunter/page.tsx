@@ -49,6 +49,10 @@ export default function HunterPage() {
         { id: "political", label: "Political Risk", category: "Official API" },
     ];
 
+    const [hsCode, setHsCode] = useState("");
+    const [minVolume, setMinVolume] = useState("");
+    const [minGrowth, setMinGrowth] = useState("");
+
     // Toggle Source
     const toggleSource = (sourceId: string) => {
         if (selectedSources.includes(sourceId)) {
@@ -72,7 +76,10 @@ export default function HunterPage() {
             const { data } = await api.post("/hunter/start", {
                 keyword,
                 location,
-                sources: selectedSources
+                sources: selectedSources,
+                hs_code: hsCode,
+                min_volume_usd: minVolume ? parseFloat(minVolume) : undefined,
+                min_growth_pct: minGrowth ? parseFloat(minGrowth) : undefined
             });
             setJobId(data.job_id);
             setStatus("processing");
@@ -153,22 +160,33 @@ export default function HunterPage() {
                     <CardTitle className="text-white">Mission Configuration</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid md:grid-cols-3 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm text-gray-400">Target Keyword / Product</label>
+                            <label className="text-sm text-gray-400">HS Code (e.g. 1006.30)</label>
                             <Input
-                                placeholder="e.g. Rice, Ceramics, Petrochemicals"
-                                value={keyword}
-                                onChange={(e) => setKeyword(e.target.value)}
+                                placeholder="4 or 6 digit code"
+                                value={hsCode}
+                                onChange={(e) => setHsCode(e.target.value)}
                                 className="bg-navy-950 border-navy-700 text-white"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm text-gray-400">Target Location</label>
+                            <label className="text-sm text-gray-400">Min Volume (USD)</label>
                             <Input
-                                placeholder="e.g. Dubai, Hamburg, Global"
-                                value={location}
-                                onChange={(e) => setLocation(e.target.value)}
+                                type="number"
+                                placeholder="e.g. 5000000"
+                                value={minVolume}
+                                onChange={(e) => setMinVolume(e.target.value)}
+                                className="bg-navy-950 border-navy-700 text-white"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-400">Min Growth (%)</label>
+                            <Input
+                                type="number"
+                                placeholder="e.g. 10"
+                                value={minGrowth}
+                                onChange={(e) => setMinGrowth(e.target.value)}
                                 className="bg-navy-950 border-navy-700 text-white"
                             />
                         </div>

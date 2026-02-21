@@ -160,3 +160,28 @@ class CRMInvoice(Base):
     
     company = relationship("CRMCompany")
 
+class CRMTask(Base):
+    """Tasks associated with Companies, Contacts, or standalone."""
+    __tablename__ = "crm_tasks"
+    
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True)
+    author_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    assigned_to_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True) # ID of user assigned
+    
+    company_id = Column(UUID(as_uuid=True), ForeignKey("crm_companies.id"), nullable=True)
+    contact_id = Column(UUID(as_uuid=True), ForeignKey("crm_contacts.id"), nullable=True)
+    deal_id = Column(UUID(as_uuid=True), ForeignKey("crm_deals.id"), nullable=True)
+    
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    due_date = Column(DateTime, nullable=True)
+    priority = Column(String, default="medium") # low, medium, high
+    status = Column(String, default="pending") # pending, completed, cancelled
+    
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+    tenant = relationship("Tenant")
+    company = relationship("CRMCompany")
+    contact = relationship("CRMContact")
+    deal = relationship("CRMDeal")

@@ -348,3 +348,69 @@ class WebBasicProvider(EnrichmentProvider):
                     break
         
         return found_keywords[:2]  # Limit to 2 industry hints
+class AIInferenceProvider(EnrichmentProvider):
+    """
+    Advanced AI enrichment provider using Gemini LLM.
+    Infers decision makers and deep intelligence from scraped text.
+    """
+    
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(config)
+        self.max_text_len = config.get('max_text_len', 10000)
+    
+    def get_name(self) -> str:
+        return "ai_inference"
+    
+    async def enrich(self, lead: HunterLead, repo: HunterRepository) -> EnrichmentResult:
+        from .gemini_service import GeminiService
+        
+        # 1. Gather existing evidence text
+        evidence_texts = [e.snippet for e in lead.evidence if e.snippet]
+        combined_text = "\n---\n".join(evidence_texts)
+        
+        if len(combined_text) < 50:
+             # Not enough data to infer
+             return EnrichmentResult(updates={}, identities=[], evidence=[])
+             
+        current_data = {
+            "name": lead.primary_name,
+            "website": lead.website,
+            "country": lead.country,
+            "industry": lead.industry
+        }
+        
+        try:
+            inference = await GeminiService.infer_lead_details_async(combined_text, current_data)
+            
+            result = EnrichmentResult(updates={}, identities=[], evidence=[])
+            
+            # Decision Maker Updates
+            dm = inference.get("decision_maker", {})
+            if dm.get("name") and dm.get("name") != "Full Name":
+                result.updates["primary_name"] = dm["name"]
+                result.updates["industry"] = inference.get("company_profile", {}).get("industry", lead.industry)
+            
+            # Identities
+            for identity in inference.get("identities", []):
+                if identity.get("value") and identity["value"] != "extracted value":
+                    result.identities.append({
+                        "type": identity["type"],
+                        "value": identity["value"]
+                    })
+            
+            # Evidence Panel
+            for ev in inference.get("evidence_panel", []):
+                result.evidence.append({
+                    "field_name": ev.get("field", "ai_inference"),
+                    "source_name": "ai_inference",
+                    "confidence": 0.85,
+                    "snippet": ev.get("snippet"),
+                    "collected_at": datetime.utcnow(),
+                    "raw": inference
+                })
+                
+            return result
+            
+        except Exception as e:
+            logger.error(f"AIInferenceProvider failed: {e}")
+            return EnrichmentResult(updates={}, identities=[], evidence=[])

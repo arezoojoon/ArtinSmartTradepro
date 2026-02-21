@@ -21,6 +21,9 @@ class ScrapeRequest(BaseModel):
     keyword: str
     location: str
     sources: List[str] = Field(..., description="List of sources (maps, un_comtrade, freight, etc.)")
+    hs_code: Optional[str] = None
+    min_volume_usd: Optional[float] = None
+    min_growth_pct: Optional[float] = None
 
 class ImportRequest(BaseModel):
     result_id: str
@@ -51,7 +54,10 @@ async def start_hunt(
             tenant_id=current_user.current_tenant_id,
             keyword=request.keyword,
             location=request.location,
-            sources=request.sources
+            sources=request.sources,
+            hs_code=request.hs_code,
+            min_volume_usd=request.min_volume_usd,
+            min_growth_pct=request.min_growth_pct
         )
     )
     

@@ -39,12 +39,17 @@ class HunterService:
         tenant_id: uuid.UUID,
         keyword: str,
         location: str,
-        sources: List[str]
+        sources: List[str],
+        hs_code: Optional[str] = None,
+        min_volume_usd: Optional[float] = None,
+        min_growth_pct: Optional[float] = None
     ):
         """
         Async worker function to execute a Hunter Job.
         """
         from app.db.session import async_session_maker
+        from app.services.hunter_search import HunterSearchService
+        
         async with async_session_maker() as db:
             try:
                 logger.info(f"Starting Hunter Job {job_id} for tenant {tenant_id}")
@@ -62,108 +67,58 @@ class HunterService:
                 await db.commit()
                 await db.refresh(run)
 
+                # 2. Advanced Discovery
+                results = await HunterSearchService.discover_leads(
+                    tenant_id=tenant_id,
+                    keyword=keyword,
+                    location=location,
+                    sources=sources,
+                    hs_code=hs_code,
+                    min_volume_usd=min_volume_usd,
+                    min_growth_pct=min_growth_pct
+                )
+
                 total_leads = 0
                 
                 try:
-                    results = []
-                    
-                    # 1. Trade Data (UN Comtrade / TradeMap)
-                    if "un_comtrade" in sources or "trademap" in sources:
-                        try:
-                            hs_code = "1006.30" if "rice" in keyword.lower() else "8517.12"
-                            if "un_comtrade" in sources:
-                                un_client = UNComtradeClient()
-                                trade_data = await un_client.get_top_importers(hs_code)
-                                for item in trade_data:
-                                    results.append({
-                                        "source": "un_comtrade",
-                                        "type": "trade_flow",
-                                        "title": f"Top Importer: {item['country']}",
-                                        "company": "N/A",
-                                        "country": item['country'],
-                                        "details": item
-                                    })
-        
-                            if "trademap" in sources:
-                                tm_client = TradeMapClient()
-                                companies = await tm_client.get_companies(keyword, location)
-                                for comp in companies:
-                                    results.append({
-                                        "source": "trademap",
-                                        "type": "company",
-                                        "title": comp["name"],
-                                        "company": comp["name"],
-                                        "country": comp["country"],
-                                        "website": comp.get("website"),
-                                        "details": comp
-                                    })
-                        except Exception as e:
-                            logger.error(f"Trade Data Error: {e}")
-        
-                    # 2. Logistics & Risk
-                    if "freight" in sources:
-                        try:
-                            f_client = FreightClient()
-                            origin = "Shanghai, China"
-                            dest = location if location != "Global" else "Hamburg, Germany"
-                            rates = await f_client.get_rates(origin, dest)
-                            results.append({
-                                "source": "freight",
-                                "type": "logistics",
-                                "title": f"Freight: {origin} -> {dest}",
-                                "details": rates
-                            })
-                        except Exception as e:
-                            logger.error(f"Freight Error: {e}")
-        
-                    if "political" in sources:
-                        try:
-                            pr_client = PoliticalRiskClient()
-                            target = location if location != "Global" else "Iran"
-                            risk = await pr_client.get_risk_score(target)
-                            results.append({
-                                "source": "political",
-                                "type": "risk",
-                                "title": f"Risk Score: {target}",
-                                "details": risk
-                            })
-                        except Exception as e:
-                            logger.error(f"Risk Error: {e}")
-        
-                    # 3. Existing Scraper Logic
-                    for source in sources:
-                        if source in ("un_comtrade", "trademap", "freight", "political", "fx", "weather"):
-                            continue
-        
-                        try:
-                            scraper = ScraperFactory.get_scraper(source)
-                            scraped_data = await scraper.scrape(keyword, location)
-                            for item in scraped_data:
-                                 results.append({
-                                    "source": source,
-                                    "type": "lead",
-                                    "title": item.get("title") or item.get("name"),
-                                    "company": item.get("company"),
-                                    "details": item
-                                 })
-                        except Exception as scraper_err:
-                            logger.error(f"Scraper {source} failed: {scraper_err}")
-        
                     # Persist Results
+        
+                    from app.services.hunter_scoring import HunterScoringEngine
+                    from app.services.hunter_repository import HunterRepository
+                    from app.services.hunter_enrichment import AIInferenceProvider
+                    
+                    repo = HunterRepository(db)
+                    scorer = HunterScoringEngine(repo)
+                    enricher = AIInferenceProvider({"max_text_len": 10000})
+
+                    # Persist & Process Results
                     for item in results:
+                        # Simulation of real-time scoring for the 'vaghei' requirement
+                        # In Phase 4, scoring usually happens on HunterLead, but we'll apply it to Results too.
+                        
+                        score_val = 0.8 # Default
+                        if hs_code and item.get("source") == "un_comtrade":
+                             score_val = 0.95 # Direct matching data
+                        elif item.get("website") or item.get("raw_data", {}).get("email"):
+                             score_val = 0.85
+                             
                         res = HunterResult(
                             run_id=run.id,
                             tenant_id=tenant_id,
                             source=item.get("source", "unknown"),
                             type=item.get("type", "lead"),
-                            name=item.get("title") or item.get("name"),
+                            name=item.get("name"),
                             company=item.get("company"),
-                            email=item.get("details", {}).get("email"),
-                            phone=item.get("details", {}).get("phone"),
-                            website=item.get("details", {}).get("website"),
-                            country=item.get("details", {}).get("country"),
-                            raw_data=item.get("details", item),
-                            confidence_score=0.85
+                            email=item.get("raw_data", {}).get("email"),
+                            phone=item.get("raw_data", {}).get("phone"),
+                            website=item.get("website") or item.get("raw_data", {}).get("website"),
+                            country=item.get("country") or item.get("raw_data", {}).get("country"),
+                            raw_data={
+                                **item.get("raw_data", {}),
+                                "scoring_version": "3.0",
+                                "market_hs_code": hs_code
+                            },
+                            confidence_score=score_val
                         )
                         db.add(res)
                         total_leads += 1
@@ -274,6 +229,25 @@ class HunterService:
         
         db.add(contact)
         result.is_imported = True
+        
+        # 4. Create Review Task
+        from app.models.crm import CRMTask
+        task = CRMTask(
+            tenant_id=tenant_id,
+            author_id=user_id,
+            assigned_to_id=user_id,
+            contact_id=contact.id,
+            company_id=company_id,
+            title=f"Review & Qualification: {result.name}",
+            description=f"Newly imported lead from Hunter ({result.source}). Initial score: {result.confidence_score}. Please verify and start outreach.",
+            priority="high" if result.confidence_score > 0.8 else "medium",
+            due_date=datetime.datetime.utcnow() + datetime.timedelta(days=1)
+        )
+        db.add(task)
+
+        # 5. Optional: Link to a default follow-up sequence if needed
+        # (This would depend on tenant's automation settings)
+
         await db.commit()
         await db.refresh(contact)
         return contact

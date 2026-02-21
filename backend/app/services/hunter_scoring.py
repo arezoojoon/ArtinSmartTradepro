@@ -71,21 +71,13 @@ class HunterScoringEngine:
         signals = []
         risk_flags = []
         
-        # Signal A: Identity completeness (0-30)
-        identity_signal = self._calculate_identity_completeness(identities_by_type, evidence_by_field, profile_weights)
-        signals.append(identity_signal)
+        # Signal E: Market Demand (0-20)
+        demand_signal = self._calculate_market_demand(evidence_by_field, profile_weights)
+        signals.append(demand_signal)
         
-        # Signal B: Country priority (0-20)
-        country_signal = self._calculate_country_priority(lead.country, profile_weights)
-        signals.append(country_signal)
-        
-        # Signal C: Company type hint (0-10)
-        company_type_signal = self._calculate_company_type_hint(evidence_by_field, profile_weights)
-        signals.append(company_type_signal)
-        
-        # Signal D: Data freshness (0-10)
-        freshness_signal = self._calculate_data_freshness(evidence_by_field, profile_weights)
-        signals.append(freshness_signal)
+        # Signal F: Payment Risk (0-10)
+        risk_signal = self._calculate_payment_risk(lead.country, evidence_by_field, profile_weights)
+        signals.append(risk_signal)
         
         # Calculate risk flags
         risk_flags = self._calculate_risk_flags(lead, identities_by_type, evidence_by_field, profile_weights)
@@ -96,6 +88,8 @@ class HunterScoringEngine:
         
         # Create breakdown
         breakdown = {
+            "version": "3.0",
+            "decision_summary": self._generate_decision_summary(signals, risk_flags),
             "signals": [
                 {
                     "name": signal.name,
@@ -309,6 +303,81 @@ class HunterScoringEngine:
         
         return risk_flags
     
+    def _calculate_market_demand(self, evidence_by_field: Dict[str, List[HunterEvidence]], weights: Dict[str, Any]) -> ScoringSignal:
+        """Signal E: Market Demand (0-20) based on trade volumes"""
+        score = 0
+        max_score = 20
+        explanations = []
+        
+        # Look for trade data evidence (from un_comtrade)
+        trade_evidence = evidence_by_field.get('trade_data', [])
+        for ev in trade_evidence:
+            raw = ev.raw or {}
+            volume = raw.get('value_usd', 0)
+            growth = raw.get('growth_pct', 0)
+            
+            if volume > 100_000_000:
+                score += 10
+                explanations.append(f"Huge market volume identified: ${volume/1e9:.1f}B")
+            elif volume > 10_000_000:
+                score += 5
+                explanations.append(f"Significant market volume: ${volume/1e6:.1f}M")
+                
+            if growth > 10:
+                score += 10
+                explanations.append(f"High growth market (+{growth}%)")
+            elif growth > 0:
+                score += 5
+                explanations.append(f"Growing market (+{growth}%)")
+        
+        score = min(score, max_score)
+        return ScoringSignal(
+            name="Market Demand",
+            score=score,
+            max_score=max_score,
+            explanation="; ".join(explanations) if explanations else "No trade data volume records",
+            evidence_count=len(trade_evidence)
+        )
+
+    def _calculate_payment_risk(self, country: str, evidence_by_field: Dict[str, List[HunterEvidence]], weights: Dict[str, Any]) -> ScoringSignal:
+        """Signal F: Payment Risk (0-10)"""
+        score = 10  # Start with full score, deduct for risk
+        max_score = 10
+        explanations = ["No major payment risks identified"]
+        
+        risk_countries = weights.get('risk_countries', [])
+        if country in risk_countries:
+            score -= 7
+            explanations = [f"Direct risk: {country} is in restricted/risk list"]
+        
+        # Optionally check Phase 5 payment behavior if linked (TBD)
+        
+        return ScoringSignal(
+            name="Payment Risk",
+            score=max(0, score),
+            max_score=max_score,
+            explanation="; ".join(explanations),
+            evidence_count=1
+        )
+
+    def _generate_decision_summary(self, signals: List[ScoringSignal], risk_flags: List[str]) -> str:
+        """Generate a GPT-style decision summary for the UI"""
+        if not signals: return "Insufficient data for assessment."
+        
+        score_sum = sum(s.score for s in signals)
+        max_sum = sum(s.max_score for s in signals)
+        pct = (score_sum / max_sum * 100) if max_sum > 0 else 0
+        
+        if risk_flags:
+            return f"Caution: Lead has {len(risk_flags)} risk flags. Overall match is {pct:.0f}% but requires compliance review."
+        
+        if pct > 80:
+             return "Strong Match: High market alignment and verified contact data. Priority lead."
+        if pct > 50:
+             return "Moderate Match: Good potential, but requires further background enrichment."
+        
+        return "Low Match: Limited evidence or weak market signals."
+
     def _get_default_weights(self) -> Dict[str, Any]:
         """Get default scoring weights"""
         return {
