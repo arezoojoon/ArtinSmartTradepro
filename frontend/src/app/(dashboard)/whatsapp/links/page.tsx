@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-    Link2, QrCode, Copy, ExternalLink, Plus, Trash2
+    Link2, Copy, ExternalLink, Plus
 } from "lucide-react";
 
 export default function DeepLinksPage() {
@@ -19,17 +19,14 @@ export default function DeepLinksPage() {
         const fetchLinks = async () => {
             try {
                 const userData = JSON.parse(localStorage.getItem("user") || "{}");
-                const tenantId = userData.tenant_id || "00000000-0000-0000-0000-000000000001";
+                const tenantId = userData.tenant_id || "";
                 const res = await api.get(`/api/v1/waha/deeplinks?tenant_id=${tenantId}`);
-
-                // Format the backend response to match the UI expectations
-                const formattedLinks = res.data.map((item: any) => ({
+                const formattedLinks = (res.data || []).map((item: any) => ({
                     id: item.ref,
                     ref: item.ref,
-                    deeplink: item.url || `https://wa.me/PHONE?text=start%20${item.ref}`,
+                    deeplink: item.url || `https://wa.me/?text=start%20${item.ref}`,
                     created_at: item.created_at
                 }));
-
                 setLinks(formattedLinks);
             } catch (e) {
                 console.error("Failed to load links:", e);
@@ -43,17 +40,14 @@ export default function DeepLinksPage() {
         setGenerating(true);
         try {
             const userData = JSON.parse(localStorage.getItem("user") || "{}");
-            const tenantId = userData.tenant_id || "00000000-0000-0000-0000-000000000001";
-
+            const tenantId = userData.tenant_id || "";
             const res = await api.post(`/api/v1/waha/deeplink?ref=${encodeURIComponent(newRef)}&tenant_id=${tenantId}`);
-
             const newLink = {
                 id: Date.now(),
                 ref: res.data.ref,
                 deeplink: res.data.url,
                 created_at: new Date().toISOString()
             };
-
             setLinks(prev => [newLink, ...prev]);
             setNewRef("");
         } catch (e) {
@@ -67,24 +61,24 @@ export default function DeepLinksPage() {
     };
 
     return (
-        <div className="p-8 bg-black min-h-screen text-white">
-            <div className="mb-8">
+        <div className="space-y-6">
+            <div>
                 <h1 className="text-3xl font-bold flex items-center gap-2">
                     <Link2 className="h-8 w-8 text-cyan-400" />
                     Deep Links
                 </h1>
-                <p className="text-gray-400">Generate unique WhatsApp start links per campaign or channel</p>
+                <p className="text-gray-400 mt-1">Generate unique WhatsApp start links per campaign or channel</p>
             </div>
 
             {/* Generator */}
-            <Card className="bg-navy-900 border-navy-800 mb-8">
+            <Card className="bg-navy-900 border-navy-800">
                 <CardHeader>
-                    <CardTitle className="text-white">Generate New Link</CardTitle>
+                    <CardTitle>Generate New Link</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="flex gap-4">
                         <Input
-                            placeholder="Reference code (e.g. gulfood2026, linkedin_ad, trade_show)"
+                            placeholder="Reference code (e.g. gulfood2026, linkedin_ad)"
                             value={newRef}
                             className="bg-navy-950 border-navy-700 flex-1"
                             onChange={e => setNewRef(e.target.value)}
@@ -121,9 +115,6 @@ export default function DeepLinksPage() {
                                             <Badge className="bg-cyan-900/60 text-cyan-300">
                                                 ref: {link.ref}
                                             </Badge>
-                                            <Badge variant="outline" className="text-gray-400 text-xs">
-                                                {link.phone}
-                                            </Badge>
                                         </div>
                                         <div className="bg-navy-950 rounded-lg p-3 overflow-hidden">
                                             <code className="text-emerald-400 text-sm break-all">
@@ -145,7 +136,7 @@ export default function DeepLinksPage() {
                                     </div>
                                 </div>
                                 <p className="text-xs text-gray-600 mt-2">
-                                    Users who click this link will start the bot with tracking code "{link.ref}"
+                                    Users who click this link will start the bot with tracking code &quot;{link.ref}&quot;
                                 </p>
                             </CardContent>
                         </Card>
