@@ -1,16 +1,19 @@
 from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
-from sqlalchemy.orm import Session
-from app.database import get_db
-from app.middleware.auth import get_current_active_user
-from app.middleware.plan_gate import require_feature
-from app.constants import Feature
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from app.db.session import get_db
+from app.api.deps import get_current_user
+from app.core.rbac import require_permissions
 from app.models.user import User
 from app.models.ai_job import AIJob
 from app.models.hunter import HunterRun, HunterResult
+from app.models.competitor import Competitor, CompetitorProduct, CompetitorPriceObservation, MarketShareSnapshot
 from app.services.hunter_service import HunterService
+from app.services.competitor_service import CompetitorService
 from pydantic import BaseModel, Field
 import uuid
+import asyncio
 
 router = APIRouter()
 
@@ -23,48 +26,35 @@ class ImportRequest(BaseModel):
     result_id: str
 
 @router.post("/start")
-@require_feature(Feature.LEAD_HUNTER)
+@require_permissions(["hunter.write"])
 async def start_hunt(
     request: ScrapeRequest,
-    background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ) -> Any:
     """
     Start a new Hunter Job (Async).
     """
-    # 1. Create AI Job Tracker
     job = AIJob(
-        tenant_id=current_user.tenant_id,
+        tenant_id=current_user.current_tenant_id,
         job_type="hunter",
         status="pending",
-        credit_cost=5.0 # Fixed cost for now
+        credit_cost=5.0
     )
     db.add(job)
-    db.commit()
-    db.refresh(job)
+    await db.commit()
+    await db.refresh(job)
 
-    # 2. Queue Background Task
-    background_tasks.add_task(
-        HunterService.run_hunter_job,
-        job_id=job.id,
-        tenant_id=current_user.tenant_id,
-        keyword=request.keyword,
-        location=request.location,
-        sources=request.sources
+    # Detach from request context
+    asyncio.create_task(
+        HunterService.run_hunter_job(
+            job_id=job.id,
+            tenant_id=current_user.current_tenant_id,
+            keyword=request.keyword,
+            location=request.location,
+            sources=request.sources
+        )
     )
-    
-    # NOTE: The above background task call `HunterService.run_hunter_job` takes `db`. 
-    # Attempting to re-open DB in service is safer. 
-    # I will rely on `run_hunter_job` signature mismatch error if I don't fix it. 
-    # The service expects `db`. I need to change how I call it. 
-    # FastAPI BackgroundTasks with DB dependency is a known anti-pattern.
-    # In a real "Grandmaster" code, we use Celery/Redis Queue. 
-    # Here I must implement a wrapper or change service to accept `session_factory`.
-    # I will ignore this specific "DB closed" risk for the *immediate* verify step 
-    # because I can't refactor the whole DI system in one file edit. 
-    # A common workaround in simple FastAPI apps is using `db` if it's not yielded.
-    # But `get_db` yields.
     
     return {
         "status": "success",
@@ -74,17 +64,19 @@ async def start_hunt(
     }
 
 @router.get("/status/{job_id}")
-@require_feature(Feature.LEAD_HUNTER)
+@require_permissions(["hunter.read"])
 async def get_job_status(
     job_id: str,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
-    job = db.query(AIJob).filter(AIJob.id == job_id, AIJob.tenant_id == current_user.tenant_id).first()
+    res = await db.execute(select(AIJob).where(AIJob.id == job_id, AIJob.tenant_id == current_user.current_tenant_id))
+    job = res.scalar_one_or_none()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     
-    run = db.query(HunterRun).filter(HunterRun.job_id == job_id).first()
+    res_run = await db.execute(select(HunterRun).where(HunterRun.job_id == job_id))
+    run = res_run.scalar_one_or_none()
     
     return {
         "job_status": job.status,
@@ -93,32 +85,34 @@ async def get_job_status(
     }
 
 @router.get("/results/{job_id}")
-@require_feature(Feature.LEAD_HUNTER)
+@require_permissions(["hunter.read"])
 async def get_job_results(
     job_id: str,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
-    run = db.query(HunterRun).filter(HunterRun.job_id == job_id, HunterRun.tenant_id == current_user.tenant_id).first()
+    res = await db.execute(select(HunterRun).where(HunterRun.job_id == job_id, HunterRun.tenant_id == current_user.current_tenant_id))
+    run = res.scalar_one_or_none()
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
         
-    results = db.query(HunterResult).filter(HunterResult.run_id == run.id).all()
+    res_results = await db.execute(select(HunterResult).where(HunterResult.run_id == run.id))
+    results = res_results.scalars().all()
     return results
 
 @router.post("/import-to-crm")
-@require_feature(Feature.LEAD_HUNTER)
+@require_permissions(["hunter.write"])
 async def import_lead(
     req: ImportRequest,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     try:
-        contact = HunterService.import_result_to_crm(
+        contact = await HunterService.import_result_to_crm(
             db, 
             uuid.UUID(req.result_id), 
             current_user.id,
-            current_user.tenant_id
+            current_user.current_tenant_id
         )
         return {"status": "success", "contact_id": str(contact.id)}
     except ValueError as e:
@@ -135,84 +129,78 @@ class CompetitorCreate(BaseModel):
     industry_tags: List[str] = []
 
 @router.post("/competitors")
-@require_feature(Feature.LEAD_HUNTER)
-def create_competitor(
+@require_permissions(["hunter.write"])
+async def create_competitor(
     comp: CompetitorCreate,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
-    from app.models.competitor import Competitor
     new_comp = Competitor(
-        tenant_id=current_user.tenant_id,
+        tenant_id=current_user.current_tenant_id,
         name=comp.name,
         website=comp.website,
         country=comp.country,
         industry_tags=comp.industry_tags
     )
     db.add(new_comp)
-    db.commit()
-    db.refresh(new_comp)
+    await db.commit()
+    await db.refresh(new_comp)
     return new_comp
 
 @router.get("/competitors")
-def get_competitors(
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+@require_permissions(["hunter.read"])
+async def get_competitors(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
-    from app.models.competitor import Competitor
-    return db.query(Competitor).filter(Competitor.tenant_id == current_user.tenant_id).all()
+    res = await db.execute(select(Competitor).where(Competitor.tenant_id == current_user.current_tenant_id))
+    return res.scalars().all()
 
 @router.post("/competitors/{id}/track")
-@require_feature(Feature.LEAD_HUNTER)
-def track_competitor(
+@require_permissions(["hunter.write"])
+async def track_competitor(
     id: str,
-    background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
-    from app.services.competitor_service import CompetitorService
-    # In a real async worker, we'd pass IDs only.
-    # For this architecture, we run the service method which commits internally.
-    # We use background_tasks to prevent blocking UI.
-    background_tasks.add_task(
-        CompetitorService.track_competitor_job,
-        competitor_id=uuid.UUID(id),
-        tenant_id=current_user.tenant_id
+    asyncio.create_task(
+        CompetitorService.track_competitor_job(
+            competitor_id=uuid.UUID(id),
+            tenant_id=current_user.current_tenant_id
+        )
     )
     return {"status": "queued", "message": "Competitor tracking started."}
 
 @router.get("/competitors/{id}/products")
-def get_competitor_products(
+@require_permissions(["hunter.read"])
+async def get_competitor_products(
     id: str,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
-    from app.models.competitor import CompetitorProduct
-    return db.query(CompetitorProduct).filter(
-        CompetitorProduct.competitor_id == id,
-        CompetitorProduct.tenant_id == current_user.tenant_id
-    ).all()
+    res = await db.execute(select(CompetitorProduct).where(
+        CompetitorProduct.competitor_id == uuid.UUID(id),
+        CompetitorProduct.tenant_id == current_user.current_tenant_id
+    ))
+    return res.scalars().all()
 
 @router.get("/market-share/analyze")
-def analyze_market_share(
+@require_permissions(["hunter.read"])
+async def analyze_market_share(
     competitor_id: str,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
-    from app.services.competitor_service import CompetitorService
-    snapshot = CompetitorService.analyze_market_share(db, uuid.UUID(competitor_id), current_user.tenant_id)
+    snapshot = await CompetitorService.analyze_market_share(db, uuid.UUID(competitor_id), current_user.current_tenant_id)
     return snapshot
 
 @router.get("/price-decision")
-def get_price_decision(
+@require_permissions(["hunter.read"])
+async def get_price_decision(
     my_price: float,
     keyword: str,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
-    """
-    Returns a strategic pricing decision based on competitor data.
-    """
-    from app.services.competitor_service import CompetitorService
-    decision = CompetitorService.compare_prices(db, my_price, keyword)
+    decision = await CompetitorService.compare_prices(db, my_price, keyword)
     return decision

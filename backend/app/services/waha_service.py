@@ -9,7 +9,8 @@ import uuid
 import hashlib
 import datetime
 from urllib.parse import urlparse
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.config import get_settings
 from app.models.whatsapp import WhatsAppMessage
 from app.models.bot_session import BotEvent
@@ -129,7 +130,7 @@ class WAHAService:
 
     @staticmethod
     async def send_and_persist(
-        db: Session,
+        db: AsyncSession,
         tenant_id: uuid.UUID,
         phone: str,
         text: str,
@@ -144,12 +145,16 @@ class WAHAService:
         """
         # QA-3: Check outbound dedup
         client_hash = _compute_outbound_hash(tenant_id, phone, text)
-        existing = db.query(WhatsAppMessage).filter(
-            WhatsAppMessage.tenant_id == tenant_id,
-            WhatsAppMessage.recipient_phone == phone,
-            WhatsAppMessage.direction == "outbound",
-            WhatsAppMessage.template_name == client_hash  # Reuse template_name field for dedup hash
-        ).first()
+        res = await db.execute(
+            select(WhatsAppMessage).where(
+                WhatsAppMessage.tenant_id == tenant_id,
+                WhatsAppMessage.recipient_phone == phone,
+                WhatsAppMessage.direction == "outbound",
+                WhatsAppMessage.template_name == client_hash  # Reuse template_name field for dedup hash
+            )
+        )
+        existing = res.scalar_one_or_none()
+        
         if existing:
             return existing  # Already sent this minute, skip
 
@@ -163,7 +168,7 @@ class WAHAService:
             template_name=client_hash  # QA-3: Store hash for dedup
         )
         db.add(msg)
-        db.flush()
+        await db.flush()
 
         try:
             if media_url and media_type == "image":
@@ -192,7 +197,11 @@ class WAHAService:
         db.add(event)
 
         # Sync to CRM conversation
-        WhatsAppService.sync_conversation(db, tenant_id, phone, msg)
+        try:
+            await WhatsAppService.sync_conversation(db, tenant_id, phone, msg)
+        except TypeError:
+            WhatsAppService.sync_conversation(db, tenant_id, phone, msg)
+            
         return msg
 
     @staticmethod

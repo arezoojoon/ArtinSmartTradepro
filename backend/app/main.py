@@ -27,6 +27,11 @@ app = FastAPI(
     openapi_url=openapi_url
 )
 
+from .middleware.sys_admin import SysAdminMiddleware
+
+# Phase 6 — Sys admin IP allowlist + rate limit (apply before CORS)
+app.add_middleware(SysAdminMiddleware)
+
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
@@ -76,6 +81,17 @@ app.include_router(stripe.router, prefix="/api/v1/stripe", tags=["stripe"])
 app.include_router(toolbox.router, prefix="/api/v1/toolbox", tags=["toolbox"])
 app.include_router(trade.router, prefix="/api/v1/trade", tags=["trade"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
+
+# --- Phase 6: Super Admin + Plans + Prompt Ops ---
+from .routers.sys import sys_router
+from .routers.tenant_billing import router as tenant_billing_router
+from .routers.tenant_whitelabel import router as tenant_whitelabel_router
+from .routers.tenant_prompts import router as tenant_prompts_router
+
+app.include_router(sys_router)   # /sys/*
+app.include_router(tenant_billing_router, prefix="/api/v1/billing", tags=["billing"])
+app.include_router(tenant_whitelabel_router, prefix="/api/v1", tags=["whitelabel"])
+app.include_router(tenant_prompts_router, prefix="/api/v1", tags=["prompts"])
 
 
 # --- Health Check ---

@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import HTTPException
 from app.models.billing import Wallet, WalletTransaction
@@ -7,37 +7,39 @@ import functools
 
 class BillingService:
     @staticmethod
-    def get_wallet(db: Session, tenant_id: UUID) -> Wallet:
+    async def get_wallet(db: AsyncSession, tenant_id: UUID) -> Wallet:
         """
         Get wallet for tenant.
         CRITICAL: Does NOT auto-create. Wallet must exist from registration.
         """
-        wallet = db.execute(select(Wallet).where(Wallet.tenant_id == tenant_id)).scalar_one_or_none()
+        res = await db.execute(select(Wallet).where(Wallet.tenant_id == tenant_id))
+        wallet = res.scalar_one_or_none()
         if not wallet:
             raise HTTPException(status_code=500, detail="Wallet missing for tenant. Contact support.")
         return wallet
 
     @staticmethod
-    def deduct_balance(db: Session, tenant_id: UUID, amount: float, description: str) -> WalletTransaction:
+    async def deduct_balance(db: AsyncSession, tenant_id: UUID, amount: float, description: str) -> WalletTransaction:
         """
         ATOMIC DEDUCTION (Revenue Guard)
         Locks the wallet row with FOR UPDATE, checks balance, deducts, logs transaction.
         Caller MUST own the transaction boundary (commit/rollback).
         """
-        wallet = db.execute(
+        res = await db.execute(
             select(Wallet).where(Wallet.tenant_id == tenant_id).with_for_update()
-        ).scalar_one_or_none()
+        )
+        wallet = res.scalar_one_or_none()
         
         if not wallet:
             raise HTTPException(status_code=404, detail="Wallet not found")
 
-        if wallet.balance < amount:
+        if float(wallet.balance) < amount:
             raise HTTPException(
                 status_code=402,
-                detail=f"Insufficient balance. Required: {amount} {wallet.currency}, Available: {wallet.balance}"
+                detail=f"Insufficient balance. Required: {amount}, Available: {wallet.balance}"
             )
 
-        wallet.balance -= amount
+        wallet.balance = float(wallet.balance) - amount
         
         transaction = WalletTransaction(
             wallet_id=wallet.id,
@@ -50,20 +52,21 @@ class BillingService:
         return transaction
 
     @staticmethod
-    def refund(db: Session, tenant_id: UUID, amount: float, description: str) -> WalletTransaction:
+    async def refund(db: AsyncSession, tenant_id: UUID, amount: float, description: str) -> WalletTransaction:
         """
         ATOMIC REFUND
         Credits the wallet back after a failed action.
         Uses row lock to prevent race conditions.
         """
-        wallet = db.execute(
+        res = await db.execute(
             select(Wallet).where(Wallet.tenant_id == tenant_id).with_for_update()
-        ).scalar_one_or_none()
+        )
+        wallet = res.scalar_one_or_none()
         
         if not wallet:
             raise HTTPException(status_code=404, detail="Wallet not found for refund")
 
-        wallet.balance += amount
+        wallet.balance = float(wallet.balance) + amount
         
         transaction = WalletTransaction(
             wallet_id=wallet.id,
@@ -76,18 +79,19 @@ class BillingService:
         return transaction
 
     @staticmethod
-    def add_credits(db: Session, tenant_id: UUID, amount: float, description: str, reference_id: str = None) -> WalletTransaction:
+    async def add_credits(db: AsyncSession, tenant_id: UUID, amount: float, description: str, reference_id: str = None) -> WalletTransaction:
         """
         Add credits to a tenant's wallet (e.g. after Stripe payment).
         """
-        wallet = db.execute(
+        res = await db.execute(
             select(Wallet).where(Wallet.tenant_id == tenant_id).with_for_update()
-        ).scalar_one_or_none()
+        )
+        wallet = res.scalar_one_or_none()
         
         if not wallet:
             raise HTTPException(status_code=404, detail="Wallet not found")
 
-        wallet.balance += amount
+        wallet.balance = float(wallet.balance) + amount
         
         transaction = WalletTransaction(
             wallet_id=wallet.id,
@@ -116,11 +120,13 @@ def precheck_balance(cost: float):
             if not db or not current_user:
                 raise HTTPException(status_code=500, detail="Billing guard configuration error")
             
-            wallet = db.execute(
-                select(Wallet).where(Wallet.tenant_id == current_user.tenant_id)
-            ).scalar_one_or_none()
+            # Using execute for async db
+            res = await db.execute(
+                select(Wallet).where(Wallet.tenant_id == current_user.current_tenant_id)
+            )
+            wallet = res.scalar_one_or_none()
             
-            if not wallet or wallet.balance < cost:
+            if not wallet or float(wallet.balance) < cost:
                  raise HTTPException(
                     status_code=402,
                     detail=f"Insufficient funds. This action costs {cost} credits."

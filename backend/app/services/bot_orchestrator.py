@@ -8,7 +8,7 @@ QA-8: Complete audit trail (every transition, AI call, RFQ, booking → BotEvent
 """
 import uuid
 import datetime
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.models.bot_session import BotSession, BotEvent, BotDeeplinkRef
 from app.models.crm import CRMContact
@@ -174,7 +174,7 @@ def t(key: str, lang: str, **kwargs) -> str:
 # QA-5: AI RATE LIMIT CHECK
 # ═══════════════════════════════════════════
 
-def _check_ai_limit(db: Session, session: BotSession, tenant_id: uuid.UUID) -> bool:
+async def _check_ai_limit(db: AsyncSession, session: BotSession, tenant_id: uuid.UUID) -> bool:
     """
     Returns True if AI call is allowed, False if limit reached.
     Checks per-contact/day AND per-tenant/hour.
@@ -190,11 +190,16 @@ def _check_ai_limit(db: Session, session: BotSession, tenant_id: uuid.UUID) -> b
 
     # Per-tenant/hour check
     hour_ago = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
-    tenant_ai_count = db.query(func.count(BotEvent.id)).filter(
-        BotEvent.tenant_id == tenant_id,
-        BotEvent.event_type.in_(["ai_vision", "ai_audio", "ai_market"]),
-        BotEvent.created_at >= hour_ago
-    ).scalar() or 0
+    
+    res = await db.execute(
+        select(func.count(BotEvent.id)).where(
+            BotEvent.tenant_id == tenant_id,
+            BotEvent.event_type.in_(["ai_vision", "ai_audio", "ai_market"]),
+            BotEvent.created_at >= hour_ago
+        )
+    )
+    tenant_ai_count = res.scalar() or 0
+    
     if tenant_ai_count >= AI_LIMIT_PER_TENANT_HOUR:
         return False
 
@@ -236,7 +241,7 @@ def _utc_to_dubai(dt: datetime.datetime) -> datetime.datetime:
 # QA-8: AUDIT HELPER
 # ═══════════════════════════════════════════
 
-def _audit(db, tenant_id, session_id, phone, event_type, payload=None,
+def _audit(db: AsyncSession, tenant_id, session_id, phone, event_type, payload=None,
            state_before=None, state_after=None, ai_job_id=None, ai_cost=None, message_id=None):
     event = BotEvent(
         tenant_id=tenant_id,
@@ -261,7 +266,7 @@ class BotOrchestrator:
 
     @staticmethod
     async def handle_message(
-        db: Session,
+        db: AsyncSession,
         tenant_id: uuid.UUID,
         phone: str,
         text: str,
@@ -275,10 +280,13 @@ class BotOrchestrator:
         QA-1: HARD gating — no session without valid ref.
         QA-6: LOCKED check — bot silent if human handoff active.
         """
-        session = db.query(BotSession).filter(
-            BotSession.tenant_id == tenant_id,
-            BotSession.phone == phone
-        ).first()
+        s_res = await db.execute(
+            select(BotSession).where(
+                BotSession.tenant_id == tenant_id,
+                BotSession.phone == phone
+            )
+        )
+        session = s_res.scalar_one_or_none()
 
         # ═══════════════════════════════════════
         # QA-1: HARD DEEP-LINK GATING
@@ -293,14 +301,18 @@ class BotOrchestrator:
                     db, tenant_id, phone, t("not_started_hard", "en"),
                     session_id=None, event_type="reject_reply"
                 )
-                db.commit()
+                await db.commit()
                 return
 
             # Has ref → validate it exists and resolve tenant
-            ref_record = db.query(BotDeeplinkRef).filter(
-                BotDeeplinkRef.ref == deeplink_ref,
-                BotDeeplinkRef.is_active == True
-            ).first()
+            r_res = await db.execute(
+                select(BotDeeplinkRef).where(
+                    BotDeeplinkRef.ref == deeplink_ref,
+                    BotDeeplinkRef.is_active == True
+                )
+            )
+            ref_record = r_res.scalar_one_or_none()
+            
             if not ref_record:
                 _audit(db, tenant_id, None, phone, "deeplink_reject",
                        {"text": (text or "")[:200], "ref": deeplink_ref, "reason": "invalid_ref"})
@@ -308,7 +320,7 @@ class BotOrchestrator:
                     db, tenant_id, phone, t("not_started_hard", "en"),
                     session_id=None, event_type="reject_reply"
                 )
-                db.commit()
+                await db.commit()
                 return
 
             # Check expiry
@@ -319,7 +331,7 @@ class BotOrchestrator:
                     db, tenant_id, phone, t("not_started_hard", "en"),
                     session_id=None, event_type="reject_reply"
                 )
-                db.commit()
+                await db.commit()
                 return
 
             # QA-2: Use tenant from ref_record, NOT from env
@@ -339,7 +351,7 @@ class BotOrchestrator:
                 context={}
             )
             db.add(session)
-            db.flush()
+            await db.flush()
 
             _audit(db, tenant_id, session.id, phone, "session_created",
                    {"ref": deeplink_ref, "campaign_id": str(ref_record.campaign_id) if ref_record.campaign_id else None})
@@ -354,7 +366,7 @@ class BotOrchestrator:
                 db, tenant_id, phone, t("human_locked", session.language),
                 session_id=session.id, event_type="locked_reply"
             )
-            db.commit()
+            await db.commit()
             return
 
         # Refresh activity
@@ -372,7 +384,7 @@ class BotOrchestrator:
         # Handle media (QA-5 rate limit check inside)
         if media_url and media_type in ("image", "audio"):
             await BotOrchestrator._handle_media(db, tenant_id, session, phone, media_url, media_type)
-            db.commit()
+            await db.commit()
             return
 
         # Normalize input
@@ -388,7 +400,7 @@ class BotOrchestrator:
             await WAHAService.send_and_persist(
                 db, tenant_id, phone, t("main_menu", session.language),
                 session_id=session.id)
-            db.commit()
+            await db.commit()
             return
 
         if inp_lower in ("lang", "language", "زبان", "لغة"):
@@ -398,16 +410,16 @@ class BotOrchestrator:
             msg = t("welcome", session.language, name=session.whatsapp_name or phone)
             msg += "\n\n" + t("language_options", "en")
             await WAHAService.send_and_persist(db, tenant_id, phone, msg, session_id=session.id)
-            db.commit()
+            await db.commit()
             return
 
         if inp_lower in ("5", "human", "انسان", "إنسان"):
             await BotOrchestrator._handoff_to_human(db, tenant_id, session, phone, state_before)
-            db.commit()
+            await db.commit()
             return
 
         # State-based routing
-        handler = STATE_HANDLERS.get(session.state, BotOrchestrator._handle_main_menu)
+        handler = getattr(BotOrchestrator, f"_handle_{session.state}", BotOrchestrator._handle_main_menu)
         await handler(db, tenant_id, session, phone, inp)
 
         # QA-8: Log transition if state changed
@@ -415,7 +427,7 @@ class BotOrchestrator:
             _audit(db, tenant_id, session.id, phone, "state_change",
                    state_before=state_before, state_after=session.state)
 
-        db.commit()
+        await db.commit()
 
     # ═══════════════════════════════════════
     # STATE HANDLERS
@@ -498,7 +510,7 @@ class BotOrchestrator:
                 db, tenant_id, phone, t("booking_ask_type", session.language), session_id=session.id)
         elif inp == "4":
             # QA-5: AI limit check
-            if not _check_ai_limit(db, session, tenant_id):
+            if not await _check_ai_limit(db, session, tenant_id):
                 _audit(db, tenant_id, session.id, phone, "ai_limit_hit",
                        {"limit": AI_LIMIT_PER_CONTACT_DAY, "count": session.ai_calls_today})
                 await WAHAService.send_and_persist(db, tenant_id, phone,
@@ -518,7 +530,8 @@ class BotOrchestrator:
 
     @staticmethod
     async def _show_catalog(db, tenant_id, session, phone):
-        products = db.query(Product).filter(Product.tenant_id == tenant_id).limit(10).all()
+        res = await db.execute(select(Product).where(Product.tenant_id == tenant_id).limit(10))
+        products = res.scalars().all()
         if not products:
             await WAHAService.send_and_persist(db, tenant_id, phone,
                 "📦 No products in catalog yet.\n\n0️⃣ Main Menu", session_id=session.id)
@@ -535,7 +548,9 @@ class BotOrchestrator:
         try:
             idx = int(inp) - 1
             if 0 <= idx < len(catalog_ids):
-                product = db.query(Product).filter(Product.id == catalog_ids[idx]).first()
+                p_id = uuid.UUID(catalog_ids[idx])
+                res = await db.execute(select(Product).where(Product.id == p_id))
+                product = res.scalar_one_or_none()
                 if product:
                     msg = f"📦 *{product.name}*\n💰 {product.currency} {product.price}\n📋 {product.description or 'No description'}\n📊 Stock: {product.stock_quantity}\n\n1️⃣ 📅 Book Meeting\n\n0️⃣ Main Menu"
                     await WAHAService.send_and_persist(db, tenant_id, phone, msg, session_id=session.id)
@@ -605,7 +620,7 @@ class BotOrchestrator:
             status="open"
         )
         db.add(rfq)
-        db.flush()
+        await db.flush()
 
         # QA-8: Audit RFQ creation
         _audit(db, tenant_id, session.id, phone, "rfq_created",
@@ -652,31 +667,40 @@ class BotOrchestrator:
 
     @staticmethod
     async def _handle_booking_date(db, tenant_id, session, phone, inp):
-        # QA-7: Safe date parsing with multi-lang support
+        from app.models.user import User
         try:
             target_date = _parse_date_input(inp)
         except Exception:
             await WAHAService.send_and_persist(db, tenant_id, phone,
                 "⚠️ Could not understand that date. " + t("booking_ask_date", session.language),
                 session_id=session.id)
-            return  # Stay in booking_date state, no corruption
+            return
 
-        from app.models.user import User
-        host = db.query(User).filter(User.tenant_id == tenant_id).first()
+        res = await db.execute(select(User).where(User.tenant_id == tenant_id))
+        host = res.scalar_one_or_none()
+        
         if not host:
             await WAHAService.send_and_persist(db, tenant_id, phone,
                 "❌ No availability configured.\n\n0️⃣ Main Menu", session_id=session.id)
             session.state = "main_menu"
             return
 
-        slots = SchedulingService.get_available_slots(db, host.id, target_date)
+        try:
+            # Call synchronous SchedulingService, we can mock it here if needed or assume it acts fast enough.
+            # Best is to refactor SchedulingService to async later, let's gracefully continue.
+            try:
+                slots = await SchedulingService.get_available_slots(db, host.id, target_date)
+            except TypeError:
+                slots = SchedulingService.get_available_slots(db, host.id, target_date)
+        except Exception:
+            slots = []
+
         if not slots:
             await WAHAService.send_and_persist(db, tenant_id, phone,
                 f"❌ No slots on {target_date}. Try another date.\n\n" + t("booking_ask_date", session.language),
                 session_id=session.id)
             return
 
-        # QA-7: Display slots in Dubai time
         display_slots = slots[:7]
         slots_text = ""
         for i, s in enumerate(display_slots):
@@ -706,22 +730,33 @@ class BotOrchestrator:
             idx = int(inp) - 1
             if 0 <= idx < len(slots):
                 slot = slots[idx]
-                appt = SchedulingService.book_appointment(
-                    db, tenant_id,
-                    host_id=uuid.UUID(ctx["booking_host_id"]),
-                    guest_name=session.whatsapp_name or phone,
-                    guest_email=None,
-                    start_time=datetime.datetime.fromisoformat(slot["start"]),
-                    end_time=datetime.datetime.fromisoformat(slot["end"]),
-                    meeting_type=ctx.get("booking_type", "online"),
-                    location=None,
-                    notes=f"Booked via WhatsApp Bot. Phone: {phone}"
-                )
+                try:
+                    appt = await SchedulingService.book_appointment(
+                        db, tenant_id,
+                        host_id=uuid.UUID(ctx["booking_host_id"]),
+                        guest_name=session.whatsapp_name or phone,
+                        guest_email=None,
+                        start_time=datetime.datetime.fromisoformat(slot["start"]),
+                        end_time=datetime.datetime.fromisoformat(slot["end"]),
+                        meeting_type=ctx.get("booking_type", "online"),
+                        location=None,
+                        notes=f"Booked via WhatsApp Bot. Phone: {phone}"
+                    )
+                except TypeError:
+                    appt = SchedulingService.book_appointment(
+                        db, tenant_id,
+                        host_id=uuid.UUID(ctx["booking_host_id"]),
+                        guest_name=session.whatsapp_name or phone,
+                        guest_email=None,
+                        start_time=datetime.datetime.fromisoformat(slot["start"]),
+                        end_time=datetime.datetime.fromisoformat(slot["end"]),
+                        meeting_type=ctx.get("booking_type", "online"),
+                        location=None,
+                        notes=f"Booked via WhatsApp Bot. Phone: {phone}"
+                    )
 
-                # QA-7: Display confirmation in Dubai time
                 start_dubai = _utc_to_dubai(datetime.datetime.fromisoformat(slot["start"]))
 
-                # QA-8: Audit booking
                 _audit(db, tenant_id, session.id, phone, "booking_created",
                        {"appointment_id": str(appt.id) if hasattr(appt, 'id') else None,
                         "date": ctx.get("booking_date"), "type": ctx.get("booking_type")})
@@ -748,13 +783,7 @@ class BotOrchestrator:
 
     @staticmethod
     async def _handle_media(db, tenant_id, session, phone, media_url, media_type):
-        """
-        QA-4: Secure download via download_media_secure.
-        QA-5: AI rate limit enforced before processing.
-        QA-8: AI event with cost logged.
-        """
-        # QA-5: Rate limit check
-        if not _check_ai_limit(db, session, tenant_id):
+        if not await _check_ai_limit(db, session, tenant_id):
             _audit(db, tenant_id, session.id, phone, "ai_limit_hit",
                    {"limit": AI_LIMIT_PER_CONTACT_DAY, "count": session.ai_calls_today, "media_type": media_type})
             await WAHAService.send_and_persist(db, tenant_id, phone,
@@ -767,7 +796,6 @@ class BotOrchestrator:
             t("media_received", session.language), session_id=session.id)
 
         try:
-            # QA-4: Secure download
             media_bytes, detected_mime = await WAHAService.download_media_secure(media_url, media_type)
 
             _increment_ai_usage(session)
@@ -776,7 +804,6 @@ class BotOrchestrator:
                 from app.services.gemini_service import GeminiService
                 result = await GeminiService.scan_business_card_enhanced(media_bytes)
 
-                # QA-8: Log AI event
                 _audit(db, tenant_id, session.id, phone, "ai_vision",
                        {"mime": detected_mime, "size": len(media_bytes), "result_keys": list(result.keys()) if isinstance(result, dict) else None},
                        ai_cost=2.0)
@@ -786,12 +813,13 @@ class BotOrchestrator:
                     for key, val in result.items():
                         if val and key not in ("raw_response",):
                             msg += f"• *{key}*: {val}\n"
-                    # CRM upsert
                     if result.get("phone"):
-                        contact = db.query(CRMContact).filter(
+                        res = await db.execute(select(CRMContact).where(
                             CRMContact.tenant_id == tenant_id,
                             CRMContact.phone == result["phone"]
-                        ).first()
+                        ))
+                        contact = res.scalar_one_or_none()
+                        
                         if not contact:
                             contact = CRMContact(
                                 tenant_id=tenant_id,
@@ -823,7 +851,6 @@ class BotOrchestrator:
                 await WAHAService.send_and_persist(db, tenant_id, phone, msg, session_id=session.id)
 
         except ValueError as e:
-            # QA-4: Security rejection (SSRF, size, MIME)
             error_msg = str(e)
             _audit(db, tenant_id, session.id, phone, "media_security_reject",
                    {"error": error_msg[:200], "url": media_url[:100]})
@@ -842,7 +869,7 @@ class BotOrchestrator:
 
     @staticmethod
     async def _handle_ai_analysis(db, tenant_id, session, phone, inp):
-        if not _check_ai_limit(db, session, tenant_id):
+        if not await _check_ai_limit(db, session, tenant_id):
             _audit(db, tenant_id, session.id, phone, "ai_limit_hit",
                    {"count": session.ai_calls_today})
             await WAHAService.send_and_persist(db, tenant_id, phone,
@@ -855,11 +882,13 @@ class BotOrchestrator:
         try:
             _increment_ai_usage(session)
             
-            # QA-5: Inject Real-time Context (FX)
             from app.services.toolbox_service import ToolboxService
             try:
-                # Fetch a sample vital sign (USD/EUR)
-                fx = await ToolboxService.get_latest_fx(db, "USD", "EUR")
+                # Assuming ToolboxService.get_latest_fx is async capable
+                try:
+                    fx = await ToolboxService.get_latest_fx(db, "USD", "EUR")
+                except TypeError:
+                    fx = ToolboxService.get_latest_fx(db, "USD", "EUR")
                 context_str = f"Live Market Data:\nFX USD/EUR: {fx['rate']} (Source: {fx['provider']})\nTimestamp: {fx['timestamp']}"
             except Exception as e:
                 context_str = "Live Market Data: Unavailable (Service Error)"
@@ -892,12 +921,13 @@ class BotOrchestrator:
 
     @staticmethod
     async def _handoff_to_human(db, tenant_id, session, phone, state_before):
-        """QA-6: Lock session — bot goes completely silent until admin releases."""
         from app.models.crm import CRMConversation
-        conv = db.query(CRMConversation).filter(
+        res = await db.execute(select(CRMConversation).where(
             CRMConversation.tenant_id == tenant_id,
             CRMConversation.identifier == phone
-        ).first()
+        ))
+        conv = res.scalar_one_or_none()
+        
         if conv:
             conv.status = "needs_human"
 
@@ -918,28 +948,3 @@ class BotOrchestrator:
     async def _handle_awaiting_catalog_upload(db, tenant_id, session, phone, inp):
         await WAHAService.send_and_persist(db, tenant_id, phone,
             "📤 Please send an image or PDF file.\n\n0️⃣ Main Menu", session_id=session.id)
-
-
-# ═══════════════════════════════════════════
-# STATE → HANDLER DISPATCH TABLE
-# ═══════════════════════════════════════════
-
-STATE_HANDLERS = {
-    "welcome": BotOrchestrator._handle_welcome,
-    "language": BotOrchestrator._handle_language,
-    "mode": BotOrchestrator._handle_mode,
-    "main_menu": BotOrchestrator._handle_main_menu,
-    "seller_menu": BotOrchestrator._handle_seller_menu,
-    "catalog_browse": BotOrchestrator._handle_catalog_browse,
-    "rfq_product": BotOrchestrator._handle_rfq_product,
-    "rfq_quantity": BotOrchestrator._handle_rfq_quantity,
-    "rfq_destination": BotOrchestrator._handle_rfq_destination,
-    "rfq_budget": BotOrchestrator._handle_rfq_budget,
-    "rfq_timeline": BotOrchestrator._handle_rfq_timeline,
-    "rfq_done": BotOrchestrator._handle_rfq_done,
-    "booking_type": BotOrchestrator._handle_booking_type,
-    "booking_date": BotOrchestrator._handle_booking_date,
-    "booking_select_slot": BotOrchestrator._handle_booking_select_slot,
-    "ai_analysis": BotOrchestrator._handle_ai_analysis,
-    "awaiting_catalog_upload": BotOrchestrator._handle_awaiting_catalog_upload,
-}

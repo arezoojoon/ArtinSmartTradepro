@@ -49,6 +49,12 @@ class Settings(BaseSettings):
     # Admin — MUST be overridden via .env or environment
     FIRST_SUPERUSER: str = "admin@artin.com"
     FIRST_SUPERUSER_PASSWORD: str = ""
+
+    # Phase 6 — Super Admin (SYS)
+    SYS_ADMIN_JWT_SECRET: str = ""       # Override in .env; falls back to dev value
+    SYS_ADMIN_RATE_LIMIT_PER_MIN: int = 30
+    SYS_ADMIN_IP_ALLOWLIST: str = ""     # Comma-separated IPs; empty = unrestricted
+    IMPERSONATION_TOKEN_EXPIRE_MINUTES: int = 15
     
     # Frontend origin for Stripe return URLs
     FRONTEND_URL: str = "http://localhost:3000"

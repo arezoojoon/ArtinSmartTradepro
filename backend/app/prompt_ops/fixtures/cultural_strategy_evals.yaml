@@ -1,0 +1,92 @@
+# Eval fixtures for cultural_strategy prompt family
+# Run: python -m app.prompt_ops.eval --family cultural_strategy --version 1
+
+evals:
+  - test_name: "Should pass when data is provided and output has numbers"
+    version: 1
+    guardrails:
+      no_numeric_without_data: true
+      must_cite_profiles: false
+      require_insufficient_data_notice: false
+    input:
+      data_used:
+        - profile_id: "prof-001"
+          country: "UAE"
+          import_volume: 12500
+    mock_output: |
+      Based on the provided data, UAE shows a 23% growth in dates imports over the last 12 months,
+      with peak demand in Ramadan (March-April window).
+    expected_pass: true
+
+  - test_name: "Should fail when numbers appear without data"
+    version: 1
+    guardrails:
+      no_numeric_without_data: true
+      must_cite_profiles: false
+      require_insufficient_data_notice: false
+    input:
+      data_used: []
+    mock_output: |
+      The UAE market shows a 45% growth rate and demand of 50,000 tons annually.
+    expected_pass: false
+
+  - test_name: "Should fail when profile citations missing"
+    version: 1
+    guardrails:
+      no_numeric_without_data: false
+      must_cite_profiles: true
+      require_insufficient_data_notice: false
+    input:
+      profile_ids:
+        - "prof-001"
+        - "prof-002"
+    mock_output: |
+      The cultural strategy for this buyer involves relationship-building first,
+      with formal LC payment terms recommended.
+    expected_pass: false
+
+  - test_name: "Should pass when profile citations present"
+    version: 1
+    guardrails:
+      no_numeric_without_data: false
+      must_cite_profiles: true
+      require_insufficient_data_notice: false
+    input:
+      profile_ids:
+        - "prof-001"
+    mock_output: |
+      Based on referenced_profile_ids: [prof-001], the recommended strategy is...
+      relationship-first approach with halal certification emphasis.
+    expected_pass: true
+
+  - test_name: "Should fail when profile missing but no INSUFFICIENT DATA notice"
+    version: 1
+    guardrails:
+      no_numeric_without_data: false
+      must_cite_profiles: false
+      require_insufficient_data_notice: true
+    input:
+      profile_missing: true
+    mock_output: |
+      The cultural approach for this region involves building trust over time.
+    expected_pass: false
+
+  - test_name: "Should pass when INSUFFICIENT DATA notice present on missing profile"
+    version: 1
+    guardrails:
+      no_numeric_without_data: false
+      must_cite_profiles: false
+      require_insufficient_data_notice: true
+    input:
+      profile_missing: true
+    mock_output: |
+      INSUFFICIENT DATA: No cultural profile available for this buyer.
+      Please collect buyer cultural profile before proceeding.
+    expected_pass: true
+
+  - test_name: "Should fail on empty output"
+    version: 1
+    guardrails: {}
+    input: {}
+    mock_output: ""
+    expected_pass: false
