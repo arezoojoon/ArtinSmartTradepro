@@ -34,7 +34,7 @@ interface ArbitrageOutput {
     next_actions: string[]
     risk_factors: string[]
   }
-  similar_deals: Array<{
+  similar_deals?: Array<{
     id: string
     product_key: string
     buy_market: string
@@ -128,7 +128,7 @@ export function ArbitrageTab() {
   const updateFee = (index: number, field: 'amount' | 'currency', value: any) => {
     setInput(prev => ({
       ...prev,
-      fees: prev.fees?.map((fee, i) => 
+      fees: prev.fees?.map((fee, i) =>
         i === index ? { ...fee, [field]: value } : fee
       ) || []
     }))
@@ -162,7 +162,7 @@ export function ArbitrageTab() {
                 placeholder="HS code or internal product ID"
               />
             </div>
-            
+
             <div>
               <Label htmlFor="buy_market">Buy Market *</Label>
               <Input
@@ -172,7 +172,7 @@ export function ArbitrageTab() {
                 placeholder="Country or port"
               />
             </div>
-            
+
             <div>
               <Label htmlFor="sell_market">Sell Market *</Label>
               <Input
@@ -182,7 +182,7 @@ export function ArbitrageTab() {
                 placeholder="Country or port"
               />
             </div>
-            
+
             <div>
               <Label htmlFor="buy_price">Buy Price *</Label>
               <Input
@@ -194,7 +194,7 @@ export function ArbitrageTab() {
                 placeholder="0.00"
               />
             </div>
-            
+
             <div>
               <Label htmlFor="buy_currency">Buy Currency *</Label>
               <Select value={input.buy_currency} onValueChange={(value) => handleInputChange('buy_currency', value)}>
@@ -210,7 +210,7 @@ export function ArbitrageTab() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <Label htmlFor="sell_price">Sell Price *</Label>
               <Input
@@ -222,7 +222,7 @@ export function ArbitrageTab() {
                 placeholder="0.00"
               />
             </div>
-            
+
             <div>
               <Label htmlFor="sell_currency">Sell Currency *</Label>
               <Select value={input.sell_currency} onValueChange={(value) => handleInputChange('sell_currency', value)}>
@@ -239,7 +239,7 @@ export function ArbitrageTab() {
               </Select>
             </div>
           </div>
-          
+
           {/* Optional Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -253,7 +253,7 @@ export function ArbitrageTab() {
                 placeholder="0.00"
               />
             </div>
-            
+
             <div>
               <Label htmlFor="target_margin_pct">Target Margin %</Label>
               <Input
@@ -266,7 +266,7 @@ export function ArbitrageTab() {
               />
             </div>
           </div>
-          
+
           {/* FX Rates */}
           <div>
             <Label>FX Rates (Optional)</Label>
@@ -284,7 +284,7 @@ export function ArbitrageTab() {
               rows={2}
             />
           </div>
-          
+
           {/* Fees */}
           <div>
             <div className="flex justify-between items-center mb-2">
@@ -320,7 +320,7 @@ export function ArbitrageTab() {
               ))}
             </div>
           </div>
-          
+
           <Button onClick={handleRun} disabled={loading} className="w-full">
             {loading ? (
               <>
@@ -376,7 +376,7 @@ export function ArbitrageTab() {
                           ))}
                         </ul>
                       </div>
-                      
+
                       <div>
                         <h4 className="font-medium">Next Actions</h4>
                         <ul className="list-disc list-inside space-y-1 text-sm">
@@ -385,7 +385,7 @@ export function ArbitrageTab() {
                           ))}
                         </ul>
                       </div>
-                      
+
                       {result.opportunity_card.risk_factors.length > 0 && (
                         <div>
                           <h4 className="font-medium text-red-600">Risk Factors</h4>
@@ -400,19 +400,19 @@ export function ArbitrageTab() {
                   </CardContent>
                 </Card>
               )}
-              
+
               {/* Similar Deals */}
-              {result.similar_deals.length > 0 && (
+              {(result.similar_deals?.length ?? 0) > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Similar Past Deals</CardTitle>
                     <CardDescription>
-                      {result.similar_deals.length} comparable transactions
+                      {result.similar_deals?.length} comparable transactions
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {result.similar_deals.map((deal, index) => (
+                      {result.similar_deals?.map((deal, index) => (
                         <div key={index} className="flex justify-between items-center p-3 border rounded">
                           <div>
                             <p className="font-medium">{deal.product_key}</p>
@@ -426,8 +426,8 @@ export function ArbitrageTab() {
                           <div className="text-right">
                             <Badge className={
                               deal.outcome === 'won' ? 'bg-green-100 text-green-800' :
-                              deal.outcome === 'lost' ? 'bg-red-100 text-red-800' :
-                              'bg-gray-100 text-gray-800'
+                                deal.outcome === 'lost' ? 'bg-red-100 text-red-800' :
+                                  'bg-gray-100 text-gray-800'
                             }>
                               {deal.outcome}
                             </Badge>
@@ -443,7 +443,7 @@ export function ArbitrageTab() {
                   </CardContent>
                 </Card>
               )}
-              
+
               {/* Explainability */}
               <ExplainableCard
                 explainability={result.explainability}
