@@ -13,7 +13,7 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    # Create enums
+    # ── 1. Enum types (Idempotent) ──────────────────────────────────────────
     types = [
         ('arbitrage_outcome', "('won','lost','no_go','unknown')"),
         ('brain_engine_type', "('arbitrage','risk','demand','cultural')"),
@@ -27,211 +27,189 @@ def upgrade():
                 END IF;
             END $$;
         """)
-    
-    # Create asset_arbitrage_history table
-    op.create_table('asset_arbitrage_history',
-        sa.Column('id', sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-        sa.Column('tenant_id', sa.UUID(as_uuid=True), nullable=False),
-        sa.Column('product_key', sa.Text(), nullable=False),
-        sa.Column('buy_market', sa.Text(), nullable=False),
-        sa.Column('sell_market', sa.Text(), nullable=False),
-        sa.Column('incoterms', sa.Text(), nullable=False),
-        sa.Column('buy_price', sa.Numeric(precision=15, scale=2), nullable=False),
-        sa.Column('buy_currency', sa.Text(), nullable=False),
-        sa.Column('sell_price', sa.Numeric(precision=15, scale=2), nullable=False),
-        sa.Column('sell_currency', sa.Text(), nullable=False),
-        sa.Column('freight_cost', sa.Numeric(precision=15, scale=2), nullable=True),
-        sa.Column('fx_rate', sa.Numeric(precision=10, scale=6), nullable=True),
-        sa.Column('estimated_margin_pct', sa.Numeric(precision=5, scale=2), nullable=True),
-        sa.Column('realized_margin_pct', sa.Numeric(precision=5, scale=2), nullable=True),
-        sa.Column('outcome', postgresql.ENUM('won', 'lost', 'no_go', 'unknown', name='arbitrage_outcome', create_type=False), nullable=True),
-        sa.Column('decision_reason', sa.Text(), nullable=True),
-        sa.Column('data_used', sa.JSON(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False)
-    )
-    
-    # Indexes for asset_arbitrage_history
-    op.create_index('idx_arbitrage_tenant_product', 'asset_arbitrage_history', ['tenant_id', 'product_key'])
-    op.create_index('idx_arbitrage_tenant_markets', 'asset_arbitrage_history', ['tenant_id', 'buy_market', 'sell_market'])
-    op.create_index('idx_arbitrage_created_at', 'asset_arbitrage_history', ['created_at'])
-    
-    # Create asset_supplier_reliability table
-    op.create_table('asset_supplier_reliability',
-        sa.Column('id', sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-        sa.Column('tenant_id', sa.UUID(as_uuid=True), nullable=False),
-        sa.Column('supplier_name', sa.Text(), nullable=False),
-        sa.Column('supplier_country', sa.Text(), nullable=False),
-        sa.Column('identifiers', sa.JSON(), nullable=True),
-        sa.Column('on_time_rate', sa.Numeric(precision=5, scale=2), nullable=True),
-        sa.Column('defect_rate', sa.Numeric(precision=5, scale=2), nullable=True),
-        sa.Column('dispute_count', sa.Integer(), server_default='0', nullable=False),
-        sa.Column('avg_lead_time_days', sa.Integer(), nullable=True),
-        sa.Column('reliability_score', sa.Integer(), server_default='0', nullable=False),
-        sa.Column('evidence', sa.JSON(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False)
-    )
-    
-    # Indexes for asset_supplier_reliability
-    op.create_index('idx_supplier_tenant_country', 'asset_supplier_reliability', ['tenant_id', 'supplier_country'])
-    op.create_index('idx_supplier_tenant_name', 'asset_supplier_reliability', ['tenant_id', 'supplier_name'])
-    op.create_index('idx_supplier_reliability_score', 'asset_supplier_reliability', ['reliability_score'])
-    
-    # Create asset_buyer_payment_behavior table
-    op.create_table('asset_buyer_payment_behavior',
-        sa.Column('id', sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-        sa.Column('tenant_id', sa.UUID(as_uuid=True), nullable=False),
-        sa.Column('buyer_country', sa.Text(), nullable=False),
-        sa.Column('buyer_name', sa.Text(), nullable=True),
-        sa.Column('segment', sa.Text(), nullable=True),
-        sa.Column('avg_payment_delay_days', sa.Integer(), nullable=True),
-        sa.Column('default_rate', sa.Numeric(precision=5, scale=2), nullable=True),
-        sa.Column('preferred_terms', sa.Text(), nullable=True),
-        sa.Column('payment_risk_score', sa.Integer(), server_default='0', nullable=False),
-        sa.Column('evidence', sa.JSON(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False)
-    )
-    
-    # Indexes for asset_buyer_payment_behavior
-    op.create_index('idx_buyer_tenant_country', 'asset_buyer_payment_behavior', ['tenant_id', 'buyer_country'])
-    op.create_index('idx_buyer_tenant_segment', 'asset_buyer_payment_behavior', ['tenant_id', 'segment'])
-    op.create_index('idx_buyer_risk_score', 'asset_buyer_payment_behavior', ['payment_risk_score'])
-    
-    # Create asset_seasonality_matrix table
-    op.create_table('asset_seasonality_matrix',
-        sa.Column('id', sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-        sa.Column('tenant_id', sa.UUID(as_uuid=True), nullable=False),
-        sa.Column('product_key', sa.Text(), nullable=False),
-        sa.Column('country', sa.Text(), nullable=False),
-        sa.Column('season_key', sa.Text(), nullable=False),
-        sa.Column('demand_index', sa.Numeric(precision=8, scale=3), nullable=True),
-        sa.Column('price_index', sa.Numeric(precision=8, scale=3), nullable=True),
-        sa.Column('volatility_index', sa.Numeric(precision=8, scale=3), nullable=True),
-        sa.Column('data_used', sa.JSON(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False)
-    )
-    
-    # Unique constraint for seasonality matrix
-    op.create_unique_constraint('uq_seasonality_matrix', 'asset_seasonality_matrix', 
-                              ['tenant_id', 'product_key', 'country', 'season_key'])
-    
-    # Indexes for asset_seasonality_matrix
-    op.create_index('idx_seasonality_tenant_product', 'asset_seasonality_matrix', ['tenant_id', 'product_key'])
-    op.create_index('idx_seasonality_tenant_country', 'asset_seasonality_matrix', ['tenant_id', 'country'])
-    op.create_index('idx_seasonality_season', 'asset_seasonality_matrix', ['season_key'])
-    
-    # Create brain_engine_runs table
-    op.create_table('brain_engine_runs',
-        sa.Column('id', sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-        sa.Column('tenant_id', sa.UUID(as_uuid=True), nullable=False),
-        sa.Column('engine_type', postgresql.ENUM('arbitrage', 'risk', 'demand', 'cultural', name='brain_engine_type', create_type=False), nullable=False),
-        sa.Column('input_payload', sa.JSON(), nullable=False),
-        sa.Column('output_payload', sa.JSON(), nullable=True),
-        sa.Column('explainability', sa.JSON(), nullable=True),
-        sa.Column('status', postgresql.ENUM('success', 'insufficient_data', 'failed', name='brain_run_status', create_type=False), nullable=False),
-        sa.Column('error', sa.JSON(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False)
-    )
-    
-    # Indexes for brain_engine_runs
-    op.create_index('idx_brain_runs_tenant_type', 'brain_engine_runs', ['tenant_id', 'engine_type'])
-    op.create_index('idx_brain_runs_created_at', 'brain_engine_runs', ['created_at'])
-    op.create_index('idx_brain_runs_status', 'brain_engine_runs', ['status'])
-    
-    # Create brain_data_sources table
-    op.create_table('brain_data_sources',
-        sa.Column('id', sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-        sa.Column('tenant_id', sa.UUID(as_uuid=True), nullable=False),
-        sa.Column('name', sa.Text(), nullable=False),
-        sa.Column('type', sa.Text(), nullable=False),
-        sa.Column('is_active', sa.Boolean(), server_default='true', nullable=False),
-        sa.Column('meta', sa.JSON(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False)
-    )
-    
-    # Indexes for brain_data_sources
-    op.create_index('idx_brain_sources_tenant', 'brain_data_sources', ['tenant_id'])
-    op.create_index('idx_brain_sources_active', 'brain_data_sources', ['is_active'])
-    
-    # Create cultural_profiles table
-    op.create_table('cultural_profiles',
-        sa.Column('id', sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-        sa.Column('tenant_id', sa.UUID(as_uuid=True), nullable=False),
-        sa.Column('country', sa.Text(), nullable=False),
-        sa.Column('negotiation_style', sa.JSON(), nullable=True),
-        sa.Column('do_dont', sa.JSON(), nullable=True),
-        sa.Column('typical_terms', sa.JSON(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False)
-    )
-    
-    # Indexes for cultural_profiles
-    op.create_index('idx_cultural_tenant_country', 'cultural_profiles', ['tenant_id', 'country'])
-    op.create_index('idx_cultural_country', 'cultural_profiles', ['country'])
-    
-    # Create demand_time_series table
-    op.create_table('demand_time_series',
-        sa.Column('id', sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-        sa.Column('tenant_id', sa.UUID(as_uuid=True), nullable=False),
-        sa.Column('product_key', sa.Text(), nullable=False),
-        sa.Column('country', sa.Text(), nullable=False),
-        sa.Column('date', sa.Date(), nullable=False),
-        sa.Column('demand_value', sa.Numeric(precision=15, scale=2), nullable=True),
-        sa.Column('source_name', sa.Text(), nullable=False),
-        sa.Column('data_used', sa.JSON(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False)
-    )
-    
-    # Unique constraint for demand time series
-    op.create_unique_constraint('uq_demand_time_series', 'demand_time_series', 
-                              ['tenant_id', 'product_key', 'country', 'date'])
-    
-    # Indexes for demand_time_series
-    op.create_index('idx_demand_tenant_product', 'demand_time_series', ['tenant_id', 'product_key'])
-    op.create_index('idx_demand_tenant_country', 'demand_time_series', ['tenant_id', 'country'])
-    op.create_index('idx_demand_date', 'demand_time_series', ['date'])
-    
-    # Enable RLS on all tables
-    for table in ['asset_arbitrage_history', 'asset_supplier_reliability', 'asset_buyer_payment_behavior', 
-                   'asset_seasonality_matrix', 'brain_engine_runs', 'brain_data_sources', 
-                   'cultural_profiles', 'demand_time_series']:
-        op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY")
-    
-    # Create RLS policies
-    # Asset tables - tenant isolation
-    for table in ['asset_arbitrage_history', 'asset_supplier_reliability', 'asset_buyer_payment_behavior', 
-                   'asset_seasonality_matrix', 'brain_engine_runs', 'brain_data_sources', 
-                   'cultural_profiles', 'demand_time_series']:
-        op.execute(f"""
-        CREATE POLICY tenant_isolation_{table} ON {table}
-        FOR ALL TO authenticated_users
-        USING (tenant_id = app.current_tenant_id())
-        WITH CHECK (tenant_id = app.current_tenant_id())
-        """)
-    
-    # Insert default brain data sources
+
+    # ── 2. Tables (Raw SQL) ────────────────────────────────────────────────
+    # asset_arbitrage_history
     op.execute("""
-    INSERT INTO brain_data_sources (tenant_id, name, type, is_active, meta)
-    SELECT 
-        t.id,
-        'manual',
-        'manual_input',
-        true,
-        '{"description": "Manually entered data"}'::jsonb
-    FROM tenants t
-    WHERE t.id IS NOT NULL
-    ON CONFLICT (tenant_id, name) DO NOTHING
+    CREATE TABLE IF NOT EXISTS asset_arbitrage_history (
+        id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id            UUID NOT NULL REFERENCES tenants(id),
+        product_key          TEXT NOT NULL,
+        buy_market           TEXT NOT NULL,
+        sell_market          TEXT NOT NULL,
+        incoterms            TEXT NOT NULL,
+        buy_price            NUMERIC(15, 2) NOT NULL,
+        buy_currency         TEXT NOT NULL,
+        sell_price           NUMERIC(15, 2) NOT NULL,
+        sell_currency        TEXT NOT NULL,
+        freight_cost         NUMERIC(15, 2),
+        fx_rate              NUMERIC(10, 6),
+        estimated_margin_pct NUMERIC(5, 2),
+        realized_margin_pct  NUMERIC(5, 2),
+        outcome              arbitrage_outcome,
+        decision_reason      TEXT,
+        data_used            JSONB,
+        created_at           TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_arbitrage_tenant_product ON asset_arbitrage_history (tenant_id, product_key);
+    CREATE INDEX IF NOT EXISTS idx_arbitrage_tenant_markets ON asset_arbitrage_history (tenant_id, buy_market, sell_market);
+    CREATE INDEX IF NOT EXISTS idx_arbitrage_created_at ON asset_arbitrage_history (created_at);
     """)
-    
+
+    # asset_supplier_reliability
+    op.execute("""
+    CREATE TABLE IF NOT EXISTS asset_supplier_reliability (
+        id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id           UUID NOT NULL REFERENCES tenants(id),
+        supplier_name       TEXT NOT NULL,
+        supplier_country    TEXT NOT NULL,
+        identifiers         JSONB,
+        on_time_rate        NUMERIC(5, 2),
+        defect_rate         NUMERIC(5, 2),
+        dispute_count       INTEGER NOT NULL DEFAULT 0,
+        avg_lead_time_days  INTEGER,
+        reliability_score   INTEGER NOT NULL DEFAULT 0,
+        evidence            JSONB,
+        created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_supplier_tenant_country ON asset_supplier_reliability (tenant_id, supplier_country);
+    CREATE INDEX IF NOT EXISTS idx_supplier_tenant_name ON asset_supplier_reliability (tenant_id, supplier_name);
+    CREATE INDEX IF NOT EXISTS idx_supplier_reliability_score ON asset_supplier_reliability (reliability_score);
+    """)
+
+    # asset_buyer_payment_behavior
+    op.execute("""
+    CREATE TABLE IF NOT EXISTS asset_buyer_payment_behavior (
+        id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id               UUID NOT NULL REFERENCES tenants(id),
+        buyer_country           TEXT NOT NULL,
+        buyer_name              TEXT,
+        segment                 TEXT,
+        avg_payment_delay_days  INTEGER,
+        default_rate            NUMERIC(5, 2),
+        preferred_terms         TEXT,
+        payment_risk_score      INTEGER NOT NULL DEFAULT 0,
+        evidence                JSONB,
+        created_at              TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_buyer_tenant_country ON asset_buyer_payment_behavior (tenant_id, buyer_country);
+    CREATE INDEX IF NOT EXISTS idx_buyer_tenant_segment ON asset_buyer_payment_behavior (tenant_id, segment);
+    CREATE INDEX IF NOT EXISTS idx_buyer_risk_score ON asset_buyer_payment_behavior (payment_risk_score);
+    """)
+
+    # asset_seasonality_matrix
+    op.execute("""
+    CREATE TABLE IF NOT EXISTS asset_seasonality_matrix (
+        id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id         UUID NOT NULL REFERENCES tenants(id),
+        product_key       TEXT NOT NULL,
+        country           TEXT NOT NULL,
+        season_key        TEXT NOT NULL,
+        demand_index      NUMERIC(8, 3),
+        price_index       NUMERIC(8, 3),
+        volatility_index  NUMERIC(8, 3),
+        data_used         JSONB,
+        created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT uq_seasonality_matrix UNIQUE (tenant_id, product_key, country, season_key)
+    );
+    CREATE INDEX IF NOT EXISTS idx_seasonality_tenant_product ON asset_seasonality_matrix (tenant_id, product_key);
+    CREATE INDEX IF NOT EXISTS idx_seasonality_tenant_country ON asset_seasonality_matrix (tenant_id, country);
+    CREATE INDEX IF NOT EXISTS idx_seasonality_season ON asset_seasonality_matrix (season_key);
+    """)
+
+    # brain_engine_runs
+    op.execute("""
+    CREATE TABLE IF NOT EXISTS brain_engine_runs (
+        id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id       UUID NOT NULL REFERENCES tenants(id),
+        engine_type     brain_engine_type NOT NULL,
+        input_payload   JSONB NOT NULL,
+        output_payload  JSONB,
+        explainability  JSONB,
+        status          brain_run_status NOT NULL,
+        error           JSONB,
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_brain_runs_tenant_type ON brain_engine_runs (tenant_id, engine_type);
+    CREATE INDEX IF NOT EXISTS idx_brain_runs_created_at ON brain_engine_runs (created_at);
+    CREATE INDEX IF NOT EXISTS idx_brain_runs_status ON brain_engine_runs (status);
+    """)
+
+    # brain_data_sources
+    op.execute("""
+    CREATE TABLE IF NOT EXISTS brain_data_sources (
+        id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id   UUID NOT NULL REFERENCES tenants(id),
+        name        TEXT NOT NULL,
+        type        TEXT NOT NULL,
+        is_active   BOOLEAN NOT NULL DEFAULT true,
+        meta        JSONB,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT uq_brain_data_sources UNIQUE (tenant_id, name)
+    );
+    CREATE INDEX IF NOT EXISTS idx_brain_sources_tenant ON brain_data_sources (tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_brain_sources_active ON brain_data_sources (is_active);
+    """)
+
+    # cultural_profiles
+    op.execute("""
+    CREATE TABLE IF NOT EXISTS cultural_profiles (
+        id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id         UUID NOT NULL REFERENCES tenants(id),
+        country           TEXT NOT NULL,
+        negotiation_style JSONB,
+        do_dont           JSONB,
+        typical_terms     JSONB,
+        created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_cultural_tenant_country ON cultural_profiles (tenant_id, country);
+    CREATE INDEX IF NOT EXISTS idx_cultural_country ON cultural_profiles (country);
+    """)
+
+    # demand_time_series
+    op.execute("""
+    CREATE TABLE IF NOT EXISTS demand_time_series (
+        id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id     UUID NOT NULL REFERENCES tenants(id),
+        product_key   TEXT NOT NULL,
+        country       TEXT NOT NULL,
+        date          DATE NOT NULL,
+        demand_value  NUMERIC(15, 2),
+        source_name   TEXT NOT NULL,
+        data_used     JSONB,
+        created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT uq_demand_time_series UNIQUE (tenant_id, product_key, country, date)
+    );
+    CREATE INDEX IF NOT EXISTS idx_demand_tenant_product ON demand_time_series (tenant_id, product_key);
+    CREATE INDEX IF NOT EXISTS idx_demand_tenant_country ON demand_time_series (tenant_id, country);
+    CREATE INDEX IF NOT EXISTS idx_demand_date ON demand_time_series (date);
+    """)
+
+    # ── 3. RLS Policies ───────────────────────────────────────────────────
+    tables = [
+        'asset_arbitrage_history', 'asset_supplier_reliability', 'asset_buyer_payment_behavior',
+        'asset_seasonality_matrix', 'brain_engine_runs', 'brain_data_sources',
+        'cultural_profiles', 'demand_time_series'
+    ]
+    for table in tables:
+        op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY")
+        op.execute(f"DROP POLICY IF EXISTS tenant_isolation ON {table}")
+        op.execute(f"""
+            CREATE POLICY tenant_isolation ON {table}
+            USING (tenant_id::text = current_setting('app.tenant_id', true))
+            WITH CHECK (tenant_id::text = current_setting('app.tenant_id', true))
+        """)
+
+    # ── 4. Default Data ───────────────────────────────────────────────────
     op.execute("""
     INSERT INTO brain_data_sources (tenant_id, name, type, is_active, meta)
-    SELECT 
-        t.id,
-        'csv_import',
-        'csv_upload',
-        true,
-        '{"description": "Data imported from CSV files"}'::jsonb
-    FROM tenants t
-    WHERE t.id IS NOT NULL
-    ON CONFLICT (tenant_id, name) DO NOTHING
+    SELECT id, 'manual', 'manual_input', true, '{"description": "Manually entered data"}'::jsonb FROM tenants
+    ON CONFLICT (tenant_id, name) DO NOTHING;
+    """)
+    op.execute("""
+    INSERT INTO brain_data_sources (tenant_id, name, type, is_active, meta)
+    SELECT id, 'csv_import', 'csv_upload', true, '{"description": "Data imported from CSV files"}'::jsonb FROM tenants
+    ON CONFLICT (tenant_id, name) DO NOTHING;
     """)
 
 def downgrade():

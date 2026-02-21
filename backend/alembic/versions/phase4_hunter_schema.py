@@ -13,7 +13,7 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    # Enums
+    # ── 1. Enum types (Idempotent) ──────────────────────────────────────────
     types = [
         ('hunter_lead_status', "('new','enriched','qualified','rejected','pushed_to_crm')"),
         ('hunter_identity_type', "('email','phone','domain','linkedin','address','other')"),
@@ -27,101 +27,113 @@ def upgrade():
                 END IF;
             END $$;
         """)
-    
-    # hunter_leads table
-    op.create_table('hunter_leads',
-        sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('tenant_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('primary_name', sa.String(), nullable=False),
-        sa.Column('country', sa.String(), nullable=False),
-        sa.Column('city', sa.String(), nullable=True),
-        sa.Column('website', sa.String(), nullable=True),
-        sa.Column('industry', sa.String(), nullable=True),
-        sa.Column('source_hint', sa.String(), nullable=True),
-        sa.Column('status', postgresql.ENUM('new', 'enriched', 'qualified', 'rejected', 'pushed_to_crm', name='hunter_lead_status', create_type=False), nullable=False, default='new'),
-        sa.Column('score_total', sa.Integer(), nullable=False, default=0),
-        sa.Column('score_breakdown', postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default='{}'),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_hunter_leads_tenant_id'), 'hunter_leads', ['tenant_id'])
-    op.create_index(op.f('ix_hunter_leads_status'), 'hunter_leads', ['status'])
-    
-    # hunter_lead_identities table
-    op.create_table('hunter_lead_identities',
-        sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('tenant_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('lead_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('type', postgresql.ENUM('email', 'phone', 'domain', 'linkedin', 'address', 'other', name='hunter_identity_type', create_type=False), nullable=False),
-        sa.Column('value', sa.String(), nullable=False),
-        sa.Column('normalized_value', sa.String(), nullable=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.ForeignKeyConstraint(['lead_id'], ['hunter_leads.id'], ),
-        sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
-        sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('tenant_id', 'type', 'normalized_value', name='uq_hunter_identities')
-    )
-    op.create_index(op.f('ix_hunter_lead_identities_tenant_id'), 'hunter_lead_identities', ['tenant_id'])
-    op.create_index(op.f('ix_hunter_lead_identities_lead_id'), 'hunter_lead_identities', ['lead_id'])
-    
-    # hunter_evidence table
-    op.create_table('hunter_evidence',
-        sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('tenant_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('lead_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('field_name', sa.String(), nullable=False),
-        sa.Column('source_name', sa.String(), nullable=False),
-        sa.Column('source_url', sa.String(), nullable=True),
-        sa.Column('collected_at', sa.DateTime(timezone=True), nullable=False),
-        sa.Column('confidence', sa.Numeric(precision=3, scale=2), nullable=False),
-        sa.Column('snippet', sa.String(), nullable=True),
-        sa.Column('raw', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.ForeignKeyConstraint(['lead_id'], ['hunter_leads.id'], ),
-        sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_hunter_evidence_tenant_id'), 'hunter_evidence', ['tenant_id'])
-    op.create_index(op.f('ix_hunter_evidence_lead_id'), 'hunter_evidence', ['lead_id'])
-    op.create_index(op.f('ix_hunter_evidence_field_name'), 'hunter_evidence', ['field_name'])
-    op.create_index('ix_hunter_evidence_lead_field', 'hunter_evidence', ['tenant_id', 'lead_id', 'field_name'])
-    
-    # hunter_enrichment_jobs table
-    op.create_table('hunter_enrichment_jobs',
-        sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('tenant_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('lead_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('provider', sa.String(), nullable=False),
-        sa.Column('status', postgresql.ENUM('queued', 'running', 'done', 'failed', name='hunter_enrichment_status', create_type=False), nullable=False, default='queued'),
-        sa.Column('attempts', sa.Integer(), nullable=False, default=0),
-        sa.Column('scheduled_for', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
-        sa.Column('started_at', sa.DateTime(timezone=True), nullable=True),
-        sa.Column('finished_at', sa.DateTime(timezone=True), nullable=True),
-        sa.Column('error', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.ForeignKeyConstraint(['lead_id'], ['hunter_leads.id'], ),
-        sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_hunter_enrichment_jobs_tenant_id'), 'hunter_enrichment_jobs', ['tenant_id'])
-    op.create_index(op.f('ix_hunter_enrichment_jobs_lead_id'), 'hunter_enrichment_jobs', ['lead_id'])
-    op.create_index(op.f('ix_hunter_enrichment_jobs_status'), 'hunter_enrichment_jobs', ['status'])
-    op.create_index('ix_hunter_enrichment_jobs_scheduled', 'hunter_enrichment_jobs', ['status', 'scheduled_for'])
-    
-    # hunter_scoring_profiles table
-    op.create_table('hunter_scoring_profiles',
-        sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('tenant_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('name', sa.String(), nullable=False),
-        sa.Column('weights', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column('is_default', sa.Boolean(), nullable=False, default=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_hunter_scoring_profiles_tenant_id'), 'hunter_scoring_profiles', ['tenant_id'])
-    op.create_index(op.f('ix_hunter_scoring_profiles_is_default'), 'hunter_scoring_profiles', ['is_default'])
+
+    # ── 2. Tables (Raw SQL) ────────────────────────────────────────────────
+    # hunter_leads
+    op.execute("""
+    CREATE TABLE IF NOT EXISTS hunter_leads (
+        id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id        UUID NOT NULL REFERENCES tenants(id),
+        primary_name     VARCHAR NOT NULL,
+        country          VARCHAR NOT NULL,
+        city             VARCHAR,
+        website          VARCHAR,
+        industry         VARCHAR,
+        source_hint      VARCHAR,
+        status           hunter_lead_status NOT NULL DEFAULT 'new',
+        score_total      INTEGER NOT NULL DEFAULT 0,
+        score_breakdown  JSONB NOT NULL DEFAULT '{}',
+        created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS ix_hunter_leads_tenant_id ON hunter_leads(tenant_id);
+    CREATE INDEX IF NOT EXISTS ix_hunter_leads_status ON hunter_leads(status);
+    """)
+
+    # hunter_lead_identities
+    op.execute("""
+    CREATE TABLE IF NOT EXISTS hunter_lead_identities (
+        id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id         UUID NOT NULL REFERENCES tenants(id),
+        lead_id           UUID NOT NULL REFERENCES hunter_leads(id) ON DELETE CASCADE,
+        type              hunter_identity_type NOT NULL,
+        value             VARCHAR NOT NULL,
+        normalized_value  VARCHAR NOT NULL,
+        created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT uq_hunter_identities UNIQUE (tenant_id, type, normalized_value)
+    );
+    CREATE INDEX IF NOT EXISTS ix_hunter_lead_identities_tenant_id ON hunter_lead_identities(tenant_id);
+    CREATE INDEX IF NOT EXISTS ix_hunter_lead_identities_lead_id ON hunter_lead_identities(lead_id);
+    """)
+
+    # hunter_evidence
+    op.execute("""
+    CREATE TABLE IF NOT EXISTS hunter_evidence (
+        id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id    UUID NOT NULL REFERENCES tenants(id),
+        lead_id      UUID NOT NULL REFERENCES hunter_leads(id) ON DELETE CASCADE,
+        field_name   VARCHAR NOT NULL,
+        source_name  VARCHAR NOT NULL,
+        source_url   VARCHAR,
+        collected_at TIMESTAMPTZ NOT NULL,
+        confidence   NUMERIC(3, 2) NOT NULL,
+        snippet      VARCHAR,
+        raw          JSONB,
+        created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS ix_hunter_evidence_tenant_id ON hunter_evidence(tenant_id);
+    CREATE INDEX IF NOT EXISTS ix_hunter_evidence_lead_id ON hunter_evidence(lead_id);
+    CREATE INDEX IF NOT EXISTS ix_hunter_evidence_field_name ON hunter_evidence(field_name);
+    CREATE INDEX IF NOT EXISTS ix_hunter_evidence_lead_field ON hunter_evidence(tenant_id, lead_id, field_name);
+    """)
+
+    # hunter_enrichment_jobs
+    op.execute("""
+    CREATE TABLE IF NOT EXISTS hunter_enrichment_jobs (
+        id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id     UUID NOT NULL REFERENCES tenants(id),
+        lead_id       UUID NOT NULL REFERENCES hunter_leads(id) ON DELETE CASCADE,
+        provider      VARCHAR NOT NULL,
+        status        hunter_enrichment_status NOT NULL DEFAULT 'queued',
+        attempts      INTEGER NOT NULL DEFAULT 0,
+        scheduled_for TIMESTAMPTZ NOT NULL DEFAULT now(),
+        started_at    TIMESTAMPTZ,
+        finished_at   TIMESTAMPTZ,
+        error         JSONB,
+        created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS ix_hunter_enrichment_jobs_tenant_id ON hunter_enrichment_jobs(tenant_id);
+    CREATE INDEX IF NOT EXISTS ix_hunter_enrichment_jobs_lead_id ON hunter_enrichment_jobs(lead_id);
+    CREATE INDEX IF NOT EXISTS ix_hunter_enrichment_jobs_status ON hunter_enrichment_jobs(status);
+    CREATE INDEX IF NOT EXISTS ix_hunter_enrichment_jobs_scheduled ON hunter_enrichment_jobs(status, scheduled_for);
+    """)
+
+    # hunter_scoring_profiles
+    op.execute("""
+    CREATE TABLE IF NOT EXISTS hunter_scoring_profiles (
+        id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id  UUID NOT NULL REFERENCES tenants(id),
+        name       VARCHAR NOT NULL,
+        weights    JSONB NOT NULL,
+        is_default BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS ix_hunter_scoring_profiles_tenant_id ON hunter_scoring_profiles(tenant_id);
+    CREATE INDEX IF NOT EXISTS ix_hunter_scoring_profiles_is_default ON hunter_scoring_profiles(is_default);
+    """)
+
+    # ── 3. RLS Policies ───────────────────────────────────────────────────
+    tables = [
+        'hunter_leads', 'hunter_lead_identities', 'hunter_evidence',
+        'hunter_enrichment_jobs', 'hunter_scoring_profiles'
+    ]
+    for table in tables:
+        op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY")
+        op.execute(f"DROP POLICY IF EXISTS tenant_isolation ON {table}")
+        op.execute(f"""
+            CREATE POLICY tenant_isolation ON {table}
+            USING (tenant_id::text = current_setting('app.tenant_id', true))
+            WITH CHECK (tenant_id::text = current_setting('app.tenant_id', true))
+        """)
     
     # Enable RLS on all tables
     tables = [
