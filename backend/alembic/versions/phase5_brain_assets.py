@@ -13,9 +13,19 @@ depends_on = None
 
 def upgrade():
     # Create enums
-    op.execute("CREATE TYPE arbitrage_outcome AS ENUM ('won','lost','no_go','unknown')")
-    op.execute("CREATE TYPE brain_engine_type AS ENUM ('arbitrage','risk','demand','cultural')")
-    op.execute("CREATE TYPE brain_run_status AS ENUM ('success','insufficient_data','failed')")
+    types = [
+        ('arbitrage_outcome', "('won','lost','no_go','unknown')"),
+        ('brain_engine_type', "('arbitrage','risk','demand','cultural')"),
+        ('brain_run_status', "('success','insufficient_data','failed')"),
+    ]
+    for type_name, values in types:
+        op.execute(f"""
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = '{type_name}') THEN
+                    CREATE TYPE {type_name} AS ENUM {values};
+                END IF;
+            END $$;
+        """)
     
     # Create asset_arbitrage_history table
     op.create_table('asset_arbitrage_history',

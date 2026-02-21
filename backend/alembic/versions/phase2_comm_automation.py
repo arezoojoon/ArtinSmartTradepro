@@ -26,15 +26,25 @@ NEW_RLS_TABLES = [
 
 def upgrade():
     # ── 1. Enum types ────────────────────────────────────────────────────────
-    op.execute("CREATE TYPE comm_channel_type AS ENUM ('whatsapp','email','telegram');")
-    op.execute("CREATE TYPE comm_provider_type AS ENUM ('waha','smtp','imap');")
-    op.execute("CREATE TYPE comm_identity_type AS ENUM ('phone','email','handle');")
-    op.execute("CREATE TYPE comm_conversation_status AS ENUM ('open','pending','closed');")
-    op.execute("CREATE TYPE comm_message_direction AS ENUM ('inbound','outbound');")
-    op.execute("CREATE TYPE comm_message_status AS ENUM ('queued','sent','delivered','read','failed');")
-    op.execute("CREATE TYPE comm_message_event_type AS ENUM ('status','webhook','retry','dlq');")
-    op.execute("CREATE TYPE automation_trigger_type AS ENUM ('no_reply','stage_changed','new_lead');")
-    op.execute("CREATE TYPE automation_run_status AS ENUM ('scheduled','executed','skipped','failed');")
+    types = [
+        ('comm_channel_type', "('whatsapp','email','telegram')"),
+        ('comm_provider_type', "('waha','smtp','imap')"),
+        ('comm_identity_type', "('phone','email','handle')"),
+        ('comm_conversation_status', "('open','pending','closed')"),
+        ('comm_message_direction', "('inbound','outbound')"),
+        ('comm_message_status', "('queued','sent','delivered','read','failed')"),
+        ('comm_message_event_type', "('status','webhook','retry','dlq')"),
+        ('automation_trigger_type', "('no_reply','stage_changed','new_lead')"),
+        ('automation_run_status', "('scheduled','executed','skipped','failed')"),
+    ]
+    for type_name, values in types:
+        op.execute(f"""
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = '{type_name}') THEN
+                    CREATE TYPE {type_name} AS ENUM {values};
+                END IF;
+            END $$;
+        """)
 
     # ── 2. comm_channels ─────────────────────────────────────────────────────
     op.execute("""

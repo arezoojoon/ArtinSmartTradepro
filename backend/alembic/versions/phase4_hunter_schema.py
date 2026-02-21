@@ -14,9 +14,19 @@ depends_on = None
 
 def upgrade():
     # Enums
-    op.execute("CREATE TYPE hunter_lead_status AS ENUM ('new','enriched','qualified','rejected','pushed_to_crm')")
-    op.execute("CREATE TYPE hunter_identity_type AS ENUM ('email','phone','domain','linkedin','address','other')")
-    op.execute("CREATE TYPE hunter_enrichment_status AS ENUM ('queued','running','done','failed')")
+    types = [
+        ('hunter_lead_status', "('new','enriched','qualified','rejected','pushed_to_crm')"),
+        ('hunter_identity_type', "('email','phone','domain','linkedin','address','other')"),
+        ('hunter_enrichment_status', "('queued','running','done','failed')"),
+    ]
+    for type_name, values in types:
+        op.execute(f"""
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = '{type_name}') THEN
+                    CREATE TYPE {type_name} AS ENUM {values};
+                END IF;
+            END $$;
+        """)
     
     # hunter_leads table
     op.create_table('hunter_leads',
