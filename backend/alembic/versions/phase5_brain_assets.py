@@ -200,6 +200,15 @@ def upgrade():
             WITH CHECK (tenant_id::text = current_setting('app.tenant_id', true))
         """)
 
+    # ── Ensure UUID defaults (Idempotent fix for SQLAlchemy-created tables) ─────
+    all_p5_tables = [
+        'asset_arbitrage_history', 'asset_supplier_reliability', 'asset_buyer_payment_behavior',
+        'asset_seasonality_matrix', 'brain_engine_runs', 'brain_data_sources',
+        'cultural_profiles', 'demand_time_series'
+    ]
+    for table in all_p5_tables:
+        op.execute(f"ALTER TABLE {table} ALTER COLUMN id SET DEFAULT gen_random_uuid()")
+
     # ── 4. Default Data ───────────────────────────────────────────────────
     op.execute("""
     INSERT INTO brain_data_sources (tenant_id, name, type, is_active, meta)

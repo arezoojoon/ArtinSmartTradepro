@@ -286,6 +286,16 @@ def upgrade():
             WITH CHECK (tenant_id::text = current_setting('app.tenant_id', true))
         """)
 
+    # ── Ensure UUID defaults (Idempotent fix for SQLAlchemy-created tables) ─────
+    all_p6_tables = [
+        'system_admins', 'sys_audit_logs', 'sys_plans', 'tenant_subscriptions',
+        'usage_counters', 'whitelabel_configs', 'whitelabel_domains',
+        'email_templates', 'prompt_families', 'prompt_versions', 'prompt_runs',
+        'prompt_evals', 'system_settings'
+    ]
+    for table in all_p6_tables:
+        op.execute(f"ALTER TABLE {table} ALTER COLUMN id SET DEFAULT gen_random_uuid()")
+
     # ── Default Data ───────────────────────────────────────────────────────────
     op.execute("""
     INSERT INTO sys_plans (id, code, name, monthly_price_usd, features, limits) VALUES

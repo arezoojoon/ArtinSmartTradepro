@@ -134,6 +134,14 @@ def upgrade():
             USING (tenant_id::text = current_setting('app.tenant_id', true))
             WITH CHECK (tenant_id::text = current_setting('app.tenant_id', true))
         """)
+
+    # ── Ensure UUID defaults (Idempotent fix for SQLAlchemy-created tables) ─────
+    all_p4_tables = [
+        'hunter_leads', 'hunter_lead_identities', 'hunter_evidence',
+        'hunter_enrichment_jobs', 'hunter_scoring_profiles'
+    ]
+    for table in all_p4_tables:
+        op.execute(f"ALTER TABLE {table} ALTER COLUMN id SET DEFAULT gen_random_uuid()")
     
     # Enable RLS on all tables
     tables = [
