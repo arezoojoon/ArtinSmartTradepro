@@ -145,8 +145,11 @@ async def create_tenant(
         user_agent=request.headers.get("user-agent")
     )
     db.add(audit_log)
-    
     await db.commit()
+
+    # Seed Default Roles, Permissions, and Pipelines
+    from ...services.tenant_seeder import seed_new_tenant
+    await seed_new_tenant(db, tenant.id, current_user.id)
     
     return TenantResponse.model_validate(tenant)
 
