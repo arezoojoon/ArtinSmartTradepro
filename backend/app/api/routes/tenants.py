@@ -133,20 +133,6 @@ async def create_tenant(
     # Set as current tenant for user
     current_user.current_tenant_id = tenant.id
     
-    # Auto-create WhatsApp deeplink for this tenant
-    try:
-        from app.models.bot_session import BotDeeplinkRef
-        deeplink = BotDeeplinkRef(
-            ref=slug,
-            tenant_id=tenant.id,
-            label=f"Default link for {tenant.name}",
-            is_active=True
-        )
-        db.add(deeplink)
-    except Exception as e:
-        import logging
-        logging.getLogger(__name__).warning(f"Failed to create deeplink for tenant {tenant.id}: {e}")
-    
     # Log tenant creation
     audit_log = AuditLog(
         tenant_id=tenant.id,
