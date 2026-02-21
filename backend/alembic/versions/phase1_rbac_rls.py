@@ -37,28 +37,34 @@ SEED_PERMISSIONS = [
 ]
 
 # Tables that should have RLS enabled (tenant-owned)
+# MUST match __tablename__ in models exactly.
 RLS_TABLES = [
     "tenantmemberships",
     "auditlogs",
-    "crmcompanys",    # CRMCompany -> crmcompanys
-    "crmcontacts",
-    "crmconversations",
-    "crmdeals",
-    "whatsappmessages",
-    "crmcampaigns",
-    "crmcampaignsegments",
-    "crmcampaignmessages",
-    "crmfollowuprules",
-    "crmfollowupexecutions",
-    "crmrevenueattributions",
-    "hunterruns",
-    "hunterresults",
+    "crm_companies",
+    "crm_contacts",
+    "crm_pipelines",
+    "crm_deals",
+    "crm_notes",
+    "crm_tags",
+    "crm_conversations",
+    "crm_invoices",
+    "whatsapp_messages",
+    "crm_campaigns",
+    "crm_campaign_segments",
+    "crm_campaign_messages",
+    "crm_followup_rules",
+    "crm_followup_executions",
+    "crm_revenue_attributions",
+    "hunter_runs",
+    "hunter_results",
     "wallets",
-    "wallettransactions",
-    "botsessions",
-    "botevents",
-    "botdeeplinkrefs",
-    "aijobs",
+    "wallet_transactions", # Will be skipped by column check if tenant_id missing
+    "bot_sessions",
+    "bot_events",
+    "bot_deeplink_refs",
+    "ai_jobs",
+    "ai_usage",
     "roles",
     "rolepermissions",
     "userroles",
@@ -137,10 +143,13 @@ def upgrade():
     """)
 
     for table in RLS_TABLES:
-        # Safe: only enable RLS if the table actually exists
+        # Safe: only enable RLS if the table exists AND has a tenant_id column
         op.execute(f"""
             DO $$ BEGIN
-                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '{table}') THEN
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = '{table}' AND column_name = 'tenant_id'
+                ) THEN
                     EXECUTE 'ALTER TABLE {table} ENABLE ROW LEVEL SECURITY';
                     EXECUTE 'DROP POLICY IF EXISTS tenant_isolation ON {table}';
                     EXECUTE 'CREATE POLICY tenant_isolation ON {table}
