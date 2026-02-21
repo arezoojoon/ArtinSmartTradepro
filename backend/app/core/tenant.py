@@ -26,12 +26,11 @@ class TenantContext:
         self.user_id = user_id
         self.user_role = user_role
 
-from ..api.deps import get_current_user
 
 async def get_tenant_context(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-) -> TenantContext:
+    current_user = None,
+    db: AsyncSession = None,
+) -> "TenantContext":
     """
     Get tenant context for the current user.
     Uses user.current_tenant_id if set, otherwise validates tenant membership.
