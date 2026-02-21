@@ -63,6 +63,7 @@ services:
       start_period: 15s
     volumes:
       - ./backend:/app
+    command: [ "/bin/bash", "/app/entrypoint.sh" ]
     deploy:
       resources:
         limits:
