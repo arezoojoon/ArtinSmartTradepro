@@ -1,179 +1,120 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Plus, Search, Phone, Mail, Building, MapPin, Star } from "lucide-react"
-import Link from "next/link"
+import { useState, useEffect } from "react";
+import { Plus, Search, Filter, MoreHorizontal, User, Mail, Phone, MapPin, Building2 } from "lucide-react";
+import { BASE_URL } from "@/lib/api";
 
 export default function ContactsPage() {
-    const [contacts, setContacts] = useState<any[]>([])
-    const [searchTerm, setSearchTerm] = useState("")
+    const [contacts, setContacts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState("");
 
     useEffect(() => {
-        // Dummy data for now
-        setContacts([
-            {
-                id: 1,
-                name: "Ahmed Hassan",
-                email: "ahmed@example.com",
-                phone: "+971 50 123 4567",
-                company: "Gulf Trading Co",
-                location: "Dubai, UAE",
-                status: "active",
-                rating: 4.5,
-                tags: ["VIP", "Supplier"]
-            },
-            {
-                id: 2,
-                name: "Sarah Johnson",
-                email: "sarah@globalcorp.com",
-                phone: "+971 55 987 6543",
-                company: "Global Corporation",
-                location: "Abu Dhabi, UAE",
-                status: "lead",
-                rating: 3.8,
-                tags: ["Potential Client"]
-            },
-            {
-                id: 3,
-                name: "Mohammed Ali",
-                email: "mohammed@logistics.ae",
-                phone: "+971 56 456 7890",
-                company: "Fast Logistics",
-                location: "Sharjah, UAE",
-                status: "active",
-                rating: 4.2,
-                tags: ["Partner", "Logistics"]
+        fetchContacts();
+    }, [search]);
+
+    const fetchContacts = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem("access_token");
+            const query = search ? `?search=${search}` : "";
+            const res = await fetch(`${BASE_URL}/crm/contacts${query}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setContacts(data.contacts || []);
             }
-        ])
-    }, [])
-
-    const filteredContacts = contacts.filter(contact =>
-        contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.company.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'active': return 'default'
-            case 'lead': return 'secondary'
-            default: return 'outline'
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
-    }
-
-    const renderStars = (rating: number) => {
-        return Array.from({ length: 5 }, (_, i) => (
-            <Star
-                key={i}
-                className={`h-3 w-3 ${
-                    i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                }`}
-            />
-        ))
-    }
+    };
 
     return (
-        <div className="flex flex-col gap-6 p-6">
-            <div className="flex justify-between items-center">
+        <div className="p-6 max-w-7xl mx-auto">
+            <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-3xl font-bold">Contacts</h1>
-                    <p className="text-muted-foreground">Manage your business contacts</p>
+                    <h1 className="text-2xl font-bold text-white">Contacts</h1>
+                    <p className="text-sm text-navy-400">Manage individual people and connections</p>
                 </div>
-                <Button>
-                    <Plus className="h-4 w-4 mr-2" />
+                <button className="flex items-center gap-2 px-4 py-2 bg-gold-400 text-navy-950 rounded-lg font-semibold hover:bg-gold-500 transition-colors">
+                    <Plus className="h-4 w-4" />
                     Add Contact
-                </Button>
+                </button>
             </div>
 
-            <div className="flex gap-4">
-                <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search contacts..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
+            <div className="mb-6 flex gap-4">
+                <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-navy-400" />
+                    <input
+                        type="text"
+                        placeholder="Search contacts by name, email, or phone..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 bg-navy-900 border border-navy-700 rounded-lg text-white focus:border-gold-400 focus:outline-none"
                     />
                 </div>
+                <button className="flex items-center gap-2 px-4 py-2 bg-navy-800 border border-navy-700 rounded-lg text-navy-300 hover:bg-navy-700">
+                    <Filter className="h-4 w-4" />
+                    Filters
+                </button>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredContacts.map((contact) => (
-                    <Card key={contact.id} className="hover:shadow-lg transition-shadow">
-                        <CardHeader>
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <CardTitle className="text-lg">{contact.name}</CardTitle>
-                                    <CardDescription className="flex items-center gap-1">
-                                        <Building className="h-3 w-3" />
-                                        {contact.company}
-                                    </CardDescription>
-                                </div>
-                                <Badge variant={getStatusColor(contact.status)}>
-                                    {contact.status}
-                                </Badge>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                {renderStars(contact.rating)}
-                                <span className="text-xs text-muted-foreground ml-1">
-                                    {contact.rating}
-                                </span>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <Mail className="h-4 w-4" />
-                                    <span>{contact.email}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <Phone className="h-4 w-4" />
-                                    <span>{contact.phone}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <MapPin className="h-4 w-4" />
-                                    <span>{contact.location}</span>
-                                </div>
-                                <div className="flex flex-wrap gap-1 pt-2">
-                                    {contact.tags.map((tag: string) => (
-                                        <Badge key={tag} variant="outline" className="text-xs">
-                                            {tag}
-                                        </Badge>
-                                    ))}
-                                </div>
-                                <div className="flex gap-2 pt-2">
-                                    <Button variant="outline" size="sm" className="flex-1">
-                                        View
-                                    </Button>
-                                    <Button size="sm" className="flex-1">
-                                        Edit
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                ))}
+            <div className="bg-navy-900 border border-navy-800 rounded-xl overflow-hidden">
+                <table className="w-full text-left text-sm">
+                    <thead className="bg-navy-950 text-navy-400">
+                        <tr>
+                            <th className="px-6 py-4 font-medium">Name</th>
+                            <th className="px-6 py-4 font-medium">Contact Info</th>
+                            <th className="px-6 py-4 font-medium">Position</th>
+                            <th className="px-6 py-4 font-medium relative"><span className="sr-only">Actions</span></th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-navy-800">
+                        {loading ? (
+                            <tr><td colSpan={4} className="px-6 py-8 text-center text-navy-500">Loading contacts...</td></tr>
+                        ) : contacts.length === 0 ? (
+                            <tr><td colSpan={4} className="px-6 py-8 text-center text-navy-500">No contacts found</td></tr>
+                        ) : (
+                            contacts.map((contact: any) => (
+                                <tr key={contact.id} className="hover:bg-navy-800/50 transition-colors group">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-full bg-navy-700 flex items-center justify-center text-white">
+                                                <User className="h-4 w-4" />
+                                            </div>
+                                            <div>
+                                                <div className="font-medium text-white">{contact.first_name} {contact.last_name}</div>
+                                                <div className="text-xs text-navy-400 flex items-center gap-1 mt-0.5"><Building2 className="h-3 w-3" /> {contact.company?.name || "No Company"}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="space-y-1">
+                                            {contact.email && <div className="flex items-center gap-2 text-navy-300"><Mail className="h-3 w-3" /> {contact.email}</div>}
+                                            {contact.phone && <div className="flex items-center gap-2 text-navy-300"><Phone className="h-3 w-3" /> {contact.phone}</div>}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-navy-300">
+                                        {contact.position ? (
+                                            <div className="px-2.5 py-1 rounded-full bg-navy-800 border border-navy-700 text-xs inline-block">
+                                                {contact.position}
+                                            </div>
+                                        ) : "-"}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <button className="p-2 hover:bg-navy-700 rounded-lg text-navy-400 hover:text-white opacity-0 group-hover:opacity-100 transition-all">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
-
-            {filteredContacts.length === 0 && (
-                <div className="text-center py-12">
-                    <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No contacts found</h3>
-                    <p className="text-muted-foreground mb-4">
-                        {searchTerm ? "Try adjusting your search terms" : "Add your first contact to get started"}
-                    </p>
-                    {!searchTerm && (
-                        <Button>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Contact
-                        </Button>
-                    )}
-                </div>
-            )}
         </div>
-    )
+    );
 }
