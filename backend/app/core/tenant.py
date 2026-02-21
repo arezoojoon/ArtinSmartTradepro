@@ -1,5 +1,5 @@
-from typing import Optional
-from fastapi import HTTPException, status, Depends
+from typing import Optional, Callable
+from fastapi import HTTPException, status, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -27,10 +27,40 @@ class TenantContext:
         self.user_role = user_role
 
 
+# ---------------------------------------------------------------------------
+# Lazy current-user dependency to break circular import with app.api.deps.
+# We duplicate the auth logic here so tenant.py never imports deps.py.
+# ---------------------------------------------------------------------------
+
+async def _current_user_for_tenant(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """Resolve current user — self-contained to avoid circular import with deps."""
+    token = credentials.credentials
+    payload = verify_token(token, "access")
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    user_id = payload.get("sub")
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
+
+
 async def get_tenant_context(
-    current_user = None,
-    db: AsyncSession = None,
-) -> "TenantContext":
+    current_user: User = Depends(_current_user_for_tenant),
+    db: AsyncSession = Depends(get_db),
+) -> TenantContext:
     """
     Get tenant context for the current user.
     Uses user.current_tenant_id if set, otherwise validates tenant membership.
@@ -86,10 +116,6 @@ async def get_tenant_context(
     )
 
 
-
-from typing import Callable
-from fastapi import Depends, HTTPException, status
-
 # Role-specific dependencies - create proper callable dependencies
 def require_tenant_role(*allowed_roles: str) -> Callable:
     """Factory function to create role-based dependencies."""
@@ -121,5 +147,4 @@ class BaseTenantModel:
     @classmethod
     def get_tenant_scoped_query(cls, tenant_id: str):
         """Get a query scoped to the specified tenant."""
-        # This will be implemented in model classes
         pass
