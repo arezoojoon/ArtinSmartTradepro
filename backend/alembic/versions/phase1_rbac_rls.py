@@ -137,17 +137,17 @@ def upgrade():
     """)
 
     for table in RLS_TABLES:
-        # Enable RLS (safe to call multiple times)
-        op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY;")
-
-        # Drop existing policy if any (idempotent)
-        op.execute(f"DROP POLICY IF EXISTS tenant_isolation ON {table};")
-
-        # Create tenant isolation policy
+        # Safe: only enable RLS if the table actually exists
         op.execute(f"""
-            CREATE POLICY tenant_isolation ON {table}
-            USING (tenant_id::text = current_setting('app.tenant_id', true))
-            WITH CHECK (tenant_id::text = current_setting('app.tenant_id', true));
+            DO $$ BEGIN
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '{table}') THEN
+                    EXECUTE 'ALTER TABLE {table} ENABLE ROW LEVEL SECURITY';
+                    EXECUTE 'DROP POLICY IF EXISTS tenant_isolation ON {table}';
+                    EXECUTE 'CREATE POLICY tenant_isolation ON {table}
+                        USING (tenant_id::text = current_setting(''app.tenant_id'', true))
+                        WITH CHECK (tenant_id::text = current_setting(''app.tenant_id'', true))';
+                END IF;
+            END $$;
         """)
 
 

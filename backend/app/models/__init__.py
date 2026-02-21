@@ -5,6 +5,7 @@ from .auth import Session, PasswordResetToken, EmailVerificationToken
 from .billing import Wallet, WalletTransaction, BillingCustomer, Invoice
 from .subscription import Subscription, Plan, PlanFeature
 from .audit import AuditLog
+from .whatsapp import WhatsAppMessage   # needed for Tenant.whatsapp_messages relationship
 # Phase 6 models
 from .phase6 import (
     SystemAdmin,
