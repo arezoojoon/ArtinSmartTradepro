@@ -44,9 +44,10 @@ def validate_password(password: str) -> tuple[bool, str]:
 
 def create_access_token(
     subject: Union[str, Any], 
-    expires_delta: Optional[timedelta] = None
+    expires_delta: Optional[timedelta] = None,
+    extra_claims: Optional[dict] = None
 ) -> str:
-    """Create JWT access token."""
+    """Create JWT access token with optional extra claims (like tenant_id, roles)."""
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
@@ -55,12 +56,16 @@ def create_access_token(
         )
     
     to_encode = {"exp": expire, "sub": str(subject), "type": "access"}
+    if extra_claims:
+        to_encode.update(extra_claims)
+        
     encoded_jwt = jwt.encode(
         to_encode, 
         settings.SECRET_KEY, 
         algorithm="HS256"
     )
     return encoded_jwt
+
 
 
 def create_refresh_token(
@@ -91,8 +96,8 @@ def create_refresh_token(
     return encoded_jwt
 
 
-def verify_token(token: str, token_type: str = "access") -> Optional[str]:
-    """Verify JWT token and return subject."""
+def verify_token(token: str, token_type: str = "access") -> Optional[dict]:
+    """Verify JWT token and return payload."""
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         user_id: str = payload.get("sub")
@@ -101,7 +106,7 @@ def verify_token(token: str, token_type: str = "access") -> Optional[str]:
         if user_id is None or token_type_in_token != token_type:
             return None
             
-        return user_id
+        return payload
     except JWTError:
         return None
 

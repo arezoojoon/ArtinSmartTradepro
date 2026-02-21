@@ -11,20 +11,27 @@ from ..core.tenant import get_tenant_context, TenantContext
 security = HTTPBearer()
 
 
+from fastapi import Request
+
 async def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: AsyncSession = Depends(get_db)
 ) -> User:
-    """Get current authenticated user."""
+    """Get current authenticated user and initialize DB context."""
     token = credentials.credentials
-    user_id = verify_token(token, "access")
+    payload = verify_token(token, "access")
     
-    if user_id is None:
+    if payload is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+        
+    user_id = payload.get("sub")
+    tenant_id = payload.get("tenant_id")
+    roles = payload.get("roles", [])
     
     from sqlalchemy import select
     result = await db.execute(
@@ -38,6 +45,16 @@ async def get_current_user(
             detail="User not found",
             headers={"WWW-Authenticate": "Bearer"},
         )
+        
+    # Inject tenant context for RLS (if present in token)
+    if tenant_id:
+        from ..middleware.tenant import set_tenant_context
+        set_tenant_context(tenant_id)
+        
+    # Save token roles to user instance and request state
+    user._jwt_roles = roles
+    request.state.user = user
+    request.state.tenant_id = tenant_id
     
     return user
 

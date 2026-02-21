@@ -149,9 +149,27 @@ async def login(
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     
+    # Get user roles and tenant context
+    extra_claims = {}
+    if user.is_superuser:
+        extra_claims["roles"] = ["super_admin"]
+    elif user.current_tenant_id:
+        from ...models.rbac import UserRole, Role
+        roles_query = await db.execute(
+            select(Role.name)
+            .join(UserRole, UserRole.role_id == Role.id)
+            .where(
+                UserRole.user_id == user.id,
+                Role.tenant_id == user.current_tenant_id
+            )
+        )
+        extra_claims["tenant_id"] = str(user.current_tenant_id)
+        extra_claims["roles"] = [r[0] for r in roles_query.all()]
+
     access_token = create_access_token(
         subject=str(user.id), 
-        expires_delta=access_token_expires
+        expires_delta=access_token_expires,
+        extra_claims=extra_claims
     )
     refresh_token = create_refresh_token(
         subject=str(user.id), 
@@ -237,19 +255,54 @@ async def refresh_token(
             detail="User not found or inactive"
         )
     
+    # Get user roles and tenant context
+    extra_claims = {}
+    if user.is_superuser:
+        extra_claims["roles"] = ["super_admin"]
+    elif user.current_tenant_id:
+        from ...models.rbac import UserRole, Role
+        roles_query = await db.execute(
+            select(Role.name)
+            .join(UserRole, UserRole.role_id == Role.id)
+            .where(
+                UserRole.user_id == user.id,
+                Role.tenant_id == user.current_tenant_id
+            )
+        )
+        extra_claims["tenant_id"] = str(user.current_tenant_id)
+        extra_claims["roles"] = [r[0] for r in roles_query.all()]
+
     # Create new access token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         subject=str(user.id), 
-        expires_delta=access_token_expires
+        expires_delta=access_token_expires,
+        extra_claims=extra_claims
     )
+    
+    # Token rotation: create new refresh token
+    refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    new_refresh_token = create_refresh_token(
+        subject=str(user.id), 
+        expires_delta=refresh_token_expires
+    )
+    new_token_hash = hashlib.sha256(new_refresh_token.encode()).hexdigest()
+
+    # Revoke old session and create new one
+    await db.execute(delete(Session).where(Session.id == session.id))
+    new_session = Session(
+        user_id=user.id,
+        token_hash=new_token_hash,
+        expires_at=datetime.utcnow() + refresh_token_expires
+    )
+    db.add(new_session)
     
     # Log token refresh
     audit_log = AuditLog(
         actor_user_id=user.id,
-        action="token_refresh",
+        action="token_refresh_rotation",
         resource_type="session",
-        resource_id=str(session.id),
+        resource_id=str(new_session.id),
         ip_address=request.client.host,
         user_agent=request.headers.get("user-agent")
     )
@@ -258,7 +311,7 @@ async def refresh_token(
     
     return TokenResponse(
         access_token=access_token,
-        refresh_token=token_data.refresh_token,  # Return same refresh token
+        refresh_token=new_refresh_token,
         token_type="bearer",
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )

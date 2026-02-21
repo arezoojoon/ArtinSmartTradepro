@@ -17,3 +17,9 @@ from app.models.followup import CRMFollowUpRule, CRMFollowUpExecution, CRMRevenu
 from app.models.hunter import HunterRun, HunterResult, TradeSignal
 from app.models.bot_session import BotSession, BotEvent, BotDeeplinkRef
 from app.models.ai_job import AIJob
+
+# Phase 1: RBAC + Audit
+from app.models.rbac import Permission, Role, RolePermission, UserRole
+from app.models.audit import AuditLog
+from app.models.auth import Session, PasswordResetToken, EmailVerificationToken
+
