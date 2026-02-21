@@ -16,8 +16,7 @@ class SendMessageRequest(BaseModel):
     content: str
     template_name: str = "hello_world"
 
-@router.post("/send")
-@require_permissions(["whatsapp.write"])
+@router.post("/send", dependencies=[Depends(require_permissions(["whatsapp.write"]))])
 @precheck_balance(cost=0.5) # UX precheck only – DO NOT RELY ON THIS FOR SECURITY
 async def send_message(
     request: SendMessageRequest,
@@ -122,8 +121,7 @@ async def send_message(
         
         raise HTTPException(status_code=500, detail=f"Message sending failed. Credits refunded.")
 
-@router.get("/conversations")
-@require_permissions(["whatsapp.read"])
+@router.get("/conversations", dependencies=[Depends(require_permissions(["whatsapp.read"]))])
 async def get_conversations(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -138,8 +136,7 @@ async def get_conversations(
     convs = res.scalars().all()
     return convs
 
-@router.get("/conversations/{conversation_id}/messages")
-@require_permissions(["whatsapp.read"])
+@router.get("/conversations/{conversation_id}/messages", dependencies=[Depends(require_permissions(["whatsapp.read"]))])
 async def get_messages(
     conversation_id: str,
     current_user: User = Depends(get_current_user),

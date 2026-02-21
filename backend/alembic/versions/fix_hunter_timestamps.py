@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'fix_hunter_timestamps'
-down_revision = 'cfacfe91159d'
+down_revision = 'add_tenantmemberships_timestamps'
 branch_labels = None
 depends_on = None
 

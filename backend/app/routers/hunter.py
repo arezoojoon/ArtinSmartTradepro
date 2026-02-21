@@ -25,8 +25,7 @@ class ScrapeRequest(BaseModel):
 class ImportRequest(BaseModel):
     result_id: str
 
-@router.post("/start")
-@require_permissions(["hunter.write"])
+@router.post("/start", dependencies=[Depends(require_permissions(["hunter.write"]))])
 async def start_hunt(
     request: ScrapeRequest,
     current_user: User = Depends(get_current_user),
@@ -63,8 +62,7 @@ async def start_hunt(
         "active_sources": request.sources
     }
 
-@router.get("/status/{job_id}")
-@require_permissions(["hunter.read"])
+@router.get("/status/{job_id}", dependencies=[Depends(require_permissions(["hunter.read"]))])
 async def get_job_status(
     job_id: str,
     current_user: User = Depends(get_current_user),
@@ -84,8 +82,7 @@ async def get_job_status(
         "completed_at": job.completed_at
     }
 
-@router.get("/results/{job_id}")
-@require_permissions(["hunter.read"])
+@router.get("/results/{job_id}", dependencies=[Depends(require_permissions(["hunter.read"]))])
 async def get_job_results(
     job_id: str,
     current_user: User = Depends(get_current_user),
@@ -100,8 +97,7 @@ async def get_job_results(
     results = res_results.scalars().all()
     return results
 
-@router.post("/import-to-crm")
-@require_permissions(["hunter.write"])
+@router.post("/import-to-crm", dependencies=[Depends(require_permissions(["hunter.write"]))])
 async def import_lead(
     req: ImportRequest,
     current_user: User = Depends(get_current_user),
@@ -128,8 +124,7 @@ class CompetitorCreate(BaseModel):
     country: Optional[str] = None
     industry_tags: List[str] = []
 
-@router.post("/competitors")
-@require_permissions(["hunter.write"])
+@router.post("/competitors", dependencies=[Depends(require_permissions(["hunter.write"]))])
 async def create_competitor(
     comp: CompetitorCreate,
     current_user: User = Depends(get_current_user),
@@ -147,8 +142,7 @@ async def create_competitor(
     await db.refresh(new_comp)
     return new_comp
 
-@router.get("/competitors")
-@require_permissions(["hunter.read"])
+@router.get("/competitors", dependencies=[Depends(require_permissions(["hunter.read"]))])
 async def get_competitors(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -156,8 +150,7 @@ async def get_competitors(
     res = await db.execute(select(Competitor).where(Competitor.tenant_id == current_user.current_tenant_id))
     return res.scalars().all()
 
-@router.post("/competitors/{id}/track")
-@require_permissions(["hunter.write"])
+@router.post("/competitors/{id}/track", dependencies=[Depends(require_permissions(["hunter.write"]))])
 async def track_competitor(
     id: str,
     current_user: User = Depends(get_current_user),
@@ -171,8 +164,7 @@ async def track_competitor(
     )
     return {"status": "queued", "message": "Competitor tracking started."}
 
-@router.get("/competitors/{id}/products")
-@require_permissions(["hunter.read"])
+@router.get("/competitors/{id}/products", dependencies=[Depends(require_permissions(["hunter.read"]))])
 async def get_competitor_products(
     id: str,
     current_user: User = Depends(get_current_user),
@@ -184,8 +176,7 @@ async def get_competitor_products(
     ))
     return res.scalars().all()
 
-@router.get("/market-share/analyze")
-@require_permissions(["hunter.read"])
+@router.get("/market-share/analyze", dependencies=[Depends(require_permissions(["hunter.read"]))])
 async def analyze_market_share(
     competitor_id: str,
     current_user: User = Depends(get_current_user),
@@ -194,8 +185,7 @@ async def analyze_market_share(
     snapshot = await CompetitorService.analyze_market_share(db, uuid.UUID(competitor_id), current_user.current_tenant_id)
     return snapshot
 
-@router.get("/price-decision")
-@require_permissions(["hunter.read"])
+@router.get("/price-decision", dependencies=[Depends(require_permissions(["hunter.read"]))])
 async def get_price_decision(
     my_price: float,
     keyword: str,

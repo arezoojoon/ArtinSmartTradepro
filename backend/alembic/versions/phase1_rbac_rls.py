@@ -16,7 +16,7 @@ import uuid
 
 # revision identifiers
 revision = 'phase1_rbac_rls'
-down_revision = None
+down_revision = 'fix_hunter_timestamps'
 branch_labels = None
 depends_on = None
 
