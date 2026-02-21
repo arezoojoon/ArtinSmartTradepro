@@ -143,7 +143,7 @@ def write_sys_audit(
     tenant_id: Optional[UUID] = None,
     before_state: Optional[dict] = None,
     after_state: Optional[dict] = None,
-    metadata: Optional[dict] = None,
+    metadata: Optional[dict] = None,   # kept for call-site compat; mapped to .extra
     ip_address: Optional[str] = None,
     user_agent: Optional[str] = None,
 ) -> None:
@@ -156,7 +156,7 @@ def write_sys_audit(
         resource_id=resource_id,
         before_state=before_state,
         after_state=after_state,
-        metadata=metadata or {"sys_admin_id": str(actor_sys_admin_id), "operation": action},
+        extra=metadata or {"sys_admin_id": str(actor_sys_admin_id), "operation": action},
         ip_address=ip_address,
         user_agent=user_agent,
     )

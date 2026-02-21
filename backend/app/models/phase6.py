@@ -68,7 +68,7 @@ class SysAuditLog(Base):
     resource_id        = Column(String(255), nullable=True)
     before_state       = Column(JSON, nullable=True)
     after_state        = Column(JSON, nullable=True)
-    metadata           = Column(JSON, nullable=True)
+    extra              = Column("metadata", JSON, nullable=True)   # DB col: metadata
     ip_address         = Column(String(45),  nullable=True)
     user_agent         = Column(String(500), nullable=True)
 
