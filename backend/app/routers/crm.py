@@ -1,35 +1,41 @@
 """
 CRM Router — CRUD for Contacts, Companies, Pipelines, Deals, Notes, Tags.
-All endpoints require authentication and tenant scoping.
-Advanced features gated to CRM_ADVANCED plan.
+Phase 1 Architecture: Uses Async DB, RLS injection, RBAC guards, and Audit Logging.
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from app.database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func, delete, or_
+from pydantic import BaseModel
+from typing import Optional, List
+from uuid import UUID
+import datetime
+
+from app.db.session import get_db
 from app.models.user import User
 from app.models.crm import (
     CRMCompany, CRMContact, CRMPipeline, CRMDeal,
     CRMNote, CRMTag, CRMConversation
 )
-from app.middleware.auth import get_current_active_user
-from app.middleware.plan_gate import require_feature
-from app.constants import Feature
-from pydantic import BaseModel, EmailStr
-from typing import Optional, List
-from uuid import UUID
+from app.api.deps import get_current_user
+from app.core.rbac import require_permissions
+from app.services.audit_service import log_audit_async
 
 router = APIRouter()
 
 
-def _assert_owned(db: Session, model, entity_id, tenant_id, label: str):
-    obj = db.query(model).filter(model.id == entity_id, model.tenant_id == tenant_id).first()
+async def _assert_owned(db: AsyncSession, model, entity_id: UUID, tenant_id: UUID, label: str):
+    """
+    Since RLS is enabled via session context, just filtering by ID
+    is sufficient to guarantee it belongs to the tenant.
+    """
+    result = await db.execute(select(model).where(model.id == entity_id))
+    obj = result.scalar_one_or_none()
     if not obj:
         raise HTTPException(status_code=404, detail=f"{label} not found")
     return obj
 
 
-# ─── Schemas ──────────────────────────────────────────────────────────
+# ─── Pydantic Schemas ─────────────────────────────────────────────────
 
 class ContactCreate(BaseModel):
     first_name: str
@@ -38,8 +44,7 @@ class ContactCreate(BaseModel):
     phone: Optional[str] = None
     company_id: Optional[UUID] = None
     position: Optional[str] = None
-    source: Optional[str] = "manual"
-    notes: Optional[str] = None
+    linkedin_url: Optional[str] = None
 
 class ContactUpdate(BaseModel):
     first_name: Optional[str] = None
@@ -48,526 +53,482 @@ class ContactUpdate(BaseModel):
     phone: Optional[str] = None
     company_id: Optional[UUID] = None
     position: Optional[str] = None
-    source: Optional[str] = None
+    linkedin_url: Optional[str] = None
 
 class CompanyCreate(BaseModel):
     name: str
     website: Optional[str] = None
     industry: Optional[str] = None
+    size: Optional[str] = None
     country: Optional[str] = None
     city: Optional[str] = None
+    address: Optional[str] = None
+    linkedin_url: Optional[str] = None
 
 class CompanyUpdate(BaseModel):
     name: Optional[str] = None
     website: Optional[str] = None
     industry: Optional[str] = None
+    size: Optional[str] = None
     country: Optional[str] = None
     city: Optional[str] = None
+    address: Optional[str] = None
+    linkedin_url: Optional[str] = None
 
 class PipelineCreate(BaseModel):
     name: str
-    stages: Optional[list] = ["Lead", "Contacted", "Proposal", "Negotiation", "Won", "Lost"]
+    stages: Optional[list] = [
+        {"id": "lead", "name": "Lead"},
+        {"id": "contacted", "name": "Contacted"},
+        {"id": "proposal", "name": "Proposal"},
+        {"id": "won", "name": "Won"},
+        {"id": "lost", "name": "Lost"}
+    ]
 
 class DealCreate(BaseModel):
-    title: str
-    contact_id: UUID
+    name: str
+    contact_id: Optional[UUID] = None
+    company_id: Optional[UUID] = None
     pipeline_id: UUID
-    stage: Optional[str] = "Lead"
+    stage_id: str
     value: Optional[float] = 0.0
     currency: Optional[str] = "AED"
+    probability: Optional[float] = 0.5
+    expected_close_date: Optional[datetime.datetime] = None
 
 class DealUpdate(BaseModel):
-    title: Optional[str] = None
-    stage: Optional[str] = None
+    name: Optional[str] = None
+    stage_id: Optional[str] = None
     value: Optional[float] = None
+    probability: Optional[float] = None
+    status: Optional[str] = None  # open, won, lost
+    expected_close_date: Optional[datetime.datetime] = None
 
 class NoteCreate(BaseModel):
     contact_id: Optional[UUID] = None
     deal_id: Optional[UUID] = None
-    body: str
-
-class TagCreate(BaseModel):
-    name: str
-    color: Optional[str] = "#3B82F6"
+    company_id: Optional[UUID] = None
+    content: str
 
 
 # ─── Contacts ─────────────────────────────────────────────────────────
 
-@router.get("/contacts")
-@require_feature(Feature.CRM_BASIC)
+@router.get("/contacts", dependencies=[Depends(require_permissions(["crm.read"]))])
 async def list_contacts(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     search: Optional[str] = None,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """List contacts for current tenant with optional search."""
-    query = db.query(CRMContact).filter(CRMContact.tenant_id == current_user.tenant_id)
+    """List contacts (RLS automatically isolates to tenant)."""
+    stmt = select(CRMContact)
     if search:
         search_filter = f"%{search}%"
-        query = query.filter(
-            (CRMContact.first_name.ilike(search_filter)) |
-            (CRMContact.last_name.ilike(search_filter)) |
-            (CRMContact.email.ilike(search_filter)) |
-            (CRMContact.phone.ilike(search_filter))
+        stmt = stmt.where(
+            or_(
+                CRMContact.first_name.ilike(search_filter),
+                CRMContact.last_name.ilike(search_filter),
+                CRMContact.email.ilike(search_filter),
+                CRMContact.phone.ilike(search_filter)
+            )
         )
-    total = query.count()
-    contacts = query.order_by(CRMContact.created_at.desc()).offset(skip).limit(limit).all()
+    
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    total = (await db.execute(count_stmt)).scalar() or 0
+    
+    contacts = (await db.execute(
+        stmt.order_by(CRMContact.created_at.desc()).offset(skip).limit(limit)
+    )).scalars().all()
+    
     return {"total": total, "contacts": contacts}
 
 
-@router.post("/contacts")
-@require_feature(Feature.CRM_BASIC)
+@router.post("/contacts", dependencies=[Depends(require_permissions(["crm.write"]))])
 async def create_contact(
     data: ContactCreate,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Create a new contact."""
     if data.company_id:
-        _assert_owned(db, CRMCompany, data.company_id, current_user.tenant_id, "Company")
+        await _assert_owned(db, CRMCompany, data.company_id, current_user.current_tenant_id, "Company")
 
     contact = CRMContact(
-        tenant_id=current_user.tenant_id,
+        tenant_id=current_user.current_tenant_id,
         first_name=data.first_name,
         last_name=data.last_name,
         email=data.email,
         phone=data.phone,
         company_id=data.company_id,
         position=data.position,
-        source=data.source,
+        linkedin_url=data.linkedin_url,
     )
     db.add(contact)
-    db.commit()
-    db.refresh(contact)
+    await db.commit()
+    await db.refresh(contact)
+    
+    await log_audit_async(
+        db, tenant_id=current_user.current_tenant_id, actor_user_id=current_user.id,
+        action="crm_contact_created", resource_type="crm_contact", resource_id=str(contact.id)
+    )
+    await db.commit()
+    
     return contact
 
 
-@router.get("/contacts/{contact_id}")
-@require_feature(Feature.CRM_BASIC)
-async def get_contact(
-    contact_id: UUID,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
-):
-    """Get single contact by ID."""
-    contact = db.query(CRMContact).filter(
-        CRMContact.id == contact_id,
-        CRMContact.tenant_id == current_user.tenant_id,
-    ).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-    return contact
-
-
-@router.put("/contacts/{contact_id}")
-@require_feature(Feature.CRM_BASIC)
+@router.put("/contacts/{contact_id}", dependencies=[Depends(require_permissions(["crm.write"]))])
 async def update_contact(
     contact_id: UUID,
     data: ContactUpdate,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Update a contact."""
-    contact = db.query(CRMContact).filter(
-        CRMContact.id == contact_id,
-        CRMContact.tenant_id == current_user.tenant_id,
-    ).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
+    contact = await _assert_owned(db, CRMContact, contact_id, current_user.current_tenant_id, "Contact")
 
     for field, value in data.dict(exclude_unset=True).items():
         setattr(contact, field, value)
 
-    db.commit()
-    db.refresh(contact)
+    await db.commit()
+    await db.refresh(contact)
+    
+    await log_audit_async(
+        db, tenant_id=current_user.current_tenant_id, actor_user_id=current_user.id,
+        action="crm_contact_updated", resource_type="crm_contact", resource_id=str(contact.id)
+    )
+    await db.commit()
+    
     return contact
 
 
-@router.delete("/contacts/{contact_id}")
-@require_feature(Feature.CRM_BASIC)
+@router.delete("/contacts/{contact_id}", dependencies=[Depends(require_permissions(["crm.admin"]))])
 async def delete_contact(
     contact_id: UUID,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Delete a contact."""
-    contact = db.query(CRMContact).filter(
-        CRMContact.id == contact_id,
-        CRMContact.tenant_id == current_user.tenant_id,
-    ).first()
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-
-    db.delete(contact)
-    db.commit()
+    contact = await _assert_owned(db, CRMContact, contact_id, current_user.current_tenant_id, "Contact")
+    await db.delete(contact)
+    
+    await log_audit_async(
+        db, tenant_id=current_user.current_tenant_id, actor_user_id=current_user.id,
+        action="crm_contact_deleted", resource_type="crm_contact", resource_id=str(contact_id)
+    )
+    await db.commit()
     return {"detail": "Contact deleted"}
 
 
 # ─── Companies ────────────────────────────────────────────────────────
 
-@router.get("/companies")
-@require_feature(Feature.CRM_BASIC)
+@router.get("/companies", dependencies=[Depends(require_permissions(["crm.read"]))])
 async def list_companies(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """List companies for current tenant."""
-    query = db.query(CRMCompany).filter(CRMCompany.tenant_id == current_user.tenant_id)
-    total = query.count()
-    companies = query.order_by(CRMCompany.created_at.desc()).offset(skip).limit(limit).all()
+    stmt = select(CRMCompany)
+    total = (await db.execute(select(func.count()).select_from(CRMCompany))).scalar() or 0
+    companies = (await db.execute(
+        stmt.order_by(CRMCompany.created_at.desc()).offset(skip).limit(limit)
+    )).scalars().all()
+    
     return {"total": total, "companies": companies}
 
 
-@router.post("/companies")
-@require_feature(Feature.CRM_BASIC)
+@router.post("/companies", dependencies=[Depends(require_permissions(["crm.write"]))])
 async def create_company(
     data: CompanyCreate,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Create a new company."""
     company = CRMCompany(
-        tenant_id=current_user.tenant_id,
+        tenant_id=current_user.current_tenant_id,
         name=data.name,
         website=data.website,
         industry=data.industry,
         country=data.country,
         city=data.city,
+        size=data.size,
+        address=data.address,
+        linkedin_url=data.linkedin_url,
     )
     db.add(company)
-    db.commit()
-    db.refresh(company)
+    await db.commit()
+    await db.refresh(company)
+    
+    await log_audit_async(
+        db, tenant_id=current_user.current_tenant_id, actor_user_id=current_user.id,
+        action="crm_company_created", resource_type="crm_company", resource_id=str(company.id)
+    )
+    await db.commit()
     return company
-
-
-@router.get("/companies/{company_id}")
-@require_feature(Feature.CRM_BASIC)
-async def get_company(
-    company_id: UUID,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
-):
-    """Get single company by ID."""
-    company = db.query(CRMCompany).filter(
-        CRMCompany.id == company_id,
-        CRMCompany.tenant_id == current_user.tenant_id,
-    ).first()
-    if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
-    return company
-
-
-@router.put("/companies/{company_id}")
-@require_feature(Feature.CRM_BASIC)
-async def update_company(
-    company_id: UUID,
-    data: CompanyUpdate,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
-):
-    """Update a company."""
-    company = db.query(CRMCompany).filter(
-        CRMCompany.id == company_id,
-        CRMCompany.tenant_id == current_user.tenant_id,
-    ).first()
-    if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
-
-    for field, value in data.dict(exclude_unset=True).items():
-        setattr(company, field, value)
-
-    db.commit()
-    db.refresh(company)
-    return company
-
-
-@router.delete("/companies/{company_id}")
-@require_feature(Feature.CRM_BASIC)
-async def delete_company(
-    company_id: UUID,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
-):
-    """Delete a company."""
-    company = db.query(CRMCompany).filter(
-        CRMCompany.id == company_id,
-        CRMCompany.tenant_id == current_user.tenant_id,
-    ).first()
-    if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
-    db.delete(company)
-    db.commit()
-    return {"detail": "Company deleted"}
 
 
 # ─── Pipelines ────────────────────────────────────────────────────────
 
-@router.get("/pipelines")
-@require_feature(Feature.CRM_ADVANCED)
+@router.get("/pipelines", dependencies=[Depends(require_permissions(["crm.read"]))])
 async def list_pipelines(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """List pipelines for current tenant."""
-    query = db.query(CRMPipeline).filter(
-        CRMPipeline.tenant_id == current_user.tenant_id
-    )
-    total = query.count()
-    pipelines = query.offset(skip).limit(limit).all()
-    return {"total": total, "pipelines": pipelines}
+    stmt = select(CRMPipeline).order_by(CRMPipeline.created_at.asc())
+    pipelines = (await db.execute(stmt)).scalars().all()
+    return {"pipelines": pipelines}
 
 
-@router.post("/pipelines")
-@require_feature(Feature.CRM_ADVANCED)
+@router.post("/pipelines", dependencies=[Depends(require_permissions(["crm.admin"]))])
 async def create_pipeline(
     data: PipelineCreate,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Create a new pipeline."""
     pipeline = CRMPipeline(
-        tenant_id=current_user.tenant_id,
+        tenant_id=current_user.current_tenant_id,
         name=data.name,
         stages=data.stages,
     )
     db.add(pipeline)
-    db.commit()
-    db.refresh(pipeline)
+    await db.commit()
+    await db.refresh(pipeline)
+    
+    await log_audit_async(
+        db, tenant_id=current_user.current_tenant_id, actor_user_id=current_user.id,
+        action="crm_pipeline_created", resource_type="crm_pipeline", resource_id=str(pipeline.id)
+    )
+    await db.commit()
     return pipeline
 
 
 # ─── Deals ────────────────────────────────────────────────────────────
 
-@router.get("/deals")
-@require_feature(Feature.CRM_ADVANCED)
+@router.get("/deals", dependencies=[Depends(require_permissions(["crm.read"]))])
 async def list_deals(
     pipeline_id: Optional[UUID] = None,
-    stage: Optional[str] = None,
+    stage_id: Optional[str] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """List deals with optional pipeline/stage filter."""
-    query = db.query(CRMDeal).filter(CRMDeal.tenant_id == current_user.tenant_id)
+    stmt = select(CRMDeal)
     if pipeline_id:
-        query = query.filter(CRMDeal.pipeline_id == pipeline_id)
-    if stage:
-        query = query.filter(CRMDeal.stage == stage)
-    total = query.count()
-    deals = query.order_by(CRMDeal.created_at.desc()).offset(skip).limit(limit).all()
+        stmt = stmt.where(CRMDeal.pipeline_id == pipeline_id)
+    if stage_id:
+        stmt = stmt.where(CRMDeal.stage_id == stage_id)
+        
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    total = (await db.execute(count_stmt)).scalar() or 0
+    
+    deals = (await db.execute(
+        stmt.order_by(CRMDeal.created_at.desc()).offset(skip).limit(limit)
+    )).scalars().all()
     return {"total": total, "deals": deals}
 
 
-@router.post("/deals")
-@require_feature(Feature.CRM_ADVANCED)
+@router.post("/deals", dependencies=[Depends(require_permissions(["crm.write"]))])
 async def create_deal(
     data: DealCreate,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Create a new deal."""
-    _assert_owned(db, CRMContact, data.contact_id, current_user.tenant_id, "Contact")
-    _assert_owned(db, CRMPipeline, data.pipeline_id, current_user.tenant_id, "Pipeline")
+    if data.contact_id:
+        await _assert_owned(db, CRMContact, data.contact_id, current_user.current_tenant_id, "Contact")
+    if data.company_id:
+        await _assert_owned(db, CRMCompany, data.company_id, current_user.current_tenant_id, "Company")
+    await _assert_owned(db, CRMPipeline, data.pipeline_id, current_user.current_tenant_id, "Pipeline")
 
     deal = CRMDeal(
-        tenant_id=current_user.tenant_id,
-        title=data.title,
+        tenant_id=current_user.current_tenant_id,
+        name=data.name,
         contact_id=data.contact_id,
+        company_id=data.company_id,
         pipeline_id=data.pipeline_id,
-        stage=data.stage,
+        stage_id=data.stage_id,
         value=data.value,
         currency=data.currency,
+        probability=data.probability,
+        expected_close_date=data.expected_close_date,
     )
     db.add(deal)
-    db.commit()
-    db.refresh(deal)
+    await db.commit()
+    await db.refresh(deal)
+    
+    await log_audit_async(
+        db, tenant_id=current_user.current_tenant_id, actor_user_id=current_user.id,
+        action="crm_deal_created", resource_type="crm_deal", resource_id=str(deal.id),
+        details={"stage_id": data.stage_id, "value": data.value}
+    )
+    await db.commit()
     return deal
 
 
-@router.put("/deals/{deal_id}")
-@require_feature(Feature.CRM_ADVANCED)
+@router.put("/deals/{deal_id}", dependencies=[Depends(require_permissions(["crm.write"]))])
 async def update_deal(
     deal_id: UUID,
     data: DealUpdate,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Update deal (move stage, update value)."""
-    deal = db.query(CRMDeal).filter(
-        CRMDeal.id == deal_id,
-        CRMDeal.tenant_id == current_user.tenant_id,
-    ).first()
-    if not deal:
-        raise HTTPException(status_code=404, detail="Deal not found")
-
-    for field, value in data.dict(exclude_unset=True).items():
+    """Deal stage movement and value updates."""
+    deal = await _assert_owned(db, CRMDeal, deal_id, current_user.current_tenant_id, "Deal")
+    
+    old_stage = deal.stage_id
+    updates = data.dict(exclude_unset=True)
+    
+    for field, value in updates.items():
         setattr(deal, field, value)
+        
+    if "status" in updates and updates["status"] in ["won", "lost"]:
+        deal.closed_at = datetime.datetime.utcnow()
 
-    db.commit()
-    db.refresh(deal)
+    await db.commit()
+    await db.refresh(deal)
+    
+    audit_action = "crm_deal_stage_moved" if data.stage_id and data.stage_id != old_stage else "crm_deal_updated"
+    await log_audit_async(
+        db, tenant_id=current_user.current_tenant_id, actor_user_id=current_user.id,
+        action=audit_action, resource_type="crm_deal", resource_id=str(deal.id),
+        details={"old_stage": old_stage, "new_stage": deal.stage_id, "updates": updates}
+    )
+    await db.commit()
     return deal
 
 
 # ─── Notes ────────────────────────────────────────────────────────────
 
-@router.post("/notes")
-@require_feature(Feature.CRM_BASIC)
+@router.post("/notes", dependencies=[Depends(require_permissions(["crm.write"]))])
 async def create_note(
     data: NoteCreate,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Add a note to a contact or deal."""
-    if not data.contact_id and not data.deal_id:
-        raise HTTPException(status_code=400, detail="contact_id or deal_id is required")
-
-    if data.contact_id:
-        _assert_owned(db, CRMContact, data.contact_id, current_user.tenant_id, "Contact")
-    if data.deal_id:
-        _assert_owned(db, CRMDeal, data.deal_id, current_user.tenant_id, "Deal")
+    if not any([data.contact_id, data.deal_id, data.company_id]):
+        raise HTTPException(status_code=400, detail="Must link note to contact, deal, or company")
 
     note = CRMNote(
-        tenant_id=current_user.tenant_id,
+        tenant_id=current_user.current_tenant_id,
+        author_id=current_user.id,
         contact_id=data.contact_id,
         deal_id=data.deal_id,
-        body=data.body,
-        created_by=current_user.id,
+        company_id=data.company_id,
+        content=data.content,
     )
     db.add(note)
-    db.commit()
-    db.refresh(note)
+    await db.commit()
+    await db.refresh(note)
+    
+    await log_audit_async(
+        db, tenant_id=current_user.current_tenant_id, actor_user_id=current_user.id,
+        action="crm_note_created", resource_type="crm_note", resource_id=str(note.id)
+    )
+    await db.commit()
     return note
 
-
-@router.get("/contacts/{contact_id}/notes")
-@require_feature(Feature.CRM_BASIC)
+@router.get("/contacts/{contact_id}/notes", dependencies=[Depends(require_permissions(["crm.read"]))])
 async def list_contact_notes(
     contact_id: UUID,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """List notes for a contact."""
-    notes = db.query(CRMNote).filter(
+    stmt = select(CRMNote).where(
         CRMNote.contact_id == contact_id,
-        CRMNote.tenant_id == current_user.tenant_id,
-    ).order_by(CRMNote.created_at.desc()).all()
+        CRMNote.tenant_id == current_user.current_tenant_id
+    ).order_by(CRMNote.created_at.desc())
+    notes = (await db.execute(stmt)).scalars().all()
     return notes
-
 
 # ─── Tags ─────────────────────────────────────────────────────────────
 
-@router.get("/tags")
-@require_feature(Feature.CRM_BASIC)
+@router.get("/tags", dependencies=[Depends(require_permissions(["crm.read"]))])
 async def list_tags(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """List all tags for the tenant."""
-    query = db.query(CRMTag).filter(CRMTag.tenant_id == current_user.tenant_id)
-    total = query.count()
-    tags = query.offset(skip).limit(limit).all()
+    stmt = select(CRMTag)
+    total = (await db.execute(select(func.count()).select_from(CRMTag))).scalar() or 0
+    tags = (await db.execute(stmt.offset(skip).limit(limit))).scalars().all()
     return {"total": total, "tags": tags}
 
+class TagCreate(BaseModel):
+    name: str
+    color: Optional[str] = "#3B82F6"
 
-@router.post("/tags")
-@require_feature(Feature.CRM_BASIC)
+@router.post("/tags", dependencies=[Depends(require_permissions(["crm.write"]))])
 async def create_tag(
     data: TagCreate,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Create a new tag."""
     tag = CRMTag(
-        tenant_id=current_user.tenant_id,
+        tenant_id=current_user.current_tenant_id,
         name=data.name,
         color=data.color,
     )
     db.add(tag)
-    db.commit()
-    db.refresh(tag)
+    await db.commit()
+    await db.refresh(tag)
+    
+    await log_audit_async(
+        db, tenant_id=current_user.current_tenant_id, actor_user_id=current_user.id,
+        action="crm_tag_created", resource_type="crm_tag", resource_id=str(tag.id)
+    )
+    await db.commit()
     return tag
 
+# ─── Conversations / Inbox ─────────────────────────────────────────
 
-# ─── Conversations / Inbox ───────────────────────────────────────────
-
-@router.get("/conversations")
-@require_feature(Feature.CRM_ADVANCED)
+@router.get("/conversations", dependencies=[Depends(require_permissions(["crm.read"]))])
 async def list_conversations(
     contact_id: Optional[UUID] = None,
     status: Optional[str] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """List CRM conversations (inbox)."""
-    query = db.query(CRMConversation).filter(
-        CRMConversation.tenant_id == current_user.tenant_id
-    )
+    stmt = select(CRMConversation)
     if contact_id:
-        query = query.filter(CRMConversation.contact_id == contact_id)
+        stmt = stmt.where(CRMConversation.contact_id == contact_id)
     if status:
-        query = query.filter(CRMConversation.status == status)
+        stmt = stmt.where(CRMConversation.status == status)
 
-    total = query.count()
-    conversations = query.order_by(
-        CRMConversation.last_message_at.desc()
-    ).offset(skip).limit(limit).all()
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    total = (await db.execute(count_stmt)).scalar() or 0
+    
+    conversations = (await db.execute(
+        stmt.order_by(CRMConversation.last_message_at.desc()).offset(skip).limit(limit)
+    )).scalars().all()
+    
     return {"total": total, "conversations": conversations}
 
-
-@router.get("/conversations/{conversation_id}")
-@require_feature(Feature.CRM_ADVANCED)
+@router.get("/conversations/{conversation_id}", dependencies=[Depends(require_permissions(["crm.read"]))])
 async def get_conversation(
     conversation_id: UUID,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Get conversation with messages."""
-    conv = db.query(CRMConversation).filter(
-        CRMConversation.id == conversation_id,
-        CRMConversation.tenant_id == current_user.tenant_id,
-    ).first()
-    if not conv:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+    conv = await _assert_owned(db, CRMConversation, conversation_id, current_user.current_tenant_id, "Conversation")
     return conv
 
 
 # ─── Stats ────────────────────────────────────────────────────────────
 
-@router.get("/stats")
-@require_feature(Feature.CRM_BASIC)
+@router.get("/stats", dependencies=[Depends(require_permissions(["crm.read"]))])
 async def crm_stats(
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """CRM overview stats for the dashboard."""
-    tid = current_user.tenant_id
-    total_contacts = db.query(func.count(CRMContact.id)).filter(
-        CRMContact.tenant_id == tid
-    ).scalar() or 0
-    total_companies = db.query(func.count(CRMCompany.id)).filter(
-        CRMCompany.tenant_id == tid
-    ).scalar() or 0
-    total_deals = db.query(func.count(CRMDeal.id)).filter(
-        CRMDeal.tenant_id == tid
-    ).scalar() or 0
-    total_pipeline_value = db.query(func.sum(CRMDeal.value)).filter(
-        CRMDeal.tenant_id == tid
-    ).scalar() or 0
+    tid = current_user.current_tenant_id
+    total_contacts = (await db.execute(select(func.count(CRMContact.id)))).scalar() or 0
+    total_companies = (await db.execute(select(func.count(CRMCompany.id)))).scalar() or 0
+    total_deals = (await db.execute(select(func.count(CRMDeal.id)))).scalar() or 0
+    total_revenue = (await db.execute(select(func.sum(CRMDeal.value)))).scalar() or 0
 
     return {
         "total_contacts": total_contacts,
         "total_companies": total_companies,
         "total_deals": total_deals,
-        "total_pipeline_value": float(total_pipeline_value),
+        "total_pipeline_value": float(total_revenue),
     }
