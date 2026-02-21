@@ -180,12 +180,13 @@ async def _handle_inbound_message(db: Session, body: dict, raw_event: WAHAWebhoo
                 logger.warning(f"Unknown deeplink ref: {deeplink_ref}")
                 return
     else:
-        # No session AND no ref → use default in dev, reject in prod
+        # No session AND no ref → use default in dev, REJECT in prod
         env = getattr(settings, "ENVIRONMENT", "development")
         if env == "development":
             tenant_id = uuid.UUID(getattr(settings, "DEFAULT_TENANT_ID", "00000000-0000-0000-0000-000000000001"))
         else:
-            tenant_id = uuid.UUID(getattr(settings, "DEFAULT_TENANT_ID", "00000000-0000-0000-0000-000000000001"))
+            logger.info(f"Ignoring message from {phone} — no active session and no deeplink ref")
+            return
 
     # Persist inbound message
     inbound_msg = WhatsAppMessage(
