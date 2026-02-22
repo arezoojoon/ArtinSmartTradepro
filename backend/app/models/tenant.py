@@ -17,8 +17,11 @@ class TenantMode(str, enum.Enum):
 
 class TenantRole(str, enum.Enum):
     OWNER = "owner"
-    ADMIN = "admin"
-    MEMBER = "member"
+    TRADE_MANAGER = "trade_manager"
+    SALES_AGENT = "sales_agent"
+    SOURCING_AGENT = "sourcing_agent"
+    FINANCE = "finance"
+    OPS_LOGISTICS = "ops_logistics"
     VIEWER = "viewer"
 
 class Tenant(Base):

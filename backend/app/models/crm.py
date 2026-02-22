@@ -19,6 +19,9 @@ class CRMCompany(Base):
     address = Column(Text)
     linkedin_url = Column(String)
     website = Column(String)
+    risk_score = Column(Float, nullable=True)  # 0-100, calculated from payment/trade history
+    trade_history_snapshot = Column(JSON, nullable=True)  # Summary of past trade interactions
+    tags_json = Column(JSON, default=[])  # Quick tags: ["importer", "distributor"]
     
     # Relationships
     contacts = relationship("CRMContact", back_populates="company")
@@ -39,6 +42,9 @@ class CRMContact(Base):
     phone = Column(String, index=True) # Added index for fast lookup by phone
     position = Column(String)
     linkedin_url = Column(String)
+    preferred_language = Column(String, nullable=True)  # ISO 639-1 code (e.g. "en", "ar", "fa")
+    whatsapp_verified = Column(Boolean, default=False, nullable=False)
+    payment_behavior_notes = Column(Text, nullable=True)  # Free-form notes on payment history
     
     # Relationships
     company = relationship("CRMCompany", back_populates="contacts")

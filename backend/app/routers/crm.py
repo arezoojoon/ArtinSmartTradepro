@@ -45,6 +45,8 @@ class ContactCreate(BaseModel):
     company_id: Optional[UUID] = None
     position: Optional[str] = None
     linkedin_url: Optional[str] = None
+    preferred_language: Optional[str] = None
+    whatsapp_verified: Optional[bool] = False
 
 class ContactUpdate(BaseModel):
     first_name: Optional[str] = None
@@ -54,6 +56,9 @@ class ContactUpdate(BaseModel):
     company_id: Optional[UUID] = None
     position: Optional[str] = None
     linkedin_url: Optional[str] = None
+    preferred_language: Optional[str] = None
+    whatsapp_verified: Optional[bool] = None
+    payment_behavior_notes: Optional[str] = None
 
 class CompanyCreate(BaseModel):
     name: str
@@ -64,6 +69,8 @@ class CompanyCreate(BaseModel):
     city: Optional[str] = None
     address: Optional[str] = None
     linkedin_url: Optional[str] = None
+    domain: Optional[str] = None
+    risk_score: Optional[float] = None
 
 class CompanyUpdate(BaseModel):
     name: Optional[str] = None
@@ -74,15 +81,19 @@ class CompanyUpdate(BaseModel):
     city: Optional[str] = None
     address: Optional[str] = None
     linkedin_url: Optional[str] = None
+    domain: Optional[str] = None
+    risk_score: Optional[float] = None
 
 class PipelineCreate(BaseModel):
     name: str
     stages: Optional[list] = [
-        {"id": "lead", "name": "Lead"},
+        {"id": "new", "name": "New"},
         {"id": "contacted", "name": "Contacted"},
-        {"id": "proposal", "name": "Proposal"},
-        {"id": "won", "name": "Won"},
-        {"id": "lost", "name": "Lost"}
+        {"id": "qualified", "name": "Qualified"},
+        {"id": "quoted", "name": "Quoted"},
+        {"id": "negotiation", "name": "Negotiation"},
+        {"id": "invoice", "name": "Invoice"},
+        {"id": "paid_won", "name": "Paid/Won"}
     ]
 
 class DealCreate(BaseModel):
@@ -92,7 +103,7 @@ class DealCreate(BaseModel):
     pipeline_id: UUID
     stage_id: str
     value: Optional[float] = 0.0
-    currency: Optional[str] = "AED"
+    currency: Optional[str] = "USD"
     probability: Optional[float] = 0.5
     expected_close_date: Optional[datetime.datetime] = None
 
@@ -532,3 +543,216 @@ async def crm_stats(
         "total_deals": total_deals,
         "total_pipeline_value": float(total_revenue),
     }
+
+
+# ─── Tasks ────────────────────────────────────────────────────────────
+
+from app.models.crm import CRMTask, CRMInvoice
+
+class TaskCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    company_id: Optional[UUID] = None
+    contact_id: Optional[UUID] = None
+    deal_id: Optional[UUID] = None
+    assigned_to_id: Optional[UUID] = None
+    due_date: Optional[datetime.datetime] = None
+    priority: Optional[str] = "medium"
+
+class TaskUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    due_date: Optional[datetime.datetime] = None
+    priority: Optional[str] = None
+    status: Optional[str] = None
+    assigned_to_id: Optional[UUID] = None
+
+
+@router.get("/tasks", dependencies=[Depends(require_permissions(["crm.read"]))])
+async def list_tasks(
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(CRMTask).where(CRMTask.tenant_id == current_user.current_tenant_id)
+    if status:
+        stmt = stmt.where(CRMTask.status == status)
+    if priority:
+        stmt = stmt.where(CRMTask.priority == priority)
+
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    total = (await db.execute(count_stmt)).scalar() or 0
+
+    tasks = (await db.execute(
+        stmt.order_by(CRMTask.due_date.asc().nullslast(), CRMTask.created_at.desc())
+            .offset(skip).limit(limit)
+    )).scalars().all()
+    return {"total": total, "tasks": tasks}
+
+
+@router.post("/tasks", dependencies=[Depends(require_permissions(["crm.write"]))])
+async def create_task(
+    data: TaskCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    task = CRMTask(
+        tenant_id=current_user.current_tenant_id,
+        author_id=current_user.id,
+        title=data.title,
+        description=data.description,
+        company_id=data.company_id,
+        contact_id=data.contact_id,
+        deal_id=data.deal_id,
+        assigned_to_id=data.assigned_to_id,
+        due_date=data.due_date,
+        priority=data.priority,
+    )
+    db.add(task)
+    await db.commit()
+    await db.refresh(task)
+
+    await log_audit_async(
+        db, tenant_id=current_user.current_tenant_id, actor_user_id=current_user.id,
+        action="crm_task_created", resource_type="crm_task", resource_id=str(task.id)
+    )
+    await db.commit()
+    return task
+
+
+@router.put("/tasks/{task_id}", dependencies=[Depends(require_permissions(["crm.write"]))])
+async def update_task(
+    task_id: UUID,
+    data: TaskUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    task = await _assert_owned(db, CRMTask, task_id, current_user.current_tenant_id, "Task")
+
+    for field, value in data.dict(exclude_unset=True).items():
+        setattr(task, field, value)
+
+    if data.status == "completed":
+        task.completed_at = datetime.datetime.utcnow()
+
+    await db.commit()
+    await db.refresh(task)
+
+    await log_audit_async(
+        db, tenant_id=current_user.current_tenant_id, actor_user_id=current_user.id,
+        action="crm_task_updated", resource_type="crm_task", resource_id=str(task.id)
+    )
+    await db.commit()
+    return task
+
+
+# ─── Invoices (DSO / Cash Flow) ──────────────────────────────────────
+
+class InvoiceCreate(BaseModel):
+    company_id: UUID
+    deal_id: Optional[UUID] = None
+    invoice_number: str
+    amount: float
+    currency: Optional[str] = "USD"
+    issued_date: datetime.datetime
+    due_date: datetime.datetime
+
+class InvoiceUpdate(BaseModel):
+    status: Optional[str] = None  # open, paid, overdue, canceled
+    paid_date: Optional[datetime.datetime] = None
+
+
+@router.get("/invoices", dependencies=[Depends(require_permissions(["crm.read"]))])
+async def list_invoices(
+    status: Optional[str] = None,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(CRMInvoice).where(CRMInvoice.tenant_id == current_user.current_tenant_id)
+    if status:
+        stmt = stmt.where(CRMInvoice.status == status)
+
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    total = (await db.execute(count_stmt)).scalar() or 0
+
+    invoices = (await db.execute(
+        stmt.order_by(CRMInvoice.due_date.desc()).offset(skip).limit(limit)
+    )).scalars().all()
+
+    # Calculate DSO (Days Sales Outstanding)
+    open_invoices = (await db.execute(
+        select(CRMInvoice).where(
+            CRMInvoice.tenant_id == current_user.current_tenant_id,
+            CRMInvoice.status.in_(["open", "overdue"])
+        )
+    )).scalars().all()
+
+    total_outstanding = sum(float(inv.amount) for inv in open_invoices)
+    dso_days = 0
+    if open_invoices:
+        now = datetime.datetime.utcnow()
+        avg_age = sum((now - inv.issued_date).days for inv in open_invoices) / len(open_invoices)
+        dso_days = round(avg_age, 1)
+
+    return {
+        "total": total,
+        "invoices": invoices,
+        "dso_days": dso_days,
+        "total_outstanding": total_outstanding,
+    }
+
+
+@router.post("/invoices", dependencies=[Depends(require_permissions(["crm.write"]))])
+async def create_invoice(
+    data: InvoiceCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    invoice = CRMInvoice(
+        tenant_id=current_user.current_tenant_id,
+        company_id=data.company_id,
+        deal_id=data.deal_id,
+        invoice_number=data.invoice_number,
+        amount=data.amount,
+        currency=data.currency,
+        issued_date=data.issued_date,
+        due_date=data.due_date,
+    )
+    db.add(invoice)
+    await db.commit()
+    await db.refresh(invoice)
+
+    await log_audit_async(
+        db, tenant_id=current_user.current_tenant_id, actor_user_id=current_user.id,
+        action="crm_invoice_created", resource_type="crm_invoice", resource_id=str(invoice.id)
+    )
+    await db.commit()
+    return invoice
+
+
+@router.put("/invoices/{invoice_id}", dependencies=[Depends(require_permissions(["crm.write"]))])
+async def update_invoice(
+    invoice_id: UUID,
+    data: InvoiceUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    invoice = await _assert_owned(db, CRMInvoice, invoice_id, current_user.current_tenant_id, "Invoice")
+
+    for field, value in data.dict(exclude_unset=True).items():
+        setattr(invoice, field, value)
+
+    await db.commit()
+    await db.refresh(invoice)
+
+    await log_audit_async(
+        db, tenant_id=current_user.current_tenant_id, actor_user_id=current_user.id,
+        action="crm_invoice_updated", resource_type="crm_invoice", resource_id=str(invoice.id)
+    )
+    await db.commit()
+    return invoice

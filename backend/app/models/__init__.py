@@ -8,7 +8,7 @@ from .audit import AuditLog
 from .whatsapp import WhatsAppMessage
 from .crm import (
     CRMCompany, CRMContact, CRMPipeline, CRMDeal, 
-    CRMNote, CRMTag, CRMConversation, CRMInvoice
+    CRMNote, CRMTag, CRMConversation, CRMInvoice, CRMTask
 )
 from .campaign import CRMCampaign, CRMCampaignSegment, CRMCampaignMessage
 from .followup import CRMFollowUpRule, CRMFollowUpExecution, CRMRevenueAttribution
