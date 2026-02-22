@@ -33,7 +33,7 @@ export default function CRMOverviewPage() {
             {/* Premium Role Switcher */}
             <Tabs defaultValue="manager" onValueChange={setActiveRole} className="w-full">
                 <div className="flex justify-center mb-8">
-                    <TabsList className="grid grid-cols-3 h-14 bg-black/40 backdrop-blur-xl border border-white/10 p-1 rounded-xl w-full max-w-2xl relative overflow-hidden">
+                    <TabsList className="grid grid-cols-3 h-14 bg-[#050a15]/60 backdrop-blur-xl border border-white/10 p-1 rounded-xl w-full max-w-2xl relative overflow-hidden">
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#D4AF37]/5 to-transparent"></div>
                         <TabsTrigger value="manager" className="rounded-lg font-bold data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black data-[state=active]:shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all z-10 text-slate-400">
                             Trade Manager
@@ -52,7 +52,7 @@ export default function CRMOverviewPage() {
                 {/* ========================================== */}
                 <TabsContent value="manager" className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
                     <div className="grid gap-6 md:grid-cols-4">
-                        <Card className="bg-black/40 backdrop-blur-xl border border-white/10 group hover:border-[#D4AF37]/30 transition-all">
+                        <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 group hover:border-[#D4AF37]/30 transition-all">
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
                                 <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Pipeline</CardTitle>
                                 <TrendingUp className="h-4 w-4 text-[#D4AF37]" />
@@ -62,7 +62,7 @@ export default function CRMOverviewPage() {
                                 <p className="text-[10px] text-emerald-400 font-bold mt-1 uppercase">+14.2% Mapped Yield</p>
                             </CardContent>
                         </Card>
-                        <Card className="bg-black/40 backdrop-blur-xl border border-white/10 group hover:border-[#D4AF37]/30 transition-all">
+                        <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 group hover:border-[#D4AF37]/30 transition-all">
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
                                 <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Deals</CardTitle>
                                 <Briefcase className="h-4 w-4 text-blue-400" />
@@ -72,7 +72,7 @@ export default function CRMOverviewPage() {
                                 <p className="text-[10px] text-slate-500 mt-1 uppercase">12 Pending Signature</p>
                             </CardContent>
                         </Card>
-                        <Card className="bg-black/40 backdrop-blur-xl border border-white/10 group hover:border-[#D4AF37]/30 transition-all">
+                        <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 group hover:border-[#D4AF37]/30 transition-all">
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
                                 <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">Open RFQs</CardTitle>
                                 <ShoppingCart className="h-4 w-4 text-emerald-400" />
@@ -82,7 +82,7 @@ export default function CRMOverviewPage() {
                                 <p className="text-[10px] text-orange-400 mt-1 uppercase">3 Awaiting Supplier</p>
                             </CardContent>
                         </Card>
-                        <Card className="bg-black/40 backdrop-blur-xl border border-red-500/20 bg-red-500/5 group hover:border-red-500/40 transition-all">
+                        <Card className="bg-[#050a15]/60 backdrop-blur-2xl border border-white/10 shadow-2xl500/20 bg-red-500/5 group hover:border-red-500/40 transition-all">
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
                                 <CardTitle className="text-xs font-bold text-red-400 uppercase tracking-wider">SLA Breaches</CardTitle>
                                 <AlertCircle className="h-4 w-4 text-red-500" />
@@ -96,7 +96,7 @@ export default function CRMOverviewPage() {
 
                     <div className="grid md:grid-cols-2 gap-8">
                         {/* Funnel */}
-                        <Card className="bg-black/40 backdrop-blur-xl border border-white/10 relative overflow-hidden">
+                        <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 relative overflow-hidden">
                             <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent opacity-20"></div>
                             <CardHeader>
                                 <CardTitle className="text-white text-lg flex items-center gap-2">
@@ -136,7 +136,7 @@ export default function CRMOverviewPage() {
                         </Card>
 
                         {/* Action Terminal */}
-                        <Card className="bg-black/40 backdrop-blur-xl border border-white/10">
+                        <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10">
                             <CardHeader>
                                 <CardTitle className="text-white text-lg flex items-center gap-2">
                                     <Zap className="h-5 w-5 text-[#D4AF37]" /> Manager Action Terminal
@@ -181,7 +181,7 @@ export default function CRMOverviewPage() {
                         </Link>
                     </div>
 
-                    <Card className="bg-black/40 backdrop-blur-xl border border-white/10">
+                    <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10">
                         <CardHeader>
                             <CardTitle className="text-white text-lg flex items-center gap-2">
                                 <Clock className="h-5 w-5 text-[#D4AF37]" /> Active Daily Pursuit
@@ -191,7 +191,7 @@ export default function CRMOverviewPage() {
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-[#D4AF37]/30 transition-all">
                                     <div className="flex items-center gap-4">
-                                        <div className="p-3 bg-black/50 border border-white/10 text-[#D4AF37] rounded-xl shadow-inner">
+                                        <div className="p-3 bg-[#050a15]/60 border border-white/10 shadow-inner">
                                             <PhoneCall className="h-5 w-5" />
                                         </div>
                                         <div>
@@ -235,7 +235,7 @@ export default function CRMOverviewPage() {
                         </Link>
                     </div>
 
-                    <Card className="bg-black/40 backdrop-blur-xl border border-white/10">
+                    <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10">
                         <CardHeader>
                             <CardTitle className="text-white text-lg flex items-center gap-2">
                                 <Factory className="h-5 w-5 text-[#D4AF37]" /> Global Supply Pipeline

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, TrendingUp, DollarSign, Users, Activity, Target, Zap, ShieldCheck, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,7 @@ export default function DashboardPage() {
                     <p className="text-slate-400 text-sm">Real-time operational intelligence and global trade oversight.</p>
                 </div>
 
-                <div className="flex items-center gap-3 bg-black/40 backdrop-blur-md px-4 py-2 rounded-lg border border-white/5">
+                <div className="flex items-center gap-3 bg-[#050a15]/60 backdrop-blur-md px-4 py-2 rounded-lg border border-white/5">
                     <div className="h-2 w-2 rounded-full bg-[#D4AF37] animate-pulse"></div>
                     <span className="text-xs font-medium text-slate-300 uppercase tracking-widest text-[#D4AF37]">Market Mode: Active</span>
                 </div>
@@ -29,7 +30,7 @@ export default function DashboardPage() {
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
 
                 {/* 1. Opportunities */}
-                <Card className="bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/30 transition-all group overflow-hidden relative">
+                <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/30 transition-all group overflow-hidden relative">
                     <div className="absolute top-0 left-0 w-1 h-full bg-[#D4AF37] opacity-50"></div>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">Opportunities</CardTitle>
@@ -45,7 +46,7 @@ export default function DashboardPage() {
                 </Card>
 
                 {/* 2. Risk Alerts */}
-                <Card className="bg-black/40 backdrop-blur-xl border border-white/10 hover:border-red-500/30 transition-all group overflow-hidden relative">
+                <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 hover:border-red-500/30 transition-all group overflow-hidden relative">
                     <div className="absolute top-0 left-0 w-1 h-full bg-red-500 opacity-50"></div>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">Risk Alerts</CardTitle>
@@ -61,7 +62,7 @@ export default function DashboardPage() {
                 </Card>
 
                 {/* 3. Cash Flow */}
-                <Card className="bg-black/40 backdrop-blur-xl border border-white/10 hover:border-emerald-500/30 transition-all group overflow-hidden relative">
+                <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 hover:border-emerald-500/30 transition-all group overflow-hidden relative">
                     <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 opacity-50"></div>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">Cash Flow</CardTitle>
@@ -77,7 +78,7 @@ export default function DashboardPage() {
                 </Card>
 
                 {/* 4. New Leads */}
-                <Card className="bg-black/40 backdrop-blur-xl border border-white/10 hover:border-purple-500/30 transition-all group overflow-hidden relative">
+                <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 hover:border-purple-500/30 transition-all group overflow-hidden relative">
                     <div className="absolute top-0 left-0 w-1 h-full bg-purple-500 opacity-50"></div>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">New Leads</CardTitle>
@@ -93,7 +94,7 @@ export default function DashboardPage() {
                 </Card>
 
                 {/* 5. Market Shocks */}
-                <Card className="bg-black/40 backdrop-blur-xl border border-white/10 hover:border-orange-500/30 transition-all group overflow-hidden relative">
+                <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 hover:border-orange-500/30 transition-all group overflow-hidden relative">
                     <div className="absolute top-0 left-0 w-1 h-full bg-orange-500 opacity-50"></div>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">Market Shocks</CardTitle>
@@ -113,7 +114,7 @@ export default function DashboardPage() {
             <div className="grid gap-6 lg:grid-cols-7 mt-8">
 
                 {/* Pipeline Summary (Bloomberg Style) */}
-                <Card className="col-span-full lg:col-span-4 bg-black/40 backdrop-blur-2xl border border-white/10 shadow-2xl overflow-hidden relative">
+                <Card className="col-span-full lg:col-span-4 bg-[#050a15]/60 backdrop-blur-2xl border border-white/10 shadow-2xl overflow-hidden relative">
                     <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent opacity-30"></div>
                     <CardHeader>
                         <CardTitle className="text-white text-lg flex items-center gap-2">
@@ -159,7 +160,7 @@ export default function DashboardPage() {
                 </Card>
 
                 {/* Risk Heatmap (Terminal Style) */}
-                <Card className="col-span-full lg:col-span-3 bg-black/40 backdrop-blur-2xl border border-white/10 shadow-2xl relative">
+                <Card className="col-span-full lg:col-span-3 bg-[#050a15]/60 backdrop-blur-2xl border border-white/10 shadow-2xl relative">
                     <CardHeader>
                         <CardTitle className="text-white text-lg flex items-center gap-2">
                             <ShieldCheck className="h-5 w-5 text-red-500" /> AI Risk Terminal

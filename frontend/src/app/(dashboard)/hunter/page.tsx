@@ -35,19 +35,19 @@ export default function HunterPage() {
                     <p className="text-slate-400 text-sm">Advanced AI-driven lead generation and market intelligence terminal.</p>
                 </div>
 
-                <div className="flex items-center gap-3 bg-black/40 backdrop-blur-md px-4 py-2 rounded-lg border border-white/5">
+                <div className="flex items-center gap-3 bg-[#050a15]/60 backdrop-blur-md px-4 py-2 rounded-lg border border-white/5">
                     <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
                     <span className="text-xs font-medium text-slate-300 uppercase tracking-widest">System Status: Optimal</span>
                 </div>
             </div>
 
             {/* Premium Mode Toggle (Glassmorphism) */}
-            <div className="flex p-1 bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl w-full max-w-md mx-auto relative overflow-hidden">
+            <div className="flex p-1 bg-[#050a15]/60 backdrop-blur-xl border border-white/10 rounded-xl w-full max-w-md mx-auto relative overflow-hidden">
                 <button
                     onClick={() => { setActiveMode("sourcing"); setStatus("idle"); }}
                     className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all duration-300 z-10 ${activeMode === "sourcing"
-                            ? "bg-[#D4AF37] text-black shadow-[0_0_20px_rgba(212,175,55,0.4)]"
-                            : "text-slate-400 hover:text-white"
+                        ? "bg-[#D4AF37] text-black shadow-[0_0_20px_rgba(212,175,55,0.4)]"
+                        : "text-slate-400 hover:text-white"
                         }`}
                 >
                     <ShoppingCart className="w-4 h-4" /> Global Sourcing
@@ -55,8 +55,8 @@ export default function HunterPage() {
                 <button
                     onClick={() => { setActiveMode("sales"); setStatus("idle"); }}
                     className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all duration-300 z-10 ${activeMode === "sales"
-                            ? "bg-[#D4AF37] text-black shadow-[0_0_20px_rgba(212,175,55,0.4)]"
-                            : "text-slate-400 hover:text-white"
+                        ? "bg-[#D4AF37] text-black shadow-[0_0_20px_rgba(212,175,55,0.4)]"
+                        : "text-slate-400 hover:text-white"
                         }`}
                 >
                     <TrendingUp className="w-4 h-4" /> B2B Sales
@@ -64,7 +64,7 @@ export default function HunterPage() {
             </div>
 
             {/* Query Builder Form (Advanced Terminal Look) */}
-            <Card className="bg-black/40 backdrop-blur-2xl border border-white/10 shadow-2xl overflow-hidden">
+            <Card className="bg-[#050a15]/60 backdrop-blur-2xl border border-white/10 shadow-2xl overflow-hidden">
                 {/* Decorative glowing top line */}
                 <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent opacity-50"></div>
 
@@ -131,8 +131,8 @@ export default function HunterPage() {
                         onClick={startDeepScan}
                         disabled={status !== "idle"}
                         className={`w-full h-14 text-base font-bold transition-all duration-500 ${status !== "idle"
-                                ? "bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30"
-                                : "bg-[#D4AF37] text-black hover:bg-[#F3E5AB] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)]"
+                            ? "bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30"
+                            : "bg-[#D4AF37] text-black hover:bg-[#F3E5AB] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)]"
                             }`}
                     >
                         {status === "idle" && <><Zap className="mr-2 h-5 w-5" /> Initialize Deep Web Scan</>}
@@ -156,7 +156,7 @@ export default function HunterPage() {
                     <div className="grid lg:grid-cols-2 gap-6">
 
                         {/* Result Card 1 */}
-                        <Card className="bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/50 transition-all duration-300 group overflow-hidden relative">
+                        <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/50 transition-all duration-300 group overflow-hidden relative">
                             {/* Glow Effect */}
                             <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/5 rounded-full blur-3xl -mr-20 -mt-20 transition-opacity opacity-0 group-hover:opacity-100"></div>
 
@@ -215,7 +215,7 @@ export default function HunterPage() {
                         </Card>
 
                         {/* Result Card 2 */}
-                        <Card className="bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/50 transition-all duration-300 group overflow-hidden relative">
+                        <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/50 transition-all duration-300 group overflow-hidden relative">
                             <CardContent className="p-6 relative z-10">
                                 <div className="flex justify-between items-start mb-6">
                                     <div className="flex gap-4">

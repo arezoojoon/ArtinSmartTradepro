@@ -57,7 +57,7 @@ export default function ToolboxPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {tools.map((tool) => (
                     <Link href={tool.href} key={tool.title}>
-                        <Card className="bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/30 transition-all cursor-pointer h-full relative group overflow-hidden">
+                        <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/30 transition-all cursor-pointer h-full relative group overflow-hidden">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 transition-opacity opacity-0 group-hover:opacity-100"></div>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
                                 <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">
@@ -82,7 +82,7 @@ export default function ToolboxPage() {
             <div className="grid gap-6 lg:grid-cols-7 mt-8">
 
                 {/* Market Pulse (Bloomberg Style) */}
-                <Card className="lg:col-span-4 bg-black/40 backdrop-blur-2xl border border-white/10 shadow-2xl relative overflow-hidden">
+                <Card className="lg:col-span-4 bg-[#050a15]/60 backdrop-blur-2xl border border-white/10 shadow-2xl relative overflow-hidden">
                     <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-20"></div>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-white text-lg">
