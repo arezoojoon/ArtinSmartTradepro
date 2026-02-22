@@ -35,7 +35,7 @@ export async function getMyTenants(): Promise<Tenant[]> {
             id: t.tenant_id,
             name: t.tenant_name,
             slug: t.tenant_name.toLowerCase().replace(/\s+/g, '-'), // fallback if slug not in list response
-            plan: "free", // fallback
+            plan: "professional", // fallback
             role: t.role,
             created_at: t.created_at
         }));
@@ -52,7 +52,7 @@ export async function createTenant(name: string): Promise<any> {
     return apiFetch("/tenants", {
         method: "POST",
         token,
-        body: { name, plan: "free" }
+        body: { name, plan: "professional" }
     });
 }
 
