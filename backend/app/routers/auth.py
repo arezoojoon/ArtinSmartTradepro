@@ -261,7 +261,7 @@ def register_user(
             if not tenant:
                 raise HTTPException(status_code=404, detail="Tenant not found")
             user_role = UserRole.USER
-            tenant_role = TenantRole.MEMBER
+            tenant_role = TenantRole.VIEWER
         else:
             raise HTTPException(status_code=400, detail="Company Name required for registration")
 

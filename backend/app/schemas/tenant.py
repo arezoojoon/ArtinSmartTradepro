@@ -16,8 +16,11 @@ class TenantMode(str, enum.Enum):
 
 class TenantRole(str, enum.Enum):
     OWNER = "owner"
-    ADMIN = "admin"
-    MEMBER = "member"
+    TRADE_MANAGER = "trade_manager"
+    SALES_AGENT = "sales_agent"
+    SOURCING_AGENT = "sourcing_agent"
+    FINANCE = "finance"
+    OPS_LOGISTICS = "ops_logistics"
     VIEWER = "viewer"
 
 # Request schemas
@@ -35,7 +38,7 @@ class TenantSwitchRequest(BaseModel):
 
 class TenantInviteRequest(BaseModel):
     email: str = Field(..., description="Email to invite")
-    role: TenantRole = Field(default=TenantRole.MEMBER, description="Role for invited user")
+    role: TenantRole = Field(default=TenantRole.VIEWER, description="Role for invited user")
 
 class TenantInviteAcceptRequest(BaseModel):
     token: str = Field(..., description="Invitation token")

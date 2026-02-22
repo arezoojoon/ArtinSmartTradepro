@@ -59,7 +59,7 @@ class TenantMembership(Base):
     """Many-to-many relationship between users and tenants."""
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    role = Column(String, default=TenantRole.MEMBER.value, nullable=False)
+    role = Column(String, default=TenantRole.VIEWER.value, nullable=False)
     
     # Explicit timestamp columns (matching Base)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -74,7 +74,7 @@ class TenantInvitation(Base):
     """Invitations for users to join tenants."""
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     email = Column(String, nullable=False)
-    role = Column(String, default=TenantRole.MEMBER.value, nullable=False)
+    role = Column(String, default=TenantRole.VIEWER.value, nullable=False)
     token_hash = Column(String, nullable=False, unique=True, index=True)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     accepted_at = Column(DateTime(timezone=True), nullable=True)

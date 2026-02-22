@@ -131,7 +131,7 @@ def invite_member(
         TenantMembership.tenant_id == tenant_id
     ).first()
     
-    if not membership or membership.role not in [TenantRole.OWNER, TenantRole.ADMIN]:
+    if not membership or membership.role not in [TenantRole.OWNER, TenantRole.TRADE_MANAGER]:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     
     # Check if already a member
