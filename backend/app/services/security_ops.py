@@ -311,7 +311,7 @@ class SecurityOps:
         audit_log = SysAuditLog(
             action=f"security_{event_type}",
             resource_type="security",
-            metadata={
+            extra={
                 "severity": severity,
                 "event_type": event_type,
                 **kwargs

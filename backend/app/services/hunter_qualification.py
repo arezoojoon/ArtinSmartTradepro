@@ -377,7 +377,7 @@ class HunterQualificationService:
             action=action,
             resource_type=resource_type,
             resource_id=resource_id,
-            metadata_json=details,
+            details=details,
             ip_address="system",
             user_agent="hunter-service"
         )

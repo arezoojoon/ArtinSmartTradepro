@@ -217,11 +217,11 @@ async def update_tenant(
     # Log tenant update
     audit_log = AuditLog(
         tenant_id=tenant.id,
-        actor_user_id=tenant_context.user_id,
+        user_id=tenant_context.user_id,
         action="tenant_update",
         resource_type="tenant",
         resource_id=str(tenant.id),
-        details={"updated_fields": tenant_data.dict(exclude_unset=True)},
+        metadata_json={"updated_fields": tenant_data.dict(exclude_unset=True)},
         ip_address=request.client.host,
         user_agent=request.headers.get("user-agent")
     )
@@ -274,11 +274,11 @@ async def switch_tenant(
     # Log tenant switch
     audit_log = AuditLog(
         tenant_id=tenant_id,
-        actor_user_id=current_user.id,
+        user_id=current_user.id,
         action="tenant_switch",
         resource_type="user",
         resource_id=str(current_user.id),
-        details={
+        metadata_json={
             "from_tenant_id": str(old_tenant_id) if old_tenant_id else None,
             "to_tenant_id": str(tenant_id)
         },
@@ -356,11 +356,11 @@ async def invite_user(
     # Log invitation
     audit_log = AuditLog(
         tenant_id=tenant_id,
-        actor_user_id=tenant_context.user_id,
+        user_id=tenant_context.user_id,
         action="tenant_invite",
         resource_type="invitation",
         resource_id=str(invitation.id),
-        details={
+        metadata_json={
             "email": invite_data.email,
             "role": invite_data.role.value
         },
@@ -498,11 +498,11 @@ async def accept_invitation(
     # Log acceptance
     audit_log = AuditLog(
         tenant_id=invitation.tenant_id,
-        actor_user_id=current_user.id,
+        user_id=current_user.id,
         action="invitation_accept",
         resource_type="membership",
         resource_id=str(membership.id),
-        details={
+        metadata_json={
             "invitation_id": str(invitation.id),
             "role": invitation.role
         },
