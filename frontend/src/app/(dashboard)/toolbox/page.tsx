@@ -2,137 +2,169 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { BarChart3, Globe, Ship, DollarSign, Download, ArrowRight, TrendingUp, AlertCircle, Activity } from "lucide-react"
+import { BarChart3, Globe, Ship, DollarSign, Download, ArrowRight, TrendingUp, AlertCircle, Activity, LayoutGrid, ChevronRight, Zap } from "lucide-react"
 import Link from "next/link"
+import { Badge } from "@/components/ui/badge"
 
 export default function ToolboxPage() {
     const tools = [
         {
             title: "Global Trade Data",
-            desc: "Search 50M+ import/export records. HS Codes, Volumes, Values.",
+            desc: "Search 50M+ import/export records. HS Codes, Volumes, Core Values.",
             icon: Globe,
             href: "/toolbox/trade-data",
-            color: "text-blue-500"
+            accent: "group-hover:text-[#D4AF37]"
         },
         {
             title: "Freight Rates",
-            desc: "Get instant estimates for Air, Sea (20GP/40HC) routes.",
+            desc: "Get instant estimates for Air, Sea (20GP/40HC) routes with volatility bands.",
             icon: Ship,
             href: "/toolbox/freight",
-            color: "text-cyan-500"
+            accent: "group-hover:text-cyan-400"
         },
         {
             title: "FX Center",
-            desc: "Live rates & volatility analysis for major trading pairs.",
+            desc: "Live rates & volatility analysis for 120+ global trading pairs.",
             icon: DollarSign,
             href: "/toolbox/fx",
-            color: "text-green-500"
+            accent: "group-hover:text-emerald-400"
         },
         {
             title: "BI Analytics",
-            desc: "KPI Dashboard: DSO, Conversion Rates, Pipeline Health.",
+            desc: "KPI Intelligence Board: DSO, Conversion Rates, Pipeline Health Matrix.",
             icon: BarChart3,
             href: "/toolbox/analytics",
-            color: "text-purple-500"
+            accent: "group-hover:text-purple-400"
         }
     ]
 
     return (
-        <div className="space-y-6 p-4 md:p-8 pt-6">
-            <div>
-                <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Trader Toolbox</h2>
-                <p className="text-slate-500 dark:text-slate-400 mt-1">Deterministic data sources and analytical tools</p>
+        <div className="space-y-8 max-w-[1400px] mx-auto p-4 md:p-8 pt-6 min-h-screen">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 border-b border-white/10 pb-6">
+                <div>
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-[#D4AF37]/10 rounded-lg border border-[#D4AF37]/20 backdrop-blur-md">
+                            <LayoutGrid className="h-6 w-6 text-[#D4AF37]" />
+                        </div>
+                        <h2 className="text-3xl font-bold tracking-tight text-white">Trader Toolbox</h2>
+                    </div>
+                    <p className="text-slate-400 text-sm">Deterministic data sources and deterministic analytical terminals.</p>
+                </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* Quick Access Grid */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {tools.map((tool) => (
                     <Link href={tool.href} key={tool.title}>
-                        <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md transition-all cursor-pointer h-full">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-bold text-slate-900 dark:text-white">
+                        <Card className="bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/30 transition-all cursor-pointer h-full relative group overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 transition-opacity opacity-0 group-hover:opacity-100"></div>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+                                <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">
                                     {tool.title}
                                 </CardTitle>
-                                <tool.icon className={`h-5 w-5 ${tool.color}`} />
+                                <tool.icon className={`h-5 w-5 text-slate-500 transition-colors ${tool.accent}`} />
                             </CardHeader>
-                            <CardContent>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium leading-relaxed">
+                            <CardContent className="relative z-10">
+                                <p className="text-xs text-slate-500 mt-2 font-medium leading-relaxed group-hover:text-slate-300 transition-colors">
                                     {tool.desc}
                                 </p>
+                                <div className="mt-6 flex items-center text-[10px] font-bold text-[#D4AF37] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
+                                    Launch Terminal <ChevronRight className="h-3 w-3 ml-1" />
+                                </div>
                             </CardContent>
                         </Card>
                     </Link>
                 ))}
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm">
+            {/* Market Pulse & Terminal Logic */}
+            <div className="grid gap-6 lg:grid-cols-7 mt-8">
+
+                {/* Market Pulse (Bloomberg Style) */}
+                <Card className="lg:col-span-4 bg-black/40 backdrop-blur-2xl border border-white/10 shadow-2xl relative overflow-hidden">
+                    <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-20"></div>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+                        <CardTitle className="flex items-center gap-2 text-white text-lg">
                             <Activity className="h-5 w-5 text-red-500" />
-                            Market Pulse
+                            Market Pulse Terminal
                         </CardTitle>
-                        <CardDescription className="text-slate-500 dark:text-slate-400">
-                            Real-time deterministic signals from your active markets.
+                        <CardDescription className="text-slate-500 text-xs uppercase font-bold tracking-tighter mt-1">
+                            Real-time deterministic signals from global trade registries.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700/50">
-                            <div className="flex items-center gap-3">
-                                <Ship className="h-8 w-8 text-cyan-600 p-1.5 bg-cyan-100 dark:bg-cyan-900/30 rounded-md" />
+                        <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-cyan-500/30 transition-all">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-xl">
+                                    <Ship className="h-6 w-6" />
+                                </div>
                                 <div>
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white">Shanghai to Dubai (Jebel Ali)</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">Freight rates spiked +4.2% in last 48h</p>
+                                    <p className="text-sm font-bold text-white group-hover:text-cyan-400 transition-colors">Shanghai &rarr; Jebel Ali (Freight Index)</p>
+                                    <p className="text-[11px] text-slate-500 uppercase font-medium mt-0.5">Rates spiked +4.2% in last 48h (Congestion Alert)</p>
                                 </div>
                             </div>
-                            <TrendingUp className="h-5 w-5 text-red-500" />
+                            <TrendingUp className="h-5 w-5 text-red-500 animate-pulse" />
                         </div>
 
-                        <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700/50">
-                            <div className="flex items-center gap-3">
-                                <DollarSign className="h-8 w-8 text-green-600 p-1.5 bg-green-100 dark:bg-green-900/30 rounded-md" />
+                        <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-emerald-500/30 transition-all">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
+                                    <DollarSign className="h-6 w-6" />
+                                </div>
                                 <div>
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white">EUR/USD Volatility Alert</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">ECB announcement caused 0.8% drop</p>
+                                    <p className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">EUR/USD Volatility Pulse</p>
+                                    <p className="text-[11px] text-slate-500 uppercase font-medium mt-0.5">ECB announcement caused 0.8% liquidity drop</p>
                                 </div>
                             </div>
                             <AlertCircle className="h-5 w-5 text-orange-500" />
                         </div>
 
-                        <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700/50">
-                            <div className="flex items-center gap-3">
-                                <Globe className="h-8 w-8 text-blue-600 p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md" />
+                        <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-blue-500/30 transition-all">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl">
+                                    <Globe className="h-6 w-6" />
+                                </div>
                                 <div>
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white">HS Code 0901.11 (Coffee)</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">New EU import regulations published</p>
+                                    <p className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">HS Code 0901.11 (Regulatory Update)</p>
+                                    <p className="text-[11px] text-slate-500 uppercase font-medium mt-0.5">New EU Green-Deal import sanctions published</p>
                                 </div>
                             </div>
-                            <AlertCircle className="h-5 w-5 text-blue-500" />
+                            <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] font-bold">INFO</Badge>
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="col-span-3 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm">
+                {/* Data Export Port */}
+                <Card className="lg:col-span-3 bg-black/40 backdrop-blur-2xl border border-white/10 shadow-2xl relative">
                     <CardHeader>
-                        <CardTitle className="text-slate-900 dark:text-white">Data Export</CardTitle>
-                        <CardDescription className="text-slate-500 dark:text-slate-400">
-                            Download raw verified data for PowerBI/Excel.
+                        <CardTitle className="text-white text-lg flex items-center gap-2">
+                            <Zap className="h-5 w-5 text-[#D4AF37]" /> Data Export Port
+                        </CardTitle>
+                        <CardDescription className="text-slate-500 text-[10px] uppercase font-bold mt-1">
+                            Download raw data for institutional reporting.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <Button variant="outline" className="w-full justify-between border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">
-                            <span className="flex items-center"><Globe className="mr-2 h-4 w-4" /> Trade Data (CSV)</span>
+                        <Button variant="outline" className="w-full justify-between h-14 border-white/10 bg-black/40 text-slate-300 hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all px-6">
+                            <span className="flex items-center font-bold text-xs uppercase tracking-widest"><Globe className="mr-3 h-4 w-4" /> Global Trade Map</span>
                             <Download className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" className="w-full justify-between border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">
-                            <span className="flex items-center"><DollarSign className="mr-2 h-4 w-4" /> FX History (CSV)</span>
+                        <Button variant="outline" className="w-full justify-between h-14 border-white/10 bg-black/40 text-slate-300 hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all px-6">
+                            <span className="flex items-center font-bold text-xs uppercase tracking-widest"><DollarSign className="mr-3 h-4 w-4" /> FX Volatility History</span>
                             <Download className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" className="w-full justify-between border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">
-                            <span className="flex items-center"><Ship className="mr-2 h-4 w-4" /> Freight Index (CSV)</span>
+                        <Button variant="outline" className="w-full justify-between h-14 border-white/10 bg-black/40 text-slate-300 hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all px-6">
+                            <span className="flex items-center font-bold text-xs uppercase tracking-widest"><Ship className="mr-3 h-4 w-4" /> Scafi Freight Index</span>
                             <Download className="h-4 w-4" />
                         </Button>
+
+                        <div className="pt-4 text-center">
+                            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.3em]">Institutional Grade Data Access</p>
+                        </div>
                     </CardContent>
                 </Card>
+
             </div>
         </div>
     )
