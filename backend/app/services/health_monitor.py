@@ -11,8 +11,8 @@ from sqlalchemy import func, and_, or_
 from app.database import get_db
 from app.models.phase6 import SystemSetting
 from app.services.gemini_service import GeminiService
-from app.integrations.comtrade import ComtradeService
-from app.integrations.waha import WAHAService
+from app.integrations.un_comtrade_client import UNComtradeClient
+from app.integrations.waha.adapter import WAHAAdapter
 
 
 class ConnectorStatus:
@@ -190,8 +190,8 @@ class ComtradeConnectorMonitor:
         
         try:
             # Test Comtrade API
-            comtrade = ComtradeService()
-            test_data = await comtrade.get_trade_data_async("USA", "China", "2023", "TOTAL")
+            comtrade = UNComtradeClient()
+            test_data = await comtrade.get_bilateral_trade("USA", "China", "TOTAL")
             
             latency_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
             
@@ -220,14 +220,13 @@ class WahaConnectorMonitor:
         
         try:
             # Test WAHA connection
-            waha = WAHAService()
-            test_status = await waha.get_health_async()
+            test_status = await WAHAAdapter.health()
             
             latency_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
             
             return ConnectorStatus(
                 name="waha",
-                status="healthy" if test_status.get("status") == "ok" else "degraded",
+                status="healthy" if test_status.get("reachable") else "degraded",
                 latency_ms=latency_ms,
                 last_success=datetime.utcnow(),
                 success_count=1
