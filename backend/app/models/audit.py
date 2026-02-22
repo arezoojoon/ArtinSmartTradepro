@@ -29,5 +29,5 @@ class AuditLog(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     # Relationships
-    tenant = relationship("Tenant")
-    user = relationship("User")
+    tenant = relationship("Tenant", foreign_keys=[tenant_id])
+    user = relationship("User", foreign_keys=[user_id])
