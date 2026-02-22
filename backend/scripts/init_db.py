@@ -42,6 +42,39 @@ def init_db():
         with sync_engine.connect() as connection:
             result = connection.execute(text("SELECT 1"))
             logger.info(f"Database connection verified: {result.scalar()}")
+
+        # Ensure FIRST_SUPERUSER is created
+        from app.models.user import User
+        from app.core.security import get_password_hash
+        
+        Session = sessionmaker(bind=sync_engine)
+        with Session() as session:
+            # Check if user exists using SQLAlchemy v2.0 syntax
+            from sqlalchemy import select
+            user = session.execute(
+                select(User).where(User.email == settings.FIRST_SUPERUSER)
+            ).scalar_one_or_none()
+            
+            if not user:
+                logger.info(f"Creating superuser {settings.FIRST_SUPERUSER}...")
+                user = User(
+                    email=settings.FIRST_SUPERUSER,
+                    hashed_password=get_password_hash(settings.FIRST_SUPERUSER_PASSWORD),
+                    full_name="Super Admin",
+                    is_active=True,
+                    is_superuser=True,
+                    email_verified=True,
+                    role="super_admin"
+                )
+                session.add(user)
+                session.commit()
+                logger.info(f"Superuser {settings.FIRST_SUPERUSER} created successfully!")
+            else:
+                logger.info(f"Superuser {settings.FIRST_SUPERUSER} already exists!")
+                # Force update password if needed
+                user.hashed_password = get_password_hash(settings.FIRST_SUPERUSER_PASSWORD)
+                session.commit()
+                logger.info(f"Superuser {settings.FIRST_SUPERUSER} password updated!")
             
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
