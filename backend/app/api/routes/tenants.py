@@ -136,11 +136,11 @@ async def create_tenant(
     # Log tenant creation
     audit_log = AuditLog(
         tenant_id=tenant.id,
-        actor_user_id=current_user.id,
+        user_id=current_user.id,
         action="tenant_create",
         resource_type="tenant",
         resource_id=str(tenant.id),
-        details={"name": tenant.name, "plan": tenant.plan},
+        metadata_json={"name": tenant.name, "plan": tenant.plan},
         ip_address=request.client.host,
         user_agent=request.headers.get("user-agent")
     )

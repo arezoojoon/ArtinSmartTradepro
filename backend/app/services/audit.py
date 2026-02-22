@@ -24,7 +24,7 @@ def log_audit_event(
             action=action,
             user_id=user_id if user_id else None,
             tenant_id=tenant_id if tenant_id else None,
-            details=details if details else {},
+            metadata_json=details if details else {},
             resource_type=resource_type,
             resource_id=str(resource_id) if resource_id else None,
             ip_address=ip_address,

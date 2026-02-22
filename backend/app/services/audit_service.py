@@ -24,11 +24,11 @@ async def log_audit_async(
     """Async audit logger for use with async DB sessions."""
     entry = AuditLog(
         tenant_id=tenant_id,
-        actor_user_id=actor_user_id,
+        user_id=actor_user_id,
         action=action,
         resource_type=resource_type,
         resource_id=resource_id,
-        details=details or {},
+        metadata_json=details or {},
         ip_address=ip_address,
         user_agent=user_agent,
     )
@@ -51,11 +51,11 @@ def log_audit_sync(
     """Sync audit logger for use with sync DB sessions (e.g. WAHA routes)."""
     entry = AuditLog(
         tenant_id=tenant_id,
-        actor_user_id=actor_user_id,
+        user_id=actor_user_id,
         action=action,
         resource_type=resource_type,
         resource_id=resource_id,
-        details=details or {},
+        metadata_json=details or {},
         ip_address=ip_address,
         user_agent=user_agent,
     )
