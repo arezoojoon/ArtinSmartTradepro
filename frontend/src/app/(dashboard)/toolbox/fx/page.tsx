@@ -75,8 +75,8 @@ export default function FXPage() {
         <div className="space-y-6 max-w-6xl mx-auto">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">FX & Volatility Hub 💱</h2>
-                    <p className="text-muted-foreground mt-1">Live Rates, Volatility Bands, and Scenario Planning</p>
+                    <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">FX & Volatility Hub 💱</h2>
+                    <p className="text-muted-foreground dark:text-slate-400 mt-1">Live Rates, Volatility Bands, and Scenario Planning</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 py-1">
@@ -134,10 +134,10 @@ export default function FXPage() {
                                 <RefreshCw className="h-6 w-6 animate-spin text-blue-500" />
                             </div>
                         )}
-                        <div className="text-5xl font-bold flex items-center tracking-tighter text-slate-800">
+                        <div className="text-5xl font-bold flex items-center tracking-tighter text-slate-800 dark:text-white">
                             {rate ? Number(rate.rate).toFixed(4) : "—"}
                         </div>
-                        <div className="text-slate-500 font-medium mt-2 flex items-center">
+                        <div className="text-slate-500 dark:text-slate-400 font-medium mt-2 flex items-center">
                             1 {base} = {rate ? Number(rate.rate).toFixed(4) : "—"} {quote}
                         </div>
                         <div className="mt-6 flex items-center space-x-2 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
@@ -154,7 +154,7 @@ export default function FXPage() {
                     <Card className="shadow-sm overflow-hidden">
                         <CardHeader className="bg-slate-50/80 border-b pb-4">
                             <div className="flex items-center justify-between">
-                                <CardTitle className="text-base flex items-center gap-2">
+                                <CardTitle className="text-base flex items-center gap-2 text-slate-900 dark:text-white">
                                     <Activity className="h-5 w-5 text-indigo-500" />
                                     30-Day Volatility Band
                                 </CardTitle>
@@ -196,7 +196,7 @@ export default function FXPage() {
                     {/* Scenario Planning Calculator */}
                     <Card className="shadow-sm">
                         <CardHeader className="bg-slate-50/80 border-b pb-4">
-                            <CardTitle className="text-base flex items-center gap-2">
+                            <CardTitle className="text-base flex items-center gap-2 text-slate-900 dark:text-white">
                                 <Calculator className="h-5 w-5 text-amber-500" />
                                 Cost Scenario Planning
                             </CardTitle>

@@ -48,8 +48,8 @@ export default function MobileControlTower() {
             <div className="px-5 py-5 sticky top-0 bg-slate-50/80 backdrop-blur-xl z-40 border-b border-slate-200 shadow-sm">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-black tracking-tight text-slate-900">Control Tower</h1>
-                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider flex items-center gap-1 mt-1">
+                        <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Control Tower</h1>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider flex items-center gap-1 mt-1">
                             <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -97,7 +97,7 @@ export default function MobileControlTower() {
                 {/* 2. Today's Opportunities */}
                 <section>
                     <div className="flex items-center justify-between mb-4 px-1">
-                        <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                        <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
                             <Zap className="h-4 w-4 text-emerald-500" />
                             Top Opportunities
                         </h2>
@@ -133,7 +133,7 @@ export default function MobileControlTower() {
                 {/* 3. Risk Alerts */}
                 <section>
                     <div className="flex items-center justify-between mb-4 px-1">
-                        <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                        <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
                             <AlertTriangle className="h-4 w-4 text-rose-500" />
                             Critical Risks
                         </h2>
@@ -159,7 +159,7 @@ export default function MobileControlTower() {
                 {/* 4. Market Shocks */}
                 <section>
                     <div className="flex items-center justify-between mb-4 px-1">
-                        <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                        <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
                             <TrendingUp className="h-4 w-4 text-blue-500" />
                             Market Shocks
                         </h2>
@@ -193,7 +193,7 @@ export default function MobileControlTower() {
                 {/* 5. New Leads */}
                 <section>
                     <div className="flex items-center justify-between mb-4 px-1">
-                        <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                        <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
                             <Users className="h-4 w-4 text-indigo-500" />
                             Latest Scored Leads
                         </h2>

@@ -48,8 +48,8 @@ export function InsightCard({
             <Card className={`border-dashed border-slate-300 bg-slate-50/50 ${className}`}>
                 <CardContent className="p-4 flex flex-col items-center justify-center text-center space-y-2">
                     <AlertCircle className="h-8 w-8 text-slate-400" />
-                    <h3 className="font-semibold text-slate-700">{title}</h3>
-                    <p className="text-sm text-slate-500 max-w-[250px]">
+                    <h3 className="font-semibold text-slate-700 dark:text-slate-200">{title}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[250px]">
                         Insufficient data to generate this insight.
                     </p>
                     <div className="flex items-center gap-2 mt-2">
@@ -67,7 +67,7 @@ export function InsightCard({
             <CardContent className="p-0">
                 <div className="p-4">
                     <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-slate-900 leading-tight">{title}</h3>
+                        <h3 className="font-semibold text-slate-900 dark:text-white leading-tight">{title}</h3>
                         {confidence !== undefined && (
                             <Badge variant="outline" className={`flex items-center text-[10px] uppercase font-bold px-2 py-0.5 ${getConfidenceColor(confidence)}`}>
                                 {getConfidenceIcon(confidence)}
@@ -97,7 +97,7 @@ export function InsightCard({
                     {actionLabel && (
                         <button
                             onClick={onAction}
-                            className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-md transition-colors"
+                            className="text-xs font-semibold text-blue-600 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 px-3 py-1.5 rounded-md transition-colors"
                         >
                             {actionLabel}
                         </button>

@@ -64,8 +64,8 @@ export default function CompaniesPage() {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">Companies</h1>
-                    <p className="text-muted-foreground mt-1">Manage global trade partners and enterprise accounts.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Companies</h1>
+                    <p className="text-muted-foreground dark:text-slate-400 mt-1">Manage global trade partners and enterprise accounts.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <Button variant="outline" className="hidden sm:flex border-slate-200">
@@ -81,50 +81,50 @@ export default function CompaniesPage() {
 
             {/* Quick Stats / Highlights */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="shadow-sm border-slate-200 bg-white">
+                <Card className="shadow-sm border-slate-200 bg-white dark:bg-slate-900">
                     <CardContent className="p-4 flex items-center gap-4">
                         <div className="p-2 bg-indigo-50 rounded-lg">
                             <Building2 className="h-5 w-5 text-indigo-600" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-slate-500">Total Partners</p>
-                            <p className="text-2xl font-bold text-slate-900">{loading ? "..." : companies.length}</p>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Partners</p>
+                            <p className="text-2xl font-bold text-slate-900 dark:text-white">{loading ? "..." : companies.length}</p>
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="shadow-sm border-slate-200 bg-white">
+                <Card className="shadow-sm border-slate-200 bg-white dark:bg-slate-900">
                     <CardContent className="p-4 flex items-center gap-4">
                         <div className="p-2 bg-emerald-50 rounded-lg">
                             <ShieldCheck className="h-5 w-5 text-emerald-600" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-slate-500">Secure Entities</p>
-                            <p className="text-2xl font-bold text-slate-900">84%</p>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Secure Entities</p>
+                            <p className="text-2xl font-bold text-slate-900 dark:text-white">84%</p>
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="shadow-sm border-slate-200 bg-white">
+                <Card className="shadow-sm border-slate-200 bg-white dark:bg-slate-900">
                     <CardContent className="p-4 flex items-center gap-4">
                         <div className="p-2 bg-amber-50 rounded-lg">
                             <TrendingUp className="h-5 w-5 text-amber-600" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-slate-500">Avg. Trade Score</p>
-                            <p className="text-2xl font-bold text-slate-900">7.2/10</p>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Avg. Trade Score</p>
+                            <p className="text-2xl font-bold text-slate-900 dark:text-white">7.2/10</p>
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
             {/* Search and Filters */}
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                 <div className="relative w-full sm:max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input
                         placeholder="Search by name, industry, or domain..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="pl-10 bg-slate-50 border-slate-200"
+                        className="pl-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 dark:text-white"
                     />
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -140,12 +140,12 @@ export default function CompaniesPage() {
             </div>
 
             {/* Companies Table */}
-            <Card className="shadow-sm border-slate-200 overflow-hidden bg-white">
+            <Card className="shadow-sm border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
                 <Table>
-                    <TableHeader className="bg-slate-50/50">
+                    <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white">
                         <TableRow>
-                            <TableHead className="w-[300px] font-bold text-slate-700">Company & Domain</TableHead>
-                            <TableHead className="font-bold text-slate-700">Industry & Size</TableHead>
+                            <TableHead className="w-[300px] font-bold text-slate-700 dark:text-slate-200">Company & Domain</TableHead>
+                            <TableHead className="font-bold text-slate-700 dark:text-slate-200">Industry & Size</TableHead>
                             <TableHead className="font-bold text-slate-700">Location</TableHead>
                             <TableHead className="font-bold text-slate-700">Risk Radar</TableHead>
                             <TableHead className="text-right font-bold text-slate-700">Actions</TableHead>
@@ -177,7 +177,7 @@ export default function CompaniesPage() {
                                                 <Building2 className="h-5 w-5" />
                                             </div>
                                             <div>
-                                                <div className="font-bold text-slate-900">{company.name}</div>
+                                                <div className="font-bold text-slate-900 dark:text-white">{company.name}</div>
                                                 <div className="text-xs text-slate-500 font-mono flex items-center gap-1">
                                                     {company.domain || company.website?.replace(/https?:\/\//, '')}
                                                     {company.website && <ExternalLink className="h-2 w-2 opacity-0 group-hover:opacity-100 transition-opacity" />}
