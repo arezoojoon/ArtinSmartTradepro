@@ -278,10 +278,11 @@ class FeatureFlag(Base):
     
     # Metadata
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     
     # Relationships
     tenant = relationship("Tenant", back_populates="feature_flags")
-    creator = relationship("User", back_populates="created_feature_flags")
-    updater = relationship("User", back_populates="updated_feature_flags")
+    creator = relationship("User", foreign_keys=[created_by], back_populates="created_feature_flags")
+    updater = relationship("User", foreign_keys=[updated_by], back_populates="updated_feature_flags")

@@ -43,6 +43,7 @@ class Deal(Base):
     # Deal classification
     status = Column(String(20), nullable=False, default=DealStatus.IDENTIFIED.value, index=True)
     priority = Column(String(10), nullable=False, default=DealPriority.MEDIUM.value)
+    custom_pipeline_id = Column(UUID(as_uuid=True), ForeignKey("custom_pipelines.id"), nullable=True)
     
     # Parties
     buyer_company_id = Column(UUID(as_uuid=True), ForeignKey("crm_companies.id"), nullable=True)
@@ -84,6 +85,7 @@ class Deal(Base):
     
     # Relationships
     tenant = relationship("Tenant", back_populates="deals")
+    custom_pipeline = relationship("CustomPipeline", back_populates="deals")
     buyer_company = relationship("CRMCompany", foreign_keys=[buyer_company_id], back_populates="buyer_deals")
     seller_company = relationship("CRMCompany", foreign_keys=[seller_company_id], back_populates="seller_deals")
     assigned_user = relationship("User", foreign_keys=[assigned_to], back_populates="assigned_deals")

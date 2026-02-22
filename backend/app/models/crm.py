@@ -29,6 +29,10 @@ class CRMCompany(Base):
     notes = relationship("CRMNote", back_populates="company")
     tenant = relationship("Tenant")
 
+    # Phase 6 relationships for the global Deal model
+    buyer_deals = relationship("Deal", foreign_keys="[Deal.buyer_company_id]", back_populates="buyer_company")
+    seller_deals = relationship("Deal", foreign_keys="[Deal.seller_company_id]", back_populates="seller_company")
+
 class CRMContact(Base):
     """People. Distinct from Leads."""
     __tablename__ = "crm_contacts"

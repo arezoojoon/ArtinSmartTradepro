@@ -59,8 +59,8 @@ class User(Base):
     created_api_keys = relationship("ApiKey", back_populates="creator")
     created_webhook_configs = relationship("WebhookConfig", back_populates="creator")
     updated_preferences = relationship("TenantPreference", back_populates="updater")
-    created_feature_flags = relationship("FeatureFlag", back_populates="creator")
-    updated_feature_flags = relationship("FeatureFlag", back_populates="updater")
+    created_feature_flags = relationship("FeatureFlag", foreign_keys="[FeatureFlag.created_by]", back_populates="creator")
+    updated_feature_flags = relationship("FeatureFlag", foreign_keys="[FeatureFlag.updated_by]", back_populates="updater")
 
     @property
     def tenant_id(self):

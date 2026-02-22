@@ -14,7 +14,8 @@ from app.models.phase6 import SystemAdmin, SysAuditLog
 from app.models.user import User
 from app.models.tenant import Tenant
 from app.core.security import generate_password_reset_token
-from app.config import settings
+from app.config import get_settings
+settings = get_settings()
 
 
 class SecurityEvent:
