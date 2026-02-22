@@ -15,6 +15,17 @@ from .followup import CRMFollowUpRule, CRMFollowUpExecution, CRMRevenueAttributi
 from .hunter import HunterRun, HunterResult, TradeSignal
 from .ai_job import AIJob, AIUsage
 from .bot_session import BotDeeplinkRef, BotSession, BotEvent, WAHAWebhookEvent, WhatsAppStatusUpdate
+# Deal models
+from .deal import (
+    Deal, DealStatus, DealPriority, DealPriceComponent, 
+    DealDocument, DealMilestone, DealRiskAssessment, 
+    DealCommunication, DealTemplate
+)
+# Brain models
+from .brain import (
+    ArbitrageResult, RiskAssessment, DemandForecast, 
+    CulturalStrategy, TradeOpportunity, MarketSignal, BrainEngineRun
+)
 # Phase 6 models
 from .phase6 import (
     SystemAdmin,

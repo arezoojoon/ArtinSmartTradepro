@@ -123,3 +123,34 @@ class MarketSignal(Base):
     sentiment_score = Column(Float) # -1.0 to 1.0
     
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class BrainEngineRun(Base):
+    """
+    V3 Brain Engine: Tracks AI model execution and results.
+    """
+    __tablename__ = "brain_engine_runs"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True)
+    
+    # Engine metadata
+    engine_type = Column(String, nullable=False) # arbitrage, risk, demand, cultural
+    model_version = Column(String)
+    run_status = Column(String, default="pending") # pending, running, completed, failed
+    
+    # Input parameters
+    input_parameters = Column(JSON)
+    
+    # Results
+    results = Column(JSON)
+    confidence_score = Column(Float)
+    execution_time_ms = Column(Integer)
+    
+    # Timestamps
+    started_at = Column(DateTime, default=datetime.datetime.utcnow)
+    completed_at = Column(DateTime)
+    
+    # Error handling
+    error_message = Column(String)
+    retry_count = Column(Integer, default=0)
