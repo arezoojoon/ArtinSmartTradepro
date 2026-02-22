@@ -17,79 +17,30 @@ import {
 } from "lucide-react";
 
 export default function MobileControlTower() {
-    // In a real implementation, these would be fetched via SWR/React Query from /api/mobile-tower
-    // Since the backend endpoints for these specific aggregations are pending, we scaffold the strict data contract here.
-
     const [isLoading, setIsLoading] = useState(true);
+    const [data, setData] = useState<any>(null);
 
     useEffect(() => {
-        // Simulate initial data fetch
-        const timer = setTimeout(() => setIsLoading(false), 800);
-        return () => clearTimeout(timer);
+        const fetchDashboardData = async () => {
+            try {
+                // Using dynamic import of API to avoid CSR cycle issues if any
+                const { api } = await import("@/lib/api");
+                const response = await api.get("/dashboard/mobile");
+                setData(response.data);
+            } catch (error) {
+                console.error("Failed to load dashboard data", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchDashboardData();
     }, []);
 
-    // 1. Today Opportunities
-    const opportunities = [
-        {
-            id: 1,
-            title: "Rice Export to UAE",
-            description: "Buy FOB India, Sell CIF Dubai. Est. Margin: 12.4%",
-            source: "AI Brain (Arbitrage Engine)",
-            timestamp: new Date().toISOString(),
-            confidence: 94,
-        },
-        {
-            id: 2,
-            title: "Scrap Metal - Turkey",
-            source: "UN Comtrade",
-            timestamp: new Date(Date.now() - 3600000).toISOString(),
-            confidence: 88,
-            isInsufficientData: false,
-        }
-    ];
-
-    // 2. Risk Alerts
-    const risks = [
-        {
-            id: 1,
-            title: "Red Sea Shipping Delay",
-            description: "Rerouting adding 14 days transit time. Action: Verify insurance.",
-            source: "FreightWatch API",
-            timestamp: new Date(Date.now() - 7200000).toISOString(),
-            confidence: 98,
-        },
-        {
-            id: 2,
-            title: "EUR/USD Volatility Spike",
-            description: "Expected 2% swing in next 48h.",
-            source: "FX Risk Engine",
-            timestamp: new Date().toISOString(),
-            confidence: 72,
-        }
-    ];
-
-    // 3. Shock Alerts (Ticker)
-    const shocks = [
-        { id: 1, asset: "Brent Crude", change: "+4.2%", trend: "up", source: "Bloomberg", confidence: 99 },
-        { id: 2, asset: "Container Index", change: "+11%", trend: "up", source: "Drewry", confidence: 95 },
-        { id: 3, asset: "Wheat Futures", change: "-2.1%", trend: "down", source: "CBOT", confidence: 100 },
-    ];
-
-    // 4. New Leads
-    const leads = [
-        {
-            id: 1,
-            title: "Al-Futtaim Group (UAE)",
-            description: "High import volume detected for auto parts.",
-            source: "TradeMap + Web Scraper",
-            timestamp: new Date(Date.now() - 14400000).toISOString(),
-            confidence: 82,
-        }
-    ];
-
-    if (isLoading) {
-        return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="animate-pulse flex items-center gap-2"><Globe className="h-5 w-5 text-indigo-500 animate-spin" /> Fetching secure data...</div></div>;
+    if (isLoading || !data) {
+        return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="animate-pulse flex flex-col items-center gap-3"><Globe className="h-8 w-8 text-indigo-500 animate-spin" /><span className="text-slate-500 font-medium">Fetching secure data...</span></div></div>;
     }
+
+    const { opportunities, risks, shocks, leads, liquidity } = data;
 
     return (
         <div className="min-h-screen bg-slate-50 pb-24 pt-safe animate-in fade-in duration-500 font-sans">
@@ -126,19 +77,19 @@ export default function MobileControlTower() {
                             <div className="space-y-1">
                                 <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">Pending In (7d)</span>
                                 <div className="font-mono text-lg text-emerald-400 flex items-center gap-1">
-                                    <ArrowUpRight className="h-3 w-3" /> $45,000
+                                    <ArrowUpRight className="h-3 w-3" /> ${liquidity.pending_in.toLocaleString()}
                                 </div>
                             </div>
                             <div className="space-y-1">
                                 <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">Pending Out (7d)</span>
                                 <div className="font-mono text-lg text-rose-400 flex items-center gap-1">
-                                    <ArrowDownRight className="h-3 w-3" /> $12,500
+                                    <ArrowDownRight className="h-3 w-3" /> ${liquidity.pending_out.toLocaleString()}
                                 </div>
                             </div>
                         </div>
                         <div className="mt-4 pt-4 border-t border-slate-800 flex justify-between items-center">
-                            <span className="text-[10px] text-slate-500">Source: Platform Wallet API</span>
-                            <span className="text-[10px] text-slate-500">DSO: <span className="text-amber-400 font-bold">24 Days</span></span>
+                            <span className="text-[10px] text-slate-500">Source: {liquidity.source}</span>
+                            <span className="text-[10px] text-slate-500">DSO: <span className="text-amber-400 font-bold">{liquidity.dso} Days</span></span>
                         </div>
                     </div>
                 </section>
@@ -152,7 +103,7 @@ export default function MobileControlTower() {
                         </h2>
                     </div>
                     <div className="space-y-4">
-                        {opportunities.map((opp) => (
+                        {opportunities.map((opp: any) => (
                             <InsightCard
                                 key={opp.id}
                                 title={opp.title}
@@ -188,7 +139,7 @@ export default function MobileControlTower() {
                         </h2>
                     </div>
                     <div className="space-y-4">
-                        {risks.map((risk) => (
+                        {risks.map((risk: any) => (
                             <InsightCard
                                 key={risk.id}
                                 title={risk.title}
@@ -215,7 +166,7 @@ export default function MobileControlTower() {
                     </div>
                     <ScrollArea className="w-full whitespace-nowrap pb-4">
                         <div className="flex space-x-3">
-                            {shocks.map((shock) => (
+                            {shocks.map((shock: any) => (
                                 <div key={shock.id} className="inline-flex items-center justify-between space-x-4 bg-white border border-slate-200 rounded-xl p-4 shadow-sm min-w-[200px]">
                                     <div className="flex flex-col">
                                         <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">{shock.asset}</span>
@@ -248,7 +199,7 @@ export default function MobileControlTower() {
                         </h2>
                     </div>
                     <div className="space-y-4">
-                        {leads.map((lead) => (
+                        {leads.map((lead: any) => (
                             <InsightCard
                                 key={lead.id}
                                 title={lead.title}

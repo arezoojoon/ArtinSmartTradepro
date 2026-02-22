@@ -45,9 +45,11 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(tenants.router, prefix="/api/v1/tenants", tags=["tenants"])
 
-# Import CRM router dynamically or at top level if prefered, but keeping style:
 from .api.routes import crm
 app.include_router(crm.router, prefix="/api/v1/crm", tags=["crm"])
+
+from .routers import dashboard
+app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])
 
 from .routers import hunter
 app.include_router(hunter.router, prefix="/api/v1/hunter", tags=["hunter"])
