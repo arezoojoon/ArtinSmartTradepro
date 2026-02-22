@@ -36,17 +36,20 @@ class FXClient(BaseIntegrationClient):
 
     async def get_rate(self, base: str, quote: str) -> float:
         """
-        Get exchange rate: 1 unit of base = ? units of quote.
-        Mock: returns realistic rate with small random variance.
+        Get exact exchange rate. NO FAKE DATA.
+        If API key is missing, only permit known static baseline pairs.
+        Otherwise, throws ValueError to trigger INSUFFICIENT_DATA.
         """
         pair = (base.upper(), quote.upper())
         if self.is_mock:
-            base_rate = MOCK_RATES.get(pair, 1.0)
-            # Add realistic variance (±0.5%)
-            variance = base_rate * random.uniform(-0.005, 0.005)
-            rate = round(base_rate + variance, 4)
-            self.log_request("get_rate", {"base": base, "quote": quote}, result=rate)
-            return rate
+            if pair in MOCK_RATES:
+                # V3 Strict: return exact dictionary value. No random variance.
+                rate = MOCK_RATES[pair]
+                self.log_request("get_rate", {"base": base, "quote": quote}, result=rate)
+                return rate
+            else:
+                # V3 Strict: Do not guess. Force Insufficient Data.
+                raise ValueError(f"No FX data available for pair {base}/{quote}. API Key required.")
 
         # TODO: Real API implementation
         raise NotImplementedError("Real FX API not configured")

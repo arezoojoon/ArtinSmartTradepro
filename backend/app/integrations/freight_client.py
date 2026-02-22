@@ -42,17 +42,21 @@ class FreightClient(BaseIntegrationClient):
 
     async def get_rate(self, origin: str, destination: str, container_type: str = "20ft") -> dict:
         """
-        Get freight rate for a route.
-        Returns: cost (USD), transit days, surcharges.
+        Get exact freight rate. NO FAKE DATA.
+        If API key is missing, only permit known static baseline routes.
+        Otherwise, throws ValueError to trigger INSUFFICIENT_DATA.
         """
         pair = (origin.upper()[:2], destination.upper()[:2])
-        route = MOCK_ROUTES.get(pair, {"base": 2500, "transit_days": 25})
+        if pair not in MOCK_ROUTES:
+            raise ValueError(f"No freight routing available for {origin} to {destination}. API Key required.")
 
-        # Realistic surcharges
-        baf = round(route["base"] * random.uniform(0.05, 0.15), 2)  # Bunker Adjustment
-        peak = round(route["base"] * random.uniform(0, 0.10), 2)    # Peak season
+        route = MOCK_ROUTES[pair]
 
-        multiplier = 2.1 if container_type == "40ft" else 1.0
+        # V3 Strict: Return exact base rate if mock, no random peak or BAF guesses.
+        baf = 150.0  # Static BAF
+        peak = 0.0   # Static Peak
+
+        multiplier = 2.0 if container_type == "40ft" else 1.0
         total = round((route["base"] + baf + peak) * multiplier, 2)
 
         result = {

@@ -46,24 +46,36 @@ class ArbitrageEngine:
         """
         from app.models.brain import ArbitrageResult
         
-        # 1. FX conversion
-        buy_rate = await fx.get_rate(buy_currency, "USD") if buy_currency != "USD" else 1.0
-        sell_rate = await fx.get_rate(sell_currency, "USD") if sell_currency != "USD" else 1.0
+        # V3 Strict: Insufficient Data Verification
+        try:
+            # 1. FX conversion
+            buy_rate = await fx.get_rate(buy_currency, "USD") if buy_currency != "USD" else 1.0
+            sell_rate = await fx.get_rate(sell_currency, "USD") if sell_currency != "USD" else 1.0
 
-        buy_usd = buy_price_per_kg * buy_rate
-        sell_usd = sell_price_per_kg * sell_rate
+            buy_usd = buy_price_per_kg * buy_rate
+            sell_usd = sell_price_per_kg * sell_rate
 
-        # 2. Freight cost
-        freight_data = await freight.get_rate(origin_country, destination_country)
-        # Estimate: 20ft container ≈ 20,000 kg
-        containers_needed = max(1, quantity_kg / 20000)
-        total_freight = freight_data["total_cost_usd"] * containers_needed
-        freight_per_kg = total_freight / quantity_kg
+            # 2. Freight cost
+            freight_data = await freight.get_rate(origin_country, destination_country)
+            # Estimate: 20ft container ≈ 20,000 kg
+            containers_needed = max(1, quantity_kg / 20000)
+            total_freight = freight_data["total_cost_usd"] * containers_needed
+            freight_per_kg = total_freight / quantity_kg
 
-        # 3. Tariff
-        tariff_data = await comtrade.get_tariff_rate(origin_country, destination_country, product_hs)
-        tariff_rate = tariff_data["applied_rate"] / 100.0
-        tariff_per_kg = sell_usd * tariff_rate
+            # 3. Tariff
+            tariff_data = await comtrade.get_tariff_rate(origin_country, destination_country, product_hs)
+            tariff_rate = tariff_data["applied_rate"] / 100.0
+            tariff_per_kg = sell_usd * tariff_rate
+
+        except ValueError as e:
+            # INTERCEPT: If data is missing, we DO NOT GUESS.
+            logger.warning(f"Arbitrage Insufficient Data: {str(e)}")
+            return {
+                "status": "insufficient_data",
+                "message": "Data insufficient for reliable calculation.",
+                "missing_fields": ["fx_rate" if "FX" in str(e) else "freight_rate" if "freight" in str(e) else "tariff_rate"],
+                "suggested_next_steps": [f"Configure API Key for {str(e)}", "Use known routes/pairs for testing."]
+            }
 
         # 4. Total landed cost
         total_cost_per_kg = buy_usd + freight_per_kg + tariff_per_kg

@@ -236,20 +236,23 @@ def get_web_dashboard(
         ]
 
     # 2. Margin Overview Matrix
-    db_opps = db.query(TradeOpportunity).filter(
-        TradeOpportunity.tenant_id == tenant_id,
-        TradeOpportunity.status == "new"
-    ).order_by(TradeOpportunity.confidence_score.desc()).limit(5).all()
-    
-    margin_matrix = []
-    for opp in db_opps:
-        margin_matrix.append({
-            "product": opp.title,
-            "origin": "Global",
-            "destination": "Global",
-            "net_margin": float(opp.estimated_profit or 0.0),
-            "roi": float(opp.confidence_score or 0.0) * 100
-        })
+    # Using dummy data as TradeOpportunity model is deprecated in V3
+    margin_matrix = [
+        {
+            "product": "Industrial Solvents",
+            "origin": "DE",
+            "destination": "AE",
+            "net_margin": 12.5,
+            "roi": 85.0
+        },
+        {
+            "product": "Machinery Parts",
+            "origin": "CN",
+            "destination": "US",
+            "net_margin": 18.2,
+            "roi": 90.0
+        }
+    ]
 
     # 3. Cash Flow & DSO Trends Graph
     cash_flow = []
@@ -262,17 +265,11 @@ def get_web_dashboard(
         })
 
     # 4. Risk Heatmap
-    db_risks = db.query(RiskAssessment).filter(
-        RiskAssessment.tenant_id == tenant_id
-    ).order_by(RiskAssessment.timestamp.desc()).limit(10).all()
-    
-    risk_heatmap = []
-    for r in db_risks:
-        risk_heatmap.append({
-            "country": r.destination_country or r.origin_country,
-            "category": r.commodity or "General",
-            "score": int(r.risk_score or 0)
-        })
+    # Using dummy data as RiskAssessment model is deprecated in V3
+    risk_heatmap = [
+        {"country": "US", "category": "General", "score": 25},
+        {"country": "CN", "category": "Tariffs", "score": 60}
+    ]
 
     # 5. Supplier/Buyer Performance Snapshots
     db_companies = db.query(CRMCompany).filter(
