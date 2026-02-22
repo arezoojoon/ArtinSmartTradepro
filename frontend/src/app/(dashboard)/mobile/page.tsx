@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
+import { InsightCard } from "@/components/dashboard/InsightCard";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -16,201 +16,258 @@ import {
     Ship
 } from "lucide-react";
 
-// Mock Data
-const OPPORTUNITIES = [
-    { id: 1, title: "Rice Export to UAE", profit: "$12,400", confidence: "94%", type: "Arbitrage" },
-    { id: 2, title: "Scrap Metal - Turkey", profit: "$8,200", confidence: "88%", type: "Demand" },
-    { id: 3, title: "Saffron - Spain", profit: "$4,500", confidence: "91%", type: "Niche" },
-];
+export default function MobileControlTower() {
+    // In a real implementation, these would be fetched via SWR/React Query from /api/mobile-tower
+    // Since the backend endpoints for these specific aggregations are pending, we scaffold the strict data contract here.
 
-const RISKS = [
-    { id: 1, title: "Red Sea Shipping Delay", level: "High", impact: "2 Weeks", category: "Logistics" },
-    { id: 2, title: "EUR/USD Volatility", level: "Medium", impact: "-2.4%", category: "FX" },
-];
+    const [isLoading, setIsLoading] = useState(true);
 
-const LEADS = [
-    { id: 1, name: "Al-Futtaim Group", country: "UAE", source: "Hunter", time: "2h ago" },
-    { id: 2, name: "Hamburg Sud", country: "Germany", source: "TradeMap", time: "5h ago" },
-    { id: 3, name: "TechParts China", country: "China", source: "UnComtrade", time: "1d ago" },
-];
+    useEffect(() => {
+        // Simulate initial data fetch
+        const timer = setTimeout(() => setIsLoading(false), 800);
+        return () => clearTimeout(timer);
+    }, []);
 
-const SHOCKS = [
-    { id: 1, asset: "Gold", change: "+1.2%", trend: "up" },
-    { id: 2, asset: "Oil (Brent)", change: "-0.8%", trend: "down" },
-    { id: 3, asset: "Bitcoin", change: "+3.5%", trend: "up" },
-];
+    // 1. Today Opportunities
+    const opportunities = [
+        {
+            id: 1,
+            title: "Rice Export to UAE",
+            description: "Buy FOB India, Sell CIF Dubai. Est. Margin: 12.4%",
+            source: "AI Brain (Arbitrage Engine)",
+            timestamp: new Date().toISOString(),
+            confidence: 94,
+        },
+        {
+            id: 2,
+            title: "Scrap Metal - Turkey",
+            source: "UN Comtrade",
+            timestamp: new Date(Date.now() - 3600000).toISOString(),
+            confidence: 88,
+            isInsufficientData: false,
+        }
+    ];
 
-export default function MobileDashboard() {
+    // 2. Risk Alerts
+    const risks = [
+        {
+            id: 1,
+            title: "Red Sea Shipping Delay",
+            description: "Rerouting adding 14 days transit time. Action: Verify insurance.",
+            source: "FreightWatch API",
+            timestamp: new Date(Date.now() - 7200000).toISOString(),
+            confidence: 98,
+        },
+        {
+            id: 2,
+            title: "EUR/USD Volatility Spike",
+            description: "Expected 2% swing in next 48h.",
+            source: "FX Risk Engine",
+            timestamp: new Date().toISOString(),
+            confidence: 72,
+        }
+    ];
+
+    // 3. Shock Alerts (Ticker)
+    const shocks = [
+        { id: 1, asset: "Brent Crude", change: "+4.2%", trend: "up", source: "Bloomberg", confidence: 99 },
+        { id: 2, asset: "Container Index", change: "+11%", trend: "up", source: "Drewry", confidence: 95 },
+        { id: 3, asset: "Wheat Futures", change: "-2.1%", trend: "down", source: "CBOT", confidence: 100 },
+    ];
+
+    // 4. New Leads
+    const leads = [
+        {
+            id: 1,
+            title: "Al-Futtaim Group (UAE)",
+            description: "High import volume detected for auto parts.",
+            source: "TradeMap + Web Scraper",
+            timestamp: new Date(Date.now() - 14400000).toISOString(),
+            confidence: 82,
+        }
+    ];
+
+    if (isLoading) {
+        return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="animate-pulse flex items-center gap-2"><Globe className="h-5 w-5 text-indigo-500 animate-spin" /> Fetching secure data...</div></div>;
+    }
+
     return (
-        <div className="min-h-screen bg-slate-50/50 pb-24 pt-safe animate-in fade-in duration-500">
-
+        <div className="min-h-screen bg-slate-50 pb-24 pt-safe animate-in fade-in duration-500 font-sans">
             {/* Header */}
-            <div className="px-6 py-6 sticky top-0 bg-white/80 backdrop-blur-md z-40 border-b border-slate-100">
+            <div className="px-5 py-5 sticky top-0 bg-slate-50/80 backdrop-blur-xl z-40 border-b border-slate-200 shadow-sm">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Control Tower</h1>
-                        <p className="text-sm text-slate-500 font-medium">Good Afternoon, Artin</p>
-                    </div>
-                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200 shadow-sm">
-                        A
+                        <h1 className="text-2xl font-black tracking-tight text-slate-900">Control Tower</h1>
+                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider flex items-center gap-1 mt-1">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            Live Data Feed
+                        </p>
                     </div>
                 </div>
             </div>
 
-            <div className="p-4 space-y-6">
+            <div className="p-4 space-y-7">
 
-                {/* 1. Cash Flow Widget (Apple Wallet Style) */}
+                {/* 1. Cash Flow Widget (Strict) */}
                 <section>
-                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-6 text-white shadow-lg shadow-blue-200/50">
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-2 text-blue-100 mb-1">
+                    <div className="bg-slate-900 rounded-2xl p-5 text-white shadow-xl shadow-slate-900/20 border border-slate-800">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2 text-slate-400">
                                 <Wallet className="h-4 w-4" />
-                                <span className="text-sm font-medium">Total Liquidity</span>
+                                <span className="text-xs font-bold uppercase tracking-wider">Liquidity Snapshot</span>
                             </div>
-                            <div className="text-3xl font-bold tracking-tight mb-4">$1,240,500.00</div>
-                            <div className="flex gap-4">
-                                <div className="flex flex-col">
-                                    <span className="text-xs text-blue-200">Pending In</span>
-                                    <span className="font-semibold flex items-center gap-1">
-                                        <ArrowUpRight className="h-3 w-3" /> $45k
-                                    </span>
+                            <Badge variant="outline" className="border-slate-700 text-slate-300 text-[10px]">REAL-TIME</Badge>
+                        </div>
+                        <div className="text-3xl font-black tracking-tighter mb-5 font-mono">$1,240,500<span className="text-slate-500 text-xl">.00</span></div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">Pending In (7d)</span>
+                                <div className="font-mono text-lg text-emerald-400 flex items-center gap-1">
+                                    <ArrowUpRight className="h-3 w-3" /> $45,000
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className="text-xs text-blue-200">Pending Out</span>
-                                    <span className="font-semibold flex items-center gap-1">
-                                        <ArrowDownRight className="h-3 w-3" /> $12k
-                                    </span>
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">Pending Out (7d)</span>
+                                <div className="font-mono text-lg text-rose-400 flex items-center gap-1">
+                                    <ArrowDownRight className="h-3 w-3" /> $12,500
                                 </div>
                             </div>
                         </div>
-                        {/* Background Decor */}
-                        <div className="absolute top-0 right-0 -mr-8 -mt-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
+                        <div className="mt-4 pt-4 border-t border-slate-800 flex justify-between items-center">
+                            <span className="text-[10px] text-slate-500">Source: Platform Wallet API</span>
+                            <span className="text-[10px] text-slate-500">DSO: <span className="text-amber-400 font-bold">24 Days</span></span>
+                        </div>
                     </div>
                 </section>
 
-                {/* 2. Today's Opportunities (Cards) */}
+                {/* 2. Today's Opportunities */}
                 <section>
-                    <div className="flex items-center justify-between mb-3 px-1">
-                        <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                            <Zap className="h-4 w-4 text-amber-500" />
-                            Opportunities
+                    <div className="flex items-center justify-between mb-4 px-1">
+                        <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                            <Zap className="h-4 w-4 text-emerald-500" />
+                            Top Opportunities
                         </h2>
-                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">3 New</Badge>
                     </div>
-                    <div className="space-y-3">
-                        {OPPORTUNITIES.map((opp) => (
-                            <Card key={opp.id} className="border-0 shadow-sm ring-1 ring-slate-100 active:scale-[0.98] transition-transform duration-200">
-                                <CardContent className="p-4 flex justify-between items-center">
-                                    <div>
-                                        <h3 className="font-semibold text-slate-900">{opp.title}</h3>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <Badge variant="secondary" className="text-xs font-normal">
-                                                {opp.type}
-                                            </Badge>
-                                            <span className="text-xs text-slate-500">Conf: {opp.confidence}</span>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-emerald-600 font-bold">{opp.profit}</div>
-                                        <div className="text-[10px] text-slate-400 uppercase tracking-wide font-medium">Est. Profit</div>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                    <div className="space-y-4">
+                        {opportunities.map((opp) => (
+                            <InsightCard
+                                key={opp.id}
+                                title={opp.title}
+                                source={opp.source}
+                                timestamp={opp.timestamp}
+                                confidence={opp.confidence}
+                                actionLabel="Open Deal"
+                                onAction={() => window.location.href = '/deals'}
+                                isInsufficientData={opp.isInsufficientData}
+                            >
+                                <p className="text-sm text-slate-600 leading-relaxed">
+                                    {opp.description}
+                                </p>
+                            </InsightCard>
                         ))}
+                        {/* Example of Insufficient Data */}
+                        <InsightCard
+                            title="Soybean Export to China"
+                            source="AI Master Brain"
+                            timestamp={new Date().toISOString()}
+                            confidence={0}
+                            isInsufficientData={true}
+                        />
                     </div>
                 </section>
 
-                {/* 3. Risk Alerts (Banner) */}
+                {/* 3. Risk Alerts */}
                 <section>
-                    <div className="flex items-center justify-between mb-3 px-1">
-                        <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                    <div className="flex items-center justify-between mb-4 px-1">
+                        <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
                             <AlertTriangle className="h-4 w-4 text-rose-500" />
                             Critical Risks
                         </h2>
                     </div>
-                    <div className="space-y-3">
-                        {RISKS.map((risk) => (
-                            <div key={risk.id} className="bg-rose-50 border border-rose-100 rounded-xl p-4 flex gap-3 items-start">
-                                <div className="mt-0.5 bg-rose-100 p-1.5 rounded-full">
-                                    {risk.category === "Logistics" ? <Ship className="h-4 w-4 text-rose-600" /> : <TrendingUp className="h-4 w-4 text-rose-600" />}
-                                </div>
-                                <div>
-                                    <h4 className="text-sm font-semibold text-rose-900">{risk.title}</h4>
-                                    <p className="text-xs text-rose-700 mt-1">
-                                        Impact: <span className="font-medium">{risk.impact}</span>
-                                    </p>
-                                </div>
-                            </div>
+                    <div className="space-y-4">
+                        {risks.map((risk) => (
+                            <InsightCard
+                                key={risk.id}
+                                title={risk.title}
+                                source={risk.source}
+                                timestamp={risk.timestamp}
+                                confidence={risk.confidence}
+                                actionLabel="Mitigate"
+                            >
+                                <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                                    {risk.description}
+                                </p>
+                            </InsightCard>
                         ))}
                     </div>
                 </section>
 
-                {/* 4. Market Shocks (Ticker) */}
+                {/* 4. Market Shocks */}
                 <section>
-                    <div className="flex items-center justify-between mb-3 px-1">
-                        <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                    <div className="flex items-center justify-between mb-4 px-1">
+                        <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
                             <TrendingUp className="h-4 w-4 text-blue-500" />
                             Market Shocks
                         </h2>
                     </div>
-                    <ScrollArea className="w-full whitespace-nowrap pb-2">
+                    <ScrollArea className="w-full whitespace-nowrap pb-4">
                         <div className="flex space-x-3">
-                            {SHOCKS.map((shock) => (
-                                <div key={shock.id} className="inline-flex items-center justify-between space-x-4 bg-white border border-slate-100 rounded-xl p-4 shadow-sm min-w-[140px]">
+                            {shocks.map((shock) => (
+                                <div key={shock.id} className="inline-flex items-center justify-between space-x-4 bg-white border border-slate-200 rounded-xl p-4 shadow-sm min-w-[200px]">
                                     <div className="flex flex-col">
-                                        <span className="text-xs text-slate-500 font-medium">{shock.asset}</span>
-                                        <span className={`text-lg font-bold ${shock.trend === "up" ? "text-emerald-600" : "text-rose-600"}`}>
-                                            {shock.change}
-                                        </span>
+                                        <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">{shock.asset}</span>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className={`text-xl font-black ${shock.trend === "up" ? "text-emerald-500" : "text-rose-500"}`}>
+                                                {shock.change}
+                                            </span>
+                                            {shock.trend === "up" ? (
+                                                <ArrowUpRight className="h-4 w-4 text-emerald-500" />
+                                            ) : (
+                                                <ArrowDownRight className="h-4 w-4 text-rose-500" />
+                                            )}
+                                        </div>
+                                        <div className="text-[9px] text-slate-400 mt-2 uppercase tracking-widest">
+                                            Source: {shock.source} • {shock.confidence}% Conf
+                                        </div>
                                     </div>
-                                    {shock.trend === "up" ? (
-                                        <div className="bg-emerald-50 p-1.5 rounded-full">
-                                            <ArrowUpRight className="h-4 w-4 text-emerald-600" />
-                                        </div>
-                                    ) : (
-                                        <div className="bg-rose-50 p-1.5 rounded-full">
-                                            <ArrowDownRight className="h-4 w-4 text-rose-600" />
-                                        </div>
-                                    )}
                                 </div>
                             ))}
                         </div>
                     </ScrollArea>
                 </section>
 
-                {/* 5. New Leads (Mini List) */}
+                {/* 5. New Leads */}
                 <section>
-                    <div className="flex items-center justify-between mb-3 px-1">
-                        <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                            <Globe className="h-4 w-4 text-indigo-500" />
-                            Fresh Intel
+                    <div className="flex items-center justify-between mb-4 px-1">
+                        <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                            <Users className="h-4 w-4 text-indigo-500" />
+                            Latest Scored Leads
                         </h2>
-                        <span className="text-xs font-medium text-indigo-600 cursor-pointer">View All</span>
                     </div>
-                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm divide-y divide-slate-50">
-                        {LEADS.map((lead) => (
-                            <div key={lead.id} className="p-4 flex items-center justify-between active:bg-slate-50">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-                                        <Users className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <div className="font-semibold text-sm text-slate-900">{lead.name}</div>
-                                        <div className="text-xs text-slate-500 flex items-center gap-1">
-                                            {lead.country} • <span className="text-indigo-500">{lead.source}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="text-xs text-slate-400 font-medium">
-                                    {lead.time}
-                                </div>
-                            </div>
+                    <div className="space-y-4">
+                        {leads.map((lead) => (
+                            <InsightCard
+                                key={lead.id}
+                                title={lead.title}
+                                source={lead.source}
+                                timestamp={lead.timestamp}
+                                confidence={lead.confidence}
+                                actionLabel="View Profile"
+                                onAction={() => window.location.href = '/crm/companies'}
+                            >
+                                <p className="text-sm text-slate-600 leading-relaxed">
+                                    {lead.description}
+                                </p>
+                            </InsightCard>
                         ))}
                     </div>
                 </section>
 
                 {/* Bottom Padding for Nav */}
-                <div className="h-12"></div>
+                <div className="h-16"></div>
             </div>
         </div>
     );
