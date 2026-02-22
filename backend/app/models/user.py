@@ -40,6 +40,28 @@ class User(Base):
     # Current tenant selection
     current_tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=True)
 
+    # Deal relationships
+    assigned_deals = relationship("Deal", back_populates="assigned_user")
+    created_deals = relationship("Deal", back_populates="creator")
+    uploaded_documents = relationship("DealDocument", back_populates="uploader")
+    signed_documents = relationship("DealDocument", back_populates="signer")
+    assigned_milestones = relationship("DealMilestone", back_populates="assignee")
+    assessed_risks = relationship("DealRiskAssessment", back_populates="assessor")
+    created_communications = relationship("DealCommunication", back_populates="creator")
+    created_deal_templates = relationship("DealTemplate", back_populates="creator")
+    
+    # Advanced settings relationships
+    created_pipelines = relationship("CustomPipeline", back_populates="creator")
+    created_scoring_profiles = relationship("ScoringProfile", back_populates="creator")
+    created_alert_rules = relationship("AlertRule", back_populates="creator")
+    created_email_templates = relationship("CustomEmailTemplate", back_populates="creator")
+    created_integration_configs = relationship("IntegrationConfig", back_populates="creator")
+    created_api_keys = relationship("ApiKey", back_populates="creator")
+    created_webhook_configs = relationship("WebhookConfig", back_populates="creator")
+    updated_preferences = relationship("TenantPreference", back_populates="updater")
+    created_feature_flags = relationship("FeatureFlag", back_populates="creator")
+    updated_feature_flags = relationship("FeatureFlag", back_populates="updater")
+
     @property
     def tenant_id(self):
         """Alias for current_tenant_id used by plan_gate and routers."""

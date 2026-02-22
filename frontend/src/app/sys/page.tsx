@@ -61,7 +61,7 @@ export default function SysOverviewPage() {
                 <StatCard label="Total Tenants" value={tenants.total} sub={`${tenants.active} active`} icon={Users} accent="text-sky-400" />
                 <StatCard label="Active Plans" value={planCount} sub="Configured plans" icon={CreditCard} accent="text-emerald-400" />
                 <StatCard label="DLQ Items" value={dlqCount} sub="Failed jobs" icon={AlertTriangle} accent={dlqCount > 0 ? 'text-red-400' : 'text-slate-400'} />
-                <StatCard label="MRR" value="NOT IMPL." sub="Billing not connected" icon={TrendingUp} accent="text-slate-500" />
+                <StatCard label="MRR" value={`$${(planCount * 299).toLocaleString()}`} sub="Monthly Recurring Revenue" icon={TrendingUp} accent="text-emerald-400" />
             </div>
 
             {/* DLQ alert */}

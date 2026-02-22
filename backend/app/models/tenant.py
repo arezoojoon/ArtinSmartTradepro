@@ -52,6 +52,28 @@ class Tenant(Base):
     subscriptions = relationship("Subscription", back_populates="tenant")
     invoices = relationship("Invoice", back_populates="tenant")
     wallets = relationship("Wallet", back_populates="tenant")
+    revenue_events = relationship("RevenueEvent", back_populates="tenant")
+    churn_prediction = relationship("ChurnPrediction", back_populates="tenant")
+    support_tickets = relationship("SupportTicket", back_populates="tenant")
+    cost_metrics = relationship("CostMetric", back_populates="tenant")
+    cost_budgets = relationship("CostBudget", back_populates="tenant")
+    cost_alerts = relationship("CostAlert", back_populates="tenant")
+    cost_forecasts = relationship("CostForecast", back_populates="tenant")
+    cost_optimizations = relationship("CostOptimization", back_populates="tenant")
+    cost_summaries = relationship("CostSummary", back_populates="tenant")
+    deals = relationship("Deal", back_populates="tenant")
+    deal_templates = relationship("DealTemplate", back_populates="tenant")
+    
+    # Advanced settings relationships
+    custom_pipelines = relationship("CustomPipeline", back_populates="tenant")
+    scoring_profiles = relationship("ScoringProfile", back_populates="tenant")
+    alert_rules = relationship("AlertRule", back_populates="tenant")
+    custom_email_templates = relationship("CustomEmailTemplate", back_populates="tenant")
+    integration_configs = relationship("IntegrationConfig", back_populates="tenant")
+    api_keys = relationship("ApiKey", back_populates="tenant")
+    webhook_configs = relationship("WebhookConfig", back_populates="tenant")
+    preferences = relationship("TenantPreference", back_populates="tenant")
+    feature_flags = relationship("FeatureFlag", back_populates="tenant")
 
 
 

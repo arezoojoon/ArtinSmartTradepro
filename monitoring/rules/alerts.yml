@@ -1,0 +1,339 @@
+# =============================================================================
+# Artin Smart Trade - Prometheus Alert Rules
+# =============================================================================
+
+groups:
+  - name: artin-smart-trade.rules
+    rules:
+      # Backend Application Alerts
+      - alert: BackendDown
+        expr: up{job="artin-smart-trade-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: backend
+        annotations:
+          summary: "Artin Smart Trade backend is down"
+          description: "Backend service has been down for more than 1 minute."
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5..", job="artin-smart-trade-backend"}[5m]) / rate(http_requests_total{job="artin-smart-trade-backend"}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: backend
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} for the last 5 minutes."
+
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="artin-smart-trade-backend"}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: backend
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}s for the last 5 minutes."
+
+      - alert: LowThroughput
+        expr: rate(http_requests_total{job="artin-smart-trade-backend"}[5m]) < 0.1
+        for: 10m
+        labels:
+          severity: warning
+          service: backend
+        annotations:
+          summary: "Low throughput detected"
+          description: "Request rate is {{ $value }} requests/second for the last 5 minutes."
+
+      # Database Alerts
+      - alert: DatabaseDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "PostgreSQL service has been down for more than 1 minute."
+
+      - alert: DatabaseConnectionsHigh
+        expr: pg_stat_activity_count > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "High database connections"
+          description: "Database has {{ $value }} active connections."
+
+      - alert: DatabaseSlowQueries
+        expr: rate(pg_stat_statements_mean_time_seconds[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Slow database queries detected"
+          description: "Average query time is {{ $value }}s for the last 5 minutes."
+
+      - alert: DatabaseDiskSpaceHigh
+        expr: (pg_database_size_bytes / 1024 / 1024 / 1024) > 50
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Database disk space usage high"
+          description: "Database size is {{ $value }}GB."
+
+      # Redis Alerts
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis is down"
+          description: "Redis service has been down for more than 1 minute."
+
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Redis memory usage is {{ $value | humanizePercentage }}."
+
+      - alert: RedisConnectionsHigh
+        expr: redis_connected_clients > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis connections high"
+          description: "Redis has {{ $value }} connected clients."
+
+      # Nginx Alerts
+      - alert: NginxDown
+        expr: up{job="nginx"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: nginx
+        annotations:
+          summary: "Nginx is down"
+          description: "Nginx service has been down for more than 1 minute."
+
+      - alert: NginxHighResponseTime
+        expr: histogram_quantile(0.95, rate(nginx_http_request_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: nginx
+        annotations:
+          summary: "Nginx high response time"
+          description: "95th percentile response time is {{ $value }}s."
+
+      - alert: NginxHighErrorRate
+        expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) / rate(nginx_http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: nginx
+        annotations:
+          summary: "Nginx high error rate"
+          description: "Error rate is {{ $value | humanizePercentage }}."
+
+      # System Alerts
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}."
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}."
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "Disk space low"
+          description: "Disk space is {{ $value }}% on {{ $labels.instance }}:{{ $labels.mountpoint }}."
+
+      - alert: DiskSpaceWarning
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 20
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "Disk space warning"
+          description: "Disk space is {{ $value }}% on {{ $labels.instance }}:{{ $labels.mountpoint }}."
+
+      # Business Metrics Alerts
+      - alert: LowActiveUsers
+        expr: artin_active_users_total < 10
+        for: 10m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "Low active users"
+          description: "Only {{ $value }} active users in the last 5 minutes."
+
+      - alert: NoNewDeals
+        expr: increase(artin_deals_created_total[1h]) == 0
+        for: 2h
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "No new deals created"
+          description: "No new deals have been created in the last hour."
+
+      - alert: HighFailedLogins
+        expr: rate(artin_login_failures_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "High failed login attempts"
+          description: "{{ $value }} failed login attempts per second."
+
+      # Container Alerts
+      - alert: ContainerRestarted
+        expr: time() - container_start_time_seconds < 300
+        for: 0m
+        labels:
+          severity: warning
+          service: containers
+        annotations:
+          summary: "Container restarted"
+          description: "Container {{ $labels.name }} was restarted less than 5 minutes ago."
+
+      - alert: ContainerCPUHigh
+        expr: rate(container_cpu_usage_seconds_total{name!=""}[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: containers
+        annotations:
+          summary: "Container CPU high"
+          description: "Container {{ $labels.name }} CPU usage is {{ $value }}%."
+
+      - alert: ContainerMemoryHigh
+        expr: (container_memory_usage_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""}) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: containers
+        annotations:
+          summary: "Container memory high"
+          description: "Container {{ $labels.name }} memory usage is {{ $value }}%."
+
+  - name: artin-smart-trade.business.rules
+    rules:
+      # Business KPI Alerts
+      - alert: DailyRevenueDrop
+        expr: (artin_daily_revenue_total / artin_daily_revenue_total offset 1d) < 0.8
+        for: 0m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "Daily revenue dropped"
+          description: "Today's revenue is {{ $value | humanizePercentage }} of yesterday's."
+
+      - alert: LowConversionRate
+        expr: artin_deal_conversion_rate < 0.2
+        for: 1h
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "Low deal conversion rate"
+          description: "Deal conversion rate is {{ $value | humanizePercentage }}."
+
+      - alert: HighChurnRate
+        expr: artin_customer_churn_rate > 0.05
+        for: 1h
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "High customer churn rate"
+          description: "Customer churn rate is {{ $value | humanizePercentage }}."
+
+      - alert: LowAPIUsage
+        expr: rate(artin_api_requests_total[1h]) < 100
+        for: 2h
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "Low API usage"
+          description: "API request rate is {{ $value }} requests/hour."
+
+  - name: artin-smart-trade.security.rules
+    rules:
+      # Security Alerts
+      - alert: SuspiciousLoginActivity
+        expr: rate(artin_suspicious_login_attempts_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "Suspicious login activity detected"
+          description: "{{ $value }} suspicious login attempts per second."
+
+      - alert: BruteForceAttack
+        expr: rate(artin_brute_force_attempts_total[1m]) > 20
+        for: 1m
+        labels:
+          severity: critical
+          service: security
+        annotations:
+          summary: "Brute force attack detected"
+          description: "{{ $value }} brute force attempts per second."
+
+      - alert: UnauthorizedAPIAccess
+        expr: rate(artin_unauthorized_api_requests_total[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "Unauthorized API access attempts"
+          description: "{{ $value }} unauthorized API requests per second."
+
+      - alert: DataExfiltrationRisk
+        expr: rate(artin_large_data_exports_total[5m]) > 2
+        for: 2m
+        labels:
+          severity: critical
+          service: security
+        annotations:
+          summary: "Potential data exfiltration"
+          description: "{{ $value }} large data exports per second."

@@ -7,6 +7,7 @@ from datetime import datetime, date
 from uuid import UUID
 from pydantic import BaseModel, Field, validator
 from enum import Enum
+from .evidence import InsightWrapper
 
 # Enums
 class BrainEngineType(str, Enum):
@@ -37,14 +38,11 @@ class RiskSeverity(str, Enum):
     HIGH = "high"
 
 # Base Models
-class DataUsedItem(BaseModel):
+class DataUsedItem(InsightWrapper):
     """Single data source entry used in engine computation"""
-    source_name: str = Field(..., description="Name of the data source")
     dataset: str = Field(..., description="Dataset or table name")
-    collected_at: Optional[datetime] = Field(None, description="When data was collected")
-    coverage: str = Field(..., description="Coverage description")
     record_count: Optional[int] = Field(None, description="Number of records used")
-    confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Confidence in this data source")
+    # Inherits source, timestamp, confidence, reasoning from InsightWrapper
 
 class ExplainabilityBundle(BaseModel):
     """Complete explainability bundle for brain engine outputs"""

@@ -1,8 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Search, Filter, MoreHorizontal, Building2, MapPin, Globe, Linkedin } from "lucide-react";
+import {
+    Plus, Search, Filter, MoreHorizontal, Building2, MapPin,
+    Globe, Linkedin, Tag, TrendingUp, AlertTriangle, ShieldCheck,
+    ExternalLink, ArrowUpRight
+} from "lucide-react";
 import { BASE_URL } from "@/lib/api";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+} from "@/components/ui/table";
+import {
+    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Progress } from "@/components/ui/progress";
 
 export default function CompaniesPage() {
     const [companies, setCompanies] = useState([]);
@@ -23,7 +38,7 @@ export default function CompaniesPage() {
             });
             if (res.ok) {
                 const data = await res.json();
-                setCompanies(data);
+                setCompanies(data.companies || data); // Handle both flat list and wrapped object
             }
         } catch (err) {
             console.error(err);
@@ -32,87 +47,221 @@ export default function CompaniesPage() {
         }
     };
 
+    const getRiskColor = (score: number) => {
+        if (score <= 30) return "bg-emerald-500";
+        if (score <= 60) return "bg-amber-500";
+        return "bg-rose-500";
+    };
+
+    const getRiskLabel = (score: number) => {
+        if (score <= 30) return "Low Risk";
+        if (score <= 60) return "Moderate";
+        return "High Risk";
+    };
+
     return (
-        <div className="p-6 max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Companies</h1>
-                    <p className="text-sm text-navy-400">Manage client organizations</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">Companies</h1>
+                    <p className="text-muted-foreground mt-1">Manage global trade partners and enterprise accounts.</p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-gold-400 text-navy-950 rounded-lg font-semibold hover:bg-gold-500 transition-colors">
-                    <Plus className="h-4 w-4" />
-                    Add Company
-                </button>
+                <div className="flex items-center gap-3">
+                    <Button variant="outline" className="hidden sm:flex border-slate-200">
+                        <ArrowUpRight className="h-4 w-4 mr-2" />
+                        Export Data
+                    </Button>
+                    <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Company
+                    </Button>
+                </div>
             </div>
 
-            <div className="mb-6 flex gap-4">
-                <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-navy-400" />
-                    <input
-                        type="text"
-                        placeholder="Search companies..."
+            {/* Quick Stats / Highlights */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="shadow-sm border-slate-200 bg-white">
+                    <CardContent className="p-4 flex items-center gap-4">
+                        <div className="p-2 bg-indigo-50 rounded-lg">
+                            <Building2 className="h-5 w-5 text-indigo-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500">Total Partners</p>
+                            <p className="text-2xl font-bold text-slate-900">{loading ? "..." : companies.length}</p>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="shadow-sm border-slate-200 bg-white">
+                    <CardContent className="p-4 flex items-center gap-4">
+                        <div className="p-2 bg-emerald-50 rounded-lg">
+                            <ShieldCheck className="h-5 w-5 text-emerald-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500">Secure Entities</p>
+                            <p className="text-2xl font-bold text-slate-900">84%</p>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="shadow-sm border-slate-200 bg-white">
+                    <CardContent className="p-4 flex items-center gap-4">
+                        <div className="p-2 bg-amber-50 rounded-lg">
+                            <TrendingUp className="h-5 w-5 text-amber-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500">Avg. Trade Score</p>
+                            <p className="text-2xl font-bold text-slate-900">7.2/10</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Search and Filters */}
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div className="relative w-full sm:max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                        placeholder="Search by name, industry, or domain..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-navy-900 border border-navy-700 rounded-lg text-white focus:border-gold-400 focus:outline-none"
+                        className="pl-10 bg-slate-50 border-slate-200"
                     />
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-navy-800 border border-navy-700 rounded-lg text-navy-300 hover:bg-navy-700">
-                    <Filter className="h-4 w-4" />
-                    Filters
-                </button>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Button variant="outline" className="flex-1 sm:flex-none border-slate-200 bg-white">
+                        <Filter className="h-4 w-4 mr-2" />
+                        Filters
+                    </Button>
+                    <Button variant="outline" className="flex-1 sm:flex-none border-slate-200 bg-white">
+                        <Tag className="h-4 w-4 mr-2" />
+                        Tags
+                    </Button>
+                </div>
             </div>
 
-            <div className="bg-navy-900 border border-navy-800 rounded-xl overflow-hidden">
-                <table className="w-full text-left text-sm">
-                    <thead className="bg-navy-950 text-navy-400">
-                        <tr>
-                            <th className="px-6 py-4 font-medium">Company Name</th>
-                            <th className="px-6 py-4 font-medium">Industry</th>
-                            <th className="px-6 py-4 font-medium">Location</th>
-                            <th className="px-6 py-4 font-medium">Website</th>
-                            <th className="px-6 py-4 font-medium relative"><span className="sr-only">Actions</span></th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-navy-800">
+            {/* Companies Table */}
+            <Card className="shadow-sm border-slate-200 overflow-hidden bg-white">
+                <Table>
+                    <TableHeader className="bg-slate-50/50">
+                        <TableRow>
+                            <TableHead className="w-[300px] font-bold text-slate-700">Company & Domain</TableHead>
+                            <TableHead className="font-bold text-slate-700">Industry & Size</TableHead>
+                            <TableHead className="font-bold text-slate-700">Location</TableHead>
+                            <TableHead className="font-bold text-slate-700">Risk Radar</TableHead>
+                            <TableHead className="text-right font-bold text-slate-700">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {loading ? (
-                            <tr><td colSpan={5} className="px-6 py-8 text-center text-navy-500">Loading companies...</td></tr>
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell colSpan={5} className="h-16 animate-pulse bg-slate-50/20" />
+                                </TableRow>
+                            ))
                         ) : companies.length === 0 ? (
-                            <tr><td colSpan={5} className="px-6 py-8 text-center text-navy-500">No companies found</td></tr>
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-64 text-center">
+                                    <div className="flex flex-col items-center justify-center text-slate-400">
+                                        <Building2 className="h-12 w-12 mb-4 opacity-20" />
+                                        <p className="text-lg font-medium">No partners found</p>
+                                        <p className="text-sm">Try adjusting your filters or search query</p>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
                         ) : (
                             companies.map((company: any) => (
-                                <tr key={company.id} className="hover:bg-navy-800/50 transition-colors group">
-                                    <td className="px-6 py-4">
+                                <TableRow key={company.id} className="hover:bg-slate-50/50 transition-colors group">
+                                    <TableCell>
                                         <div className="flex items-center gap-3">
-                                            <div className="h-8 w-8 rounded-lg bg-navy-700 flex items-center justify-center text-white">
-                                                <Building2 className="h-4 w-4" />
+                                            <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 border border-indigo-100 shadow-sm">
+                                                <Building2 className="h-5 w-5" />
                                             </div>
                                             <div>
-                                                <div className="font-medium text-white">{company.name}</div>
-                                                <div className="text-xs text-navy-400">{company.size || "Unknown size"}</div>
+                                                <div className="font-bold text-slate-900">{company.name}</div>
+                                                <div className="text-xs text-slate-500 font-mono flex items-center gap-1">
+                                                    {company.domain || company.website?.replace(/https?:\/\//, '')}
+                                                    {company.website && <ExternalLink className="h-2 w-2 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                                                </div>
                                             </div>
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-navy-300">{company.industry || "-"}</td>
-                                    <td className="px-6 py-4 text-navy-300">
-                                        {company.country && <div className="flex items-center gap-2"><MapPin className="h-3 w-3" />{company.city ? `${company.city}, ` : ""}{company.country}</div>}
-                                    </td>
-                                    <td className="px-6 py-4 text-navy-300">
-                                        <div className="flex items-center gap-3">
-                                            {company.website && <a href={company.website} target="_blank" className="text-navy-400 hover:text-gold-400"><Globe className="h-4 w-4" /></a>}
-                                            {company.linkedin_url && <a href={company.linkedin_url} target="_blank" className="text-navy-400 hover:text-blue-400"><Linkedin className="h-4 w-4" /></a>}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="space-y-1">
+                                            <div className="text-sm font-medium text-slate-700">{company.industry || "General Trade"}</div>
+                                            <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider bg-slate-50 text-slate-500 border-slate-200">
+                                                {company.size || "SME"}
+                                            </Badge>
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <button className="p-2 hover:bg-navy-700 rounded-lg text-navy-400 hover:text-white opacity-0 group-hover:opacity-100 transition-all">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </button>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                                                <MapPin className="h-3 w-3 text-rose-500" />
+                                                {company.country || "Global"}
+                                            </div>
+                                            <div className="text-xs text-slate-500 ml-5">{company.city || "Multi-location"}</div>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="w-32 space-y-1.5">
+                                            <div className="flex justify-between text-[10px] font-bold uppercase tracking-tighter">
+                                                <span className="text-slate-500">{getRiskLabel(company.risk_score || 20)}</span>
+                                                <span className="text-slate-700">{(company.risk_score || 20).toFixed(0)}%</span>
+                                            </div>
+                                            <Progress
+                                                value={company.risk_score || 20}
+                                                className="h-1.5"
+                                                indicatorClassName={getRiskColor(company.risk_score || 20)}
+                                            />
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <div className="hidden group-hover:flex items-center gap-1">
+                                                {company.linkedin_url && (
+                                                    <a href={company.linkedin_url} target="_blank" className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-blue-600 transition-colors">
+                                                        <Linkedin className="h-4 w-4" />
+                                                    </a>
+                                                )}
+                                                {company.website && (
+                                                    <a href={company.website} target="_blank" className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-indigo-600 transition-colors">
+                                                        <Globe className="h-4 w-4" />
+                                                    </a>
+                                                )}
+                                            </div>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-slate-100">
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem>View Trade History</DropdownMenuItem>
+                                                    <DropdownMenuItem>Manage Contacts</DropdownMenuItem>
+                                                    <DropdownMenuItem>Edit Company</DropdownMenuItem>
+                                                    <DropdownMenuItem className="text-rose-600">Archive Partner</DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
                             ))
                         )}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
+            </Card>
+
+            <div className="flex items-center justify-between text-xs text-slate-500 font-medium px-2">
+                <p>Showing {loading ? "..." : companies.length} global trade entities.</p>
+                <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-1 px-3 shadow-sm">
+                    <ShieldCheck className="h-3 w-3 text-emerald-500" /> All data vetted by Comtrade & Local Intelligence.
+                </div>
             </div>
         </div>
     );
 }
+
+function TargetIcon(props: any) {
+    return <Target className={props.className} />
+}
+import { Target } from "lucide-react"

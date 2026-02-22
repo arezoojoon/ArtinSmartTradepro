@@ -52,6 +52,10 @@ class SystemAdmin(Base):
     name           = Column(String(255), nullable=True)
     is_active      = Column(Boolean, server_default="true", nullable=False, index=True)
     last_login_at  = Column(DateTime(timezone=True), nullable=True)
+    
+    # Relationships
+    assigned_tickets = relationship("SupportTicket", back_populates="assigned_admin")
+    time_logs = relationship("TicketTimeLog", back_populates="admin")
 
 
 # ─── Audit Log ────────────────────────────────────────────────────────────────

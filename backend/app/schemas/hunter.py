@@ -4,6 +4,7 @@ Lead Intake API request/response models
 """
 from pydantic import BaseModel, Field, validator
 from typing import List, Optional, Dict, Any
+from .evidence import InsightWrapper
 from uuid import UUID
 from datetime import datetime
 from enum import Enum
@@ -74,15 +75,12 @@ class IdentityResponse(BaseModel):
     class Config:
         from_attributes = True
 
-class EvidenceResponse(BaseModel):
+class EvidenceResponse(InsightWrapper):
     id: UUID
     field_name: str
-    source_name: str
-    source_url: Optional[str]
-    collected_at: datetime
-    confidence: float
     snippet: Optional[str]
     created_at: datetime
+    # Inherits source, timestamp, confidence, reasoning from InsightWrapper
     
     class Config:
         from_attributes = True
