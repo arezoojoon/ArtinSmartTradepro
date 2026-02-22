@@ -66,3 +66,7 @@ class User(Base):
     def tenant_id(self):
         """Alias for current_tenant_id used by plan_gate and routers."""
         return self.current_tenant_id
+        
+    @tenant_id.setter
+    def tenant_id(self, value):
+        self.current_tenant_id = value
