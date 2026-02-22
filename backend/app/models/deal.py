@@ -86,7 +86,7 @@ class Deal(Base):
     tenant = relationship("Tenant", back_populates="deals")
     buyer_company = relationship("CRMCompany", foreign_keys=[buyer_company_id], back_populates="buyer_deals")
     seller_company = relationship("CRMCompany", foreign_keys=[seller_company_id], back_populates="seller_deals")
-    assigned_user = relationship("User", back_populates="assigned_deals")
+    assigned_user = relationship("User", foreign_keys=[assigned_to], back_populates="assigned_deals")
     creator = relationship("User", foreign_keys=[created_by], back_populates="created_deals")
     
     # Deal components
@@ -157,8 +157,8 @@ class DealDocument(Base):
     
     # Relationships
     deal = relationship("Deal", back_populates="documents")
-    uploader = relationship("User", back_populates="uploaded_documents")
-    signer = relationship("User", back_populates="signed_documents")
+    uploader = relationship("User", foreign_keys=[uploaded_by], back_populates="uploaded_documents")
+    signer = relationship("User", foreign_keys=[signed_by], back_populates="signed_documents")
 
 
 class DealMilestone(Base):

@@ -41,10 +41,10 @@ class User(Base):
     current_tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=True)
 
     # Deal relationships
-    assigned_deals = relationship("Deal", back_populates="assigned_user")
-    created_deals = relationship("Deal", back_populates="creator")
-    uploaded_documents = relationship("DealDocument", back_populates="uploader")
-    signed_documents = relationship("DealDocument", back_populates="signer")
+    assigned_deals = relationship("Deal", foreign_keys="[Deal.assigned_to]", back_populates="assigned_user")
+    created_deals = relationship("Deal", foreign_keys="[Deal.created_by]", back_populates="creator")
+    uploaded_documents = relationship("DealDocument", foreign_keys="[DealDocument.uploaded_by]", back_populates="uploader")
+    signed_documents = relationship("DealDocument", foreign_keys="[DealDocument.signed_by]", back_populates="signer")
     assigned_milestones = relationship("DealMilestone", back_populates="assignee")
     assessed_risks = relationship("DealRiskAssessment", back_populates="assessor")
     created_communications = relationship("DealCommunication", back_populates="creator")
