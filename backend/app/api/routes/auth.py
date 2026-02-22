@@ -91,16 +91,8 @@ async def register(
     db.add(verification_token)
     
     # Log registration
-    audit_log = AuditLog(
-        actor_user_id=user.id,
-        action="user_register",
-        resource_type="user",
-        resource_id=str(user.id),
-        details={"email": user.email},
-        ip_address=request.client.host,
-        user_agent=request.headers.get("user-agent")
-    )
-    db.add(audit_log)
+    # We skip AuditLog here because the user is just registering and has no tenant yet.
+    # AuditLog requires tenant_id.
     
     await db.commit()
     
@@ -197,16 +189,18 @@ async def login(
     user.last_login_at = datetime.utcnow()
     
     # Log login
-    audit_log = AuditLog(
-        actor_user_id=user.id,
-        action="user_login",
-        resource_type="user",
-        resource_id=str(user.id),
-        details={"email": user.email},
-        ip_address=request.client.host,
-        user_agent=request.headers.get("user-agent")
-    )
-    db.add(audit_log)
+    if user.current_tenant_id:
+        audit_log = AuditLog(
+            user_id=user.id,
+            tenant_id=user.current_tenant_id,
+            action="user_login",
+            resource_type="user",
+            resource_id=user.id,
+            metadata_json={"email": user.email},
+            ip_address=request.client.host,
+            user_agent=request.headers.get("user-agent")
+        )
+        db.add(audit_log)
     
     await db.commit()
     
