@@ -277,7 +277,7 @@ class FeatureFlag(Base):
     user_ids = Column(JSON, nullable=True)  # Array of specific user IDs
     
     # Metadata
-    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id), nullable=False)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     

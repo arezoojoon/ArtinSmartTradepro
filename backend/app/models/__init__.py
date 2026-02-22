@@ -42,3 +42,16 @@ from .phase6 import (
     PromptEval,
     SystemSetting,
 )
+
+# Tenant settings models
+from .tenant_settings import (
+    CustomPipeline,
+    ScoringProfile,
+    AlertRule,
+    CustomEmailTemplate,
+    IntegrationConfig,
+    ApiKey,
+    WebhookConfig,
+    TenantPreference,
+    FeatureFlag,
+)
