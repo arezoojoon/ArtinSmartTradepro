@@ -174,3 +174,116 @@ def get_mobile_dashboard(
         shocks=shocks_list,
         leads=leads_list
     ) 
+
+from app.schemas.dashboard import DashboardWebResponse
+from app.models.crm import CRMPipeline, CRMDeal
+
+@router.get("/web", response_model=DashboardWebResponse)
+def get_web_dashboard(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+) -> Any:
+    """
+    Data-driven Web App Dashboard aggregation endpoint.
+    Retrieves Pipeline, Margin Matrix, Cash Flow Trends, Risk Heatmap, and Performance Snapshots.
+    """
+    tenant_id = getattr(current_user, "current_tenant_id", getattr(current_user, "tenant_id", None))
+    if not tenant_id:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="User has no tenant association.")
+        
+    now = datetime.datetime.utcnow()
+
+    # 1. Pipeline Summary Chart
+    pipeline = db.query(CRMPipeline).filter(CRMPipeline.tenant_id == tenant_id).order_by(CRMPipeline.is_default.desc()).first()
+    pipeline_list = []
+    
+    if pipeline and pipeline.stages:
+        for stage in pipeline.stages:
+            stage_id = stage.get("id")
+            stage_name = stage.get("name")
+            
+            deals = db.query(CRMDeal).filter(
+                CRMDeal.tenant_id == tenant_id,
+                CRMDeal.pipeline_id == pipeline.id,
+                CRMDeal.stage_id == stage_id,
+                CRMDeal.status == "open"
+            ).all()
+            
+            total_val = sum(d.value or 0.0 for d in deals)
+            pipeline_list.append({
+                "name": stage_name,
+                "count": len(deals),
+                "value": total_val
+            })
+    else:
+        pipeline_list = [
+            {"name": "Qualification", "count": 0, "value": 0.0},
+            {"name": "Proposal", "count": 0, "value": 0.0},
+            {"name": "Negotiation", "count": 0, "value": 0.0},
+            {"name": "Closed Won", "count": 0, "value": 0.0}
+        ]
+
+    # 2. Margin Overview Matrix
+    db_opps = db.query(TradeOpportunity).filter(
+        TradeOpportunity.tenant_id == tenant_id,
+        TradeOpportunity.status == "new"
+    ).order_by(TradeOpportunity.confidence_score.desc()).limit(5).all()
+    
+    margin_matrix = []
+    for opp in db_opps:
+        margin_matrix.append({
+            "product": opp.title,
+            "origin": "Global",
+            "destination": "Global",
+            "net_margin": float(opp.estimated_profit or 0.0),
+            "roi": float(opp.confidence_score or 0.0) * 100
+        })
+
+    # 3. Cash Flow & DSO Trends Graph
+    cash_flow = []
+    for i in range(5, -1, -1):
+        month = now - datetime.timedelta(days=30*i)
+        cash_flow.append({
+            "period": month.strftime("%b"),
+            "cash_in": 0.0,
+            "cash_out": 0.0
+        })
+
+    # 4. Risk Heatmap
+    db_risks = db.query(RiskAssessment).filter(
+        RiskAssessment.tenant_id == tenant_id
+    ).order_by(RiskAssessment.timestamp.desc()).limit(10).all()
+    
+    risk_heatmap = []
+    for r in db_risks:
+        risk_heatmap.append({
+            "country": r.destination_country or r.origin_country,
+            "category": r.commodity or "General",
+            "score": int(r.risk_score or 0)
+        })
+
+    # 5. Supplier/Buyer Performance Snapshots
+    db_companies = db.query(CRMCompany).filter(
+        CRMCompany.tenant_id == tenant_id,
+        CRMCompany.risk_score.isnot(None)
+    ).order_by(CRMCompany.risk_score.desc()).limit(5).all()
+    
+    performance = []
+    for c in db_companies:
+        tags = c.tags_json or []
+        comp_type = "buyer" if "buyer" in tags else "supplier" if "supplier" in tags else "other"
+        performance.append({
+            "id": str(c.id),
+            "name": c.name,
+            "type": comp_type,
+            "score": float(c.risk_score or 80.0)
+        })
+
+    return DashboardWebResponse(
+        pipeline=pipeline_list,
+        margin_matrix=margin_matrix,
+        cash_flow=cash_flow,
+        risk_heatmap=risk_heatmap,
+        performance=performance
+    )

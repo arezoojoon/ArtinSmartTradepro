@@ -35,3 +35,38 @@ class DashboardMobileResponse(BaseModel):
     risks: List[InsightBase]
     shocks: List[ShockData]
     leads: List[InsightBase]
+
+class PipelineStageData(BaseModel):
+    name: str
+    count: int
+    value: float
+
+class MarginMatrixRow(BaseModel):
+    product: str
+    origin: str
+    destination: str
+    net_margin: float
+    roi: float
+
+class CashFlowPoint(BaseModel):
+    period: str # "Jan", "Feb", etc or timestamp
+    cash_in: float
+    cash_out: float
+
+class RiskHeatmapPoint(BaseModel):
+    country: str
+    category: str
+    score: int # 0-100
+
+class PerformanceSnapshot(BaseModel):
+    id: str
+    name: str
+    type: str # "supplier" or "buyer"
+    score: float # 0-100
+
+class DashboardWebResponse(BaseModel):
+    pipeline: List[PipelineStageData]
+    margin_matrix: List[MarginMatrixRow]
+    cash_flow: List[CashFlowPoint]
+    risk_heatmap: List[RiskHeatmapPoint]
+    performance: List[PerformanceSnapshot]
