@@ -71,10 +71,6 @@ def init_db():
                 logger.info(f"Superuser {settings.FIRST_SUPERUSER} created successfully!")
             else:
                 logger.info(f"Superuser {settings.FIRST_SUPERUSER} already exists!")
-                # Force update password if needed
-                user.hashed_password = get_password_hash(settings.FIRST_SUPERUSER_PASSWORD)
-                session.commit()
-                logger.info(f"Superuser {settings.FIRST_SUPERUSER} password updated!")
             
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
