@@ -2,7 +2,7 @@
 Cost Tracking for Super Admin Dashboard
 Phase 6 Enhancement - Track LLM, scraping, storage, and infrastructure costs
 """
-from sqlalchemy import Column, String, DateTime, Numeric, Integer, ForeignKey, JSON, Boolean
+from sqlalchemy import Column, String, DateTime, Numeric, Integer, ForeignKey, JSON, Boolean, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -61,7 +61,7 @@ class CostMetric(Base):
     period_end = Column(DateTime(timezone=True), nullable=False, index=True)
     
     # Metadata
-    metadata = Column(JSON, nullable=True)  # Additional context
+    metric_metadata = Column(JSON, nullable=True)  # Additional context
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     
     # Relationships

@@ -2,7 +2,7 @@
 Billing Revenue Tracking for Super Admin MRR/ARR Dashboard
 Phase 6 Enhancement - Revenue analytics and churn tracking
 """
-from sqlalchemy import Column, String, DateTime, Numeric, Integer, JSON, ForeignKey, Boolean
+from sqlalchemy import Column, String, DateTime, Numeric, Integer, JSON, ForeignKey, Boolean, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -78,7 +78,7 @@ class RevenueEvent(Base):
     usage_quantity = Column(Integer, nullable=True)
     
     # Metadata
-    metadata = Column(JSON, nullable=True)
+    event_metadata = Column(JSON, nullable=True)
     processed = Column(Boolean, default=False, nullable=False)  # For event processing
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
