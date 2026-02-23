@@ -64,11 +64,11 @@ export default function RFQPage() {
 
                 <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
-                        <Button className="bg-gold-500 text-black hover:bg-gold-400">
+                        <Button className="bg-gold-500 text-black hover:bg-[#f5a623]">
                             <Plus className="h-4 w-4 mr-2" /> New RFQ
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="bg-navy-900 border-navy-800 text-white">
+                    <DialogContent className="bg-[#0e1e33] border-[#1e3a5f] text-white">
                         <DialogHeader>
                             <DialogTitle>Create Request For Quote</DialogTitle>
                         </DialogHeader>
@@ -101,7 +101,7 @@ export default function RFQPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-6">
-                <Card className="bg-navy-900 border-navy-800">
+                <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                     <CardHeader>
                         <CardTitle className="text-white">Active Requests</CardTitle>
                     </CardHeader>

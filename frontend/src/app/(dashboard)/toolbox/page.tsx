@@ -13,7 +13,7 @@ export default function ToolboxPage() {
             desc: "Search 50M+ import/export records. HS Codes, Volumes, Core Values.",
             icon: Globe,
             href: "/toolbox/trade-data",
-            accent: "group-hover:text-[#D4AF37]"
+            accent: "group-hover:text-[#f5a623]"
         },
         {
             title: "Freight Rates",
@@ -44,8 +44,8 @@ export default function ToolboxPage() {
             <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 border-b border-white/10 pb-6">
                 <div>
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-[#D4AF37]/10 rounded-lg border border-[#D4AF37]/20 backdrop-blur-md">
-                            <LayoutGrid className="h-6 w-6 text-[#D4AF37]" />
+                        <div className="p-2 bg-[#f5a623]/10 rounded-lg border border-[#f5a623]/20 backdrop-blur-md">
+                            <LayoutGrid className="h-6 w-6 text-[#f5a623]" />
                         </div>
                         <h2 className="text-3xl font-bold tracking-tight text-white">Trader Toolbox</h2>
                     </div>
@@ -57,7 +57,7 @@ export default function ToolboxPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {tools.map((tool) => (
                     <Link href={tool.href} key={tool.title}>
-                        <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/30 transition-all cursor-pointer h-full relative group overflow-hidden">
+                        <Card className="bg-[#12253f]/80 backdrop-blur-xl border border-[#1e3a5f] hover:border-[#f5a623]/30 transition-all cursor-pointer h-full relative group overflow-hidden">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 transition-opacity opacity-0 group-hover:opacity-100"></div>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
                                 <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">
@@ -69,7 +69,7 @@ export default function ToolboxPage() {
                                 <p className="text-xs text-slate-500 mt-2 font-medium leading-relaxed group-hover:text-slate-300 transition-colors">
                                     {tool.desc}
                                 </p>
-                                <div className="mt-6 flex items-center text-[10px] font-bold text-[#D4AF37] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
+                                <div className="mt-6 flex items-center text-[10px] font-bold text-[#f5a623] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
                                     Launch Terminal <ChevronRight className="h-3 w-3 ml-1" />
                                 </div>
                             </CardContent>
@@ -82,7 +82,7 @@ export default function ToolboxPage() {
             <div className="grid gap-6 lg:grid-cols-7 mt-8">
 
                 {/* Market Pulse (Bloomberg Style) */}
-                <Card className="lg:col-span-4 bg-[#050a15]/60 backdrop-blur-2xl border border-white/10 shadow-2xl relative overflow-hidden">
+                <Card className="lg:col-span-4 bg-[#12253f]/80 backdrop-blur-2xl border border-[#1e3a5f] shadow-2xl relative overflow-hidden">
                     <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-20"></div>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-white text-lg">
@@ -136,25 +136,25 @@ export default function ToolboxPage() {
                 </Card>
 
                 {/* Data Export Port */}
-                <Card className="lg:col-span-3 bg-black/40 backdrop-blur-2xl border border-white/10 shadow-2xl relative">
+                <Card className="lg:col-span-3 bg-[#12253f]/80 backdrop-blur-2xl border border-[#1e3a5f] shadow-2xl relative">
                     <CardHeader>
                         <CardTitle className="text-white text-lg flex items-center gap-2">
-                            <Zap className="h-5 w-5 text-[#D4AF37]" /> Data Export Port
+                            <Zap className="h-5 w-5 text-[#f5a623]" /> Data Export Port
                         </CardTitle>
                         <CardDescription className="text-slate-500 text-[10px] uppercase font-bold mt-1">
                             Download raw data for institutional reporting.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <Button variant="outline" className="w-full justify-between h-14 border-white/10 bg-black/40 text-slate-300 hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all px-6">
+                        <Button variant="outline" className="w-full justify-between h-14 border-[#1e3a5f] bg-[#0e1e33]/40 text-slate-300 hover:border-[#f5a623] hover:text-[#f5a623] transition-all px-6">
                             <span className="flex items-center font-bold text-xs uppercase tracking-widest"><Globe className="mr-3 h-4 w-4" /> Global Trade Map</span>
                             <Download className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" className="w-full justify-between h-14 border-white/10 bg-black/40 text-slate-300 hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all px-6">
+                        <Button variant="outline" className="w-full justify-between h-14 border-[#1e3a5f] bg-[#0e1e33]/40 text-slate-300 hover:border-[#f5a623] hover:text-[#f5a623] transition-all px-6">
                             <span className="flex items-center font-bold text-xs uppercase tracking-widest"><DollarSign className="mr-3 h-4 w-4" /> FX Volatility History</span>
                             <Download className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" className="w-full justify-between h-14 border-white/10 bg-black/40 text-slate-300 hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all px-6">
+                        <Button variant="outline" className="w-full justify-between h-14 border-[#1e3a5f] bg-[#0e1e33]/40 text-slate-300 hover:border-[#f5a623] hover:text-[#f5a623] transition-all px-6">
                             <span className="flex items-center font-bold text-xs uppercase tracking-widest"><Ship className="mr-3 h-4 w-4" /> Scafi Freight Index</span>
                             <Download className="h-4 w-4" />
                         </Button>

@@ -10,7 +10,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
 
     return (
-        <div className="flex h-screen overflow-hidden bg-[#020617] selection:bg-[#D4AF37]/30 selection:text-[#D4AF37]">
+        <div className="flex h-screen overflow-hidden bg-[#0a1628] selection:bg-[#f5a623]/30 selection:text-[#f5a623]">
             {/* Background Texture/Grain for Luxury feel */}
             <div className="fixed inset-0 pointer-events-none opacity-20 contrast-125 grayscale" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/asfalt-dark.png")' }}></div>
 
@@ -21,7 +21,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
             {/* Mobile Drawer */}
             <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-                <SheetContent side="left" className="p-0 w-72 bg-[#020617] border-white/10 z-[100]">
+                <SheetContent side="left" className="p-0 w-72 bg-[#0a1628] border-[#1e3a5f] z-[100]">
                     <Sidebar forceExpanded={true} onItemClick={() => setIsMobileOpen(false)} />
                 </SheetContent>
             </Sheet>
@@ -34,7 +34,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                     {children}
 
                     {/* Decorative Ambient Glow */}
-                    <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-[#D4AF37]/3 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+                    <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-[#f5a623]/5 rounded-full blur-[120px] pointer-events-none -z-10"></div>
                 </main>
 
                 {/* Mobile Bottom Nav */}
@@ -51,11 +51,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                     background: transparent;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: rgba(212, 175, 55, 0.2);
+                    background: rgba(245, 166, 35, 0.2);
                     border-radius: 20px;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: rgba(212, 175, 55, 0.4);
+                    background: rgba(245, 166, 35, 0.4);
                 }
             `}</style>
         </div>

@@ -40,9 +40,9 @@ export default function LoginPage() {
     };
 
     return (
-        <Card className="border-navy-800 bg-navy-900 text-white">
+        <Card className="border-[#1e3a5f] bg-[#0e1e33] text-white">
             <CardHeader>
-                <CardTitle className="text-center text-xl text-gold-400">Sign In</CardTitle>
+                <CardTitle className="text-center text-xl text-[#f5a623]">Sign In</CardTitle>
                 <CardDescription className="text-center text-gray-400">
                     Access your AI Trading Dashboard
                 </CardDescription>
@@ -64,7 +64,7 @@ export default function LoginPage() {
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <Label htmlFor="password">Password</Label>
-                            <Link href="/forgot-password" className="text-xs text-gold-400 hover:text-gold-300">
+                            <Link href="/forgot-password" className="text-xs text-[#f5a623] hover:text-gold-300">
                                 Forgot password?
                             </Link>
                         </div>
@@ -95,7 +95,7 @@ export default function LoginPage() {
             <CardFooter className="justify-center">
                 <p className="text-sm text-gray-400">
                     Don't have an account?{" "}
-                    <Link href="/register" className="text-gold-400 hover:text-gold-300">
+                    <Link href="/register" className="text-[#f5a623] hover:text-gold-300">
                         Sign up
                     </Link>
                 </p>

@@ -121,7 +121,7 @@ export default function HunterDashboard() {
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                        <Search className="h-8 w-8 text-gold-400" />
+                        <Search className="h-8 w-8 text-[#f5a623]" />
                         Lead Hunter
                     </h1>
                     <p className="text-navy-300 mt-2 text-lg">AI-powered B2B lead generation engine</p>
@@ -130,7 +130,7 @@ export default function HunterDashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Configuration Panel */}
-                <div className="bg-navy-900 border border-navy-700/50 rounded-2xl p-6 shadow-2xl lg:col-span-1">
+                <div className="bg-[#0e1e33] border border-navy-700/50 rounded-2xl p-6 shadow-2xl lg:col-span-1">
                     <h2 className="text-xl font-semibold text-white mb-6">Execution Config</h2>
 
                     <div className="space-y-6">
@@ -198,7 +198,7 @@ export default function HunterDashboard() {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Status Tracker */}
                     {activeJobId && (
-                        <div className="bg-navy-900 border border-navy-700/50 rounded-2xl p-6 shadow-xl flex items-center justify-between">
+                        <div className="bg-[#0e1e33] border border-navy-700/50 rounded-2xl p-6 shadow-xl flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 {jobStatus?.job_status === "completed" ? (
                                     <div className="bg-green-500/20 p-3 rounded-full text-green-400">
@@ -206,9 +206,9 @@ export default function HunterDashboard() {
                                     </div>
                                 ) : (
                                     <div className="relative h-14 w-14 flex items-center justify-center">
-                                        <div className="absolute inset-0 rounded-full border-4 border-navy-800"></div>
+                                        <div className="absolute inset-0 rounded-full border-4 border-[#1e3a5f]"></div>
                                         <div className="absolute inset-0 rounded-full border-4 border-t-gold-400 animate-spin"></div>
-                                        <Search className="h-6 w-6 text-gold-400 animate-pulse" />
+                                        <Search className="h-6 w-6 text-[#f5a623] animate-pulse" />
                                     </div>
                                 )}
                                 <div>
@@ -230,8 +230,8 @@ export default function HunterDashboard() {
                     )}
 
                     {/* Leads Table */}
-                    <div className="bg-navy-900 border border-navy-700/50 rounded-2xl shadow-xl overflow-hidden min-h-[400px]">
-                        <div className="bg-navy-950 px-6 py-4 border-b border-navy-800 flex justify-between items-center">
+                    <div className="bg-[#0e1e33] border border-navy-700/50 rounded-2xl shadow-xl overflow-hidden min-h-[400px]">
+                        <div className="bg-navy-950 px-6 py-4 border-b border-[#1e3a5f] flex justify-between items-center">
                             <h3 className="text-lg font-bold text-white">Extracted Leads</h3>
                             <span className="text-sm text-navy-400">{results.length} results</span>
                         </div>
@@ -244,7 +244,7 @@ export default function HunterDashboard() {
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left text-sm whitespace-nowrap">
-                                    <thead className="text-navy-400 bg-navy-900/50">
+                                    <thead className="text-navy-400 bg-[#0e1e33]/50">
                                         <tr>
                                             <th className="px-6 py-4 font-semibold text-xs tracking-wider uppercase">Business Name</th>
                                             <th className="px-6 py-4 font-semibold text-xs tracking-wider uppercase">Contact Info</th>

@@ -18,7 +18,7 @@ export default function PublicHeader() {
             <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
                 <Link href="/" className="flex items-center gap-2">
                     <span className="text-base font-semibold tracking-tight text-white">
-                        Artin <span className="text-[#D4AF37]">Smart Trade</span>
+                        Artin <span className="text-[#f5a623]">Smart Trade</span>
                     </span>
                     <span className="hidden rounded-full border border-white/15 px-2 py-0.5 text-xs text-white/70 md:inline">
                         AI Trade OS
@@ -46,7 +46,7 @@ export default function PublicHeader() {
                     </Link>
                     <Link
                         href="/register"
-                        className="rounded-xl bg-[#D4AF37] px-4 py-2 text-sm font-medium text-[#0B1B3A] hover:opacity-95"
+                        className="rounded-xl bg-[#f5a623] px-4 py-2 text-sm font-medium text-[#0B1B3A] hover:opacity-95"
                     >
                         Get Started
                     </Link>
@@ -86,7 +86,7 @@ export default function PublicHeader() {
                                 </Link>
                                 <Link
                                     href="/register"
-                                    className="rounded-xl bg-[#D4AF37] px-3 py-2 text-center text-sm font-medium text-[#0B1B3A]"
+                                    className="rounded-xl bg-[#f5a623] px-3 py-2 text-center text-sm font-medium text-[#0B1B3A]"
                                     onClick={() => setOpen(false)}
                                 >
                                     Get Started

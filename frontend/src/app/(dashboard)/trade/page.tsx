@@ -12,7 +12,7 @@ const analysisTools = [
     { type: "brand" as const, label: "Brand & Supply Chain", icon: Package, cost: "2.0", color: "text-purple-400" },
     { type: "shipping" as const, label: "Shipping & Compliance", icon: Ship, cost: "1.0", color: "text-orange-400" },
     { type: "card-scan" as const, label: "Scan Business Card", icon: Camera, cost: "0.5", color: "text-pink-400" },
-    { type: "insights" as const, label: "AI Insights", icon: Brain, cost: "1.0", color: "text-gold-400" },
+    { type: "insights" as const, label: "AI Insights", icon: Brain, cost: "1.0", color: "text-[#f5a623]" },
 ];
 
 export default function TradePage() {
@@ -99,7 +99,7 @@ export default function TradePage() {
     return (
         <div className="p-6 max-w-6xl mx-auto">
             <div className="flex items-center gap-3 mb-8">
-                <Sparkles className="h-7 w-7 text-gold-400" />
+                <Sparkles className="h-7 w-7 text-[#f5a623]" />
                 <div>
                     <h1 className="text-2xl font-bold">Trade Intelligence</h1>
                     <p className="text-sm text-navy-400">AI-powered market, brand, and logistics analysis</p>
@@ -114,7 +114,7 @@ export default function TradePage() {
                         onClick={() => { setActive(tool.type); setResult(null); setError(null); }}
                         className={`p-4 rounded-xl border transition-all text-left ${active === tool.type
                             ? "bg-navy-800 border-gold-400/50 shadow-lg shadow-gold-400/5"
-                            : "bg-navy-900/50 border-navy-700/30 hover:border-navy-600"
+                            : "bg-[#0e1e33]/50 border-navy-700/30 hover:border-navy-600"
                             }`}
                     >
                         <tool.icon className={`h-5 w-5 mb-2 ${tool.color}`} />
@@ -126,7 +126,7 @@ export default function TradePage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Input Panel */}
-                <div className="bg-navy-900/50 border border-navy-700/30 rounded-2xl p-6">
+                <div className="bg-[#0e1e33]/50 border border-navy-700/30 rounded-2xl p-6">
                     <h2 className="text-sm font-semibold text-navy-300 mb-4 uppercase tracking-wider">
                         {analysisTools.find(t => t.type === active)?.label}
                     </h2>
@@ -206,14 +206,14 @@ export default function TradePage() {
 
                     {active !== "card-scan" && (
                         <button onClick={runAnalysis} disabled={loading}
-                            className="mt-6 w-full py-3 bg-gold-400 text-navy-950 rounded-xl font-semibold hover:bg-gold-300 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                            className="mt-6 w-full py-3 bg-[#f5a623] text-navy-950 rounded-xl font-semibold hover:bg-gold-300 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
                             {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing...</> : <><Search className="h-4 w-4" /> Run Analysis</>}
                         </button>
                     )}
                 </div>
 
                 {/* Results Panel */}
-                <div className="bg-navy-900/50 border border-navy-700/30 rounded-2xl p-6">
+                <div className="bg-[#0e1e33]/50 border border-navy-700/30 rounded-2xl p-6">
                     <h2 className="text-sm font-semibold text-navy-300 mb-4 uppercase tracking-wider">Results</h2>
 
                     {error && (
@@ -232,7 +232,7 @@ export default function TradePage() {
 
                     {loading && (
                         <div className="text-center py-16">
-                            <Loader2 className="h-8 w-8 text-gold-400 animate-spin mx-auto mb-3" />
+                            <Loader2 className="h-8 w-8 text-[#f5a623] animate-spin mx-auto mb-3" />
                             <p className="text-sm text-navy-400">AI is analyzing...</p>
                             <p className="text-xs text-navy-600 mt-1">This may take 5-15 seconds</p>
                         </div>

@@ -11,7 +11,7 @@ const TopBar = ({ onMenuClick }: TopBarProps) => {
     const { user } = useAuth();
 
     return (
-        <header className="flex h-16 items-center justify-between border-b border-navy-800 bg-navy-900 px-4 md:px-6 shadow-sm shrink-0">
+        <header className="flex h-16 items-center justify-between border-b border-[#1e3a5f] bg-[#0e1e33] px-4 md:px-6 shadow-sm shrink-0">
             <div className="flex items-center gap-4">
                 <button
                     onClick={onMenuClick}
@@ -21,7 +21,7 @@ const TopBar = ({ onMenuClick }: TopBarProps) => {
                     <Menu className="h-6 w-6" />
                 </button>
                 <span className="text-gray-100 text-sm truncate">
-                    Welcome back, <span className="text-gold-400 font-semibold">{user?.full_name || "Trader"}</span>
+                    Welcome back, <span className="text-[#f5a623] font-semibold">{user?.full_name || "Trader"}</span>
                 </span>
             </div>
 
@@ -30,8 +30,8 @@ const TopBar = ({ onMenuClick }: TopBarProps) => {
                     <Bell className="h-6 w-6" />
                     <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
                 </button>
-                <div className="h-8 w-8 rounded-full bg-navy-700 flex items-center justify-center border border-navy-600">
-                    <User className="h-5 w-5 text-gold-400" />
+                <div className="h-8 w-8 rounded-full bg-[#12253f] flex items-center justify-center border border-[#1e3a5f]">
+                    <User className="h-5 w-5 text-[#f5a623]" />
                 </div>
             </div>
         </header>

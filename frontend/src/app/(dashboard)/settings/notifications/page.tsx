@@ -38,21 +38,21 @@ export default function NotificationsPage() {
         <div className="p-4 md:p-8 space-y-8 max-w-4xl text-white">
             <div>
                 <h1 className="text-2xl font-bold flex items-center gap-2">
-                    <Bell className="h-6 w-6 text-gold-400" /> Notification Settings
+                    <Bell className="h-6 w-6 text-[#f5a623]" /> Notification Settings
                 </h1>
                 <p className="text-white/60">Configure how and when you receive alerts.</p>
             </div>
 
             {/* Channels */}
-            <Card className="bg-navy-900 border-navy-800">
+            <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                 <CardHeader>
                     <CardTitle className="text-white">Notification Channels</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     {NOTIFICATION_CHANNELS.map((ch) => (
-                        <div key={ch.id} className="flex items-center justify-between p-3 bg-navy-950 rounded-lg border border-navy-800">
+                        <div key={ch.id} className="flex items-center justify-between p-3 bg-navy-950 rounded-lg border border-[#1e3a5f]">
                             <div className="flex items-center gap-3">
-                                <ch.icon className="h-5 w-5 text-gold-400" />
+                                <ch.icon className="h-5 w-5 text-[#f5a623]" />
                                 <span className="font-medium text-white">{ch.label}</span>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">
@@ -65,15 +65,15 @@ export default function NotificationsPage() {
             </Card>
 
             {/* Alert Rules */}
-            <Card className="bg-navy-900 border-navy-800">
+            <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                 <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
-                        <AlertTriangle className="h-5 w-5 text-gold-400" /> Alert Rules
+                        <AlertTriangle className="h-5 w-5 text-[#f5a623]" /> Alert Rules
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     {ALERT_RULES.map((rule) => (
-                        <div key={rule.id} className="flex items-center justify-between p-3 bg-navy-950 rounded-lg border border-navy-800">
+                        <div key={rule.id} className="flex items-center justify-between p-3 bg-navy-950 rounded-lg border border-[#1e3a5f]">
                             <div className="flex items-center gap-3">
                                 <span className="font-medium text-white text-sm">{rule.label}</span>
                                 {severityBadge(rule.severity)}

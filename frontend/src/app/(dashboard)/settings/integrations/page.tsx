@@ -61,18 +61,18 @@ export default function IntegrationsPage() {
         <div className="p-4 md:p-8 space-y-8 max-w-4xl text-white">
             <div>
                 <h1 className="text-2xl font-bold flex items-center gap-2">
-                    <Plug className="h-6 w-6 text-gold-400" /> Integrations
+                    <Plug className="h-6 w-6 text-[#f5a623]" /> Integrations
                 </h1>
                 <p className="text-white/60">Connect external services and data sources.</p>
             </div>
 
             <div className="grid gap-4">
                 {INTEGRATIONS.map((int) => (
-                    <Card key={int.name} className="bg-navy-900 border-navy-800">
+                    <Card key={int.name} className="bg-[#0e1e33] border-[#1e3a5f]">
                         <CardContent className="p-5 flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="p-2.5 rounded-xl bg-navy-800">
-                                    <int.icon className="h-5 w-5 text-gold-400" />
+                                    <int.icon className="h-5 w-5 text-[#f5a623]" />
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-white">{int.name}</h3>

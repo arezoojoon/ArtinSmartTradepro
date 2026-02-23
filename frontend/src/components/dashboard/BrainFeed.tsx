@@ -65,7 +65,7 @@ export default function BrainFeed({ mode }: BrainFeedProps) {
     if (loading && opportunities.length === 0) {
         return (
             <div className="flex justify-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-gold-400" />
+                <Loader2 className="h-8 w-8 animate-spin text-[#f5a623]" />
             </div>
         );
     }
@@ -74,10 +74,10 @@ export default function BrainFeed({ mode }: BrainFeedProps) {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                    <Brain className="h-5 w-5 text-gold-400" />
+                    <Brain className="h-5 w-5 text-[#f5a623]" />
                     Proactive Intelligence
                 </h2>
-                <Button variant="outline" size="sm" onClick={triggerScan} className="border-gold-500 text-gold-400 hover:bg-gold-500/10">
+                <Button variant="outline" size="sm" onClick={triggerScan} className="border-gold-500 text-[#f5a623] hover:bg-gold-500/10">
                     {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Run AI Scan"}
                 </Button>
             </div>
@@ -86,7 +86,7 @@ export default function BrainFeed({ mode }: BrainFeedProps) {
             {signals.length > 0 && (
                 <div className="bg-navy-800/50 border border-navy-700 rounded-lg p-3 flex gap-4 overflow-x-auto">
                     {signals.map(sig => (
-                        <div key={sig.id} className="min-w-[300px] flex items-start gap-2 bg-navy-900 p-2 rounded border border-navy-800">
+                        <div key={sig.id} className="min-w-[300px] flex items-start gap-2 bg-[#0e1e33] p-2 rounded border border-[#1e3a5f]">
                             <AlertTriangle className={`h-4 w-4 mt-1 ${sig.severity === 'critical' ? 'text-red-500' : 'text-yellow-500'}`} />
                             <div>
                                 <p className="text-sm font-semibold text-gray-200">{sig.headline}</p>
@@ -100,10 +100,10 @@ export default function BrainFeed({ mode }: BrainFeedProps) {
             {/* Opportunities Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {opportunities.map(opp => (
-                    <Card key={opp.id} className="bg-navy-900 border-navy-800 hover:border-gold-500/30 transition-all">
+                    <Card key={opp.id} className="bg-[#0e1e33] border-[#1e3a5f] hover:border-gold-500/30 transition-all">
                         <CardHeader className="pb-2">
                             <div className="flex justify-between items-start">
-                                <Badge variant="outline" className="border-gold-500/50 text-gold-400 uppercase text-[10px]">
+                                <Badge variant="outline" className="border-gold-500/50 text-[#f5a623] uppercase text-[10px]">
                                     {opp.type}
                                 </Badge>
                                 <span className={`text-xs font-bold ${opp.confidence_score > 0.8 ? 'text-green-400' : 'text-yellow-400'}`}>

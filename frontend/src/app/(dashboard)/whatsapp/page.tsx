@@ -48,7 +48,7 @@ export default function WhatsAppPage() {
             </h1>
 
             <div className="grid gap-6 md:grid-cols-2">
-                <Card className="bg-navy-900 border-navy-800 text-white">
+                <Card className="bg-[#0e1e33] border-[#1e3a5f] text-white">
                     <CardHeader>
                         <CardTitle>Send Message</CardTitle>
                         <CardDescription>Cost: 0.5 Credits per message</CardDescription>

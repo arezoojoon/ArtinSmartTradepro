@@ -230,7 +230,7 @@ export default function VisionIntelligencePage() {
                         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                         onDragLeave={() => setDragOver(false)}
                         onDrop={handleDrop}
-                        className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${dragOver ? 'border-emerald-400 bg-emerald-400/5' : 'border-navy-700 hover:border-navy-500 bg-navy-900/50'}`}
+                        className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${dragOver ? 'border-emerald-400 bg-emerald-400/5' : 'border-navy-700 hover:border-navy-500 bg-[#0e1e33]/50'}`}
                         onClick={() => document.getElementById("image-input")?.click()}
                     >
                         <input id="image-input" type="file" accept="image/*" className="hidden"
@@ -265,7 +265,7 @@ export default function VisionIntelligencePage() {
                     </div>
 
                     {/* Recent Scans */}
-                    <div className="bg-navy-900 border border-navy-800 rounded-xl p-6">
+                    <div className="bg-[#0e1e33] border border-[#1e3a5f] rounded-xl p-6">
                         <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
                             <CreditCard className="h-4 w-4 text-emerald-400" /> Recent Scans
                         </h3>
@@ -297,7 +297,7 @@ export default function VisionIntelligencePage() {
                 {/* Results Panel */}
                 <div>
                     {!result && !scanning && (
-                        <div className="bg-navy-900 border border-navy-800 rounded-xl p-12 text-center">
+                        <div className="bg-[#0e1e33] border border-[#1e3a5f] rounded-xl p-12 text-center">
                             <Eye className="h-16 w-16 mx-auto text-navy-700 mb-4" />
                             <h3 className="text-white font-semibold mb-2">Scan a Business Card</h3>
                             <p className="text-navy-500 text-sm">Upload an image to extract contact information.</p>
@@ -305,7 +305,7 @@ export default function VisionIntelligencePage() {
                     )}
 
                     {scanning && (
-                        <div className="bg-navy-900 border border-navy-800 rounded-xl p-12 text-center">
+                        <div className="bg-[#0e1e33] border border-[#1e3a5f] rounded-xl p-12 text-center">
                             <div className="h-16 w-16 mx-auto border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
                             <h3 className="text-white font-semibold mb-2">Scanning with Gemini Vision...</h3>
                             <p className="text-navy-500 text-sm">Extracting name, company, phone, email & more</p>
@@ -330,7 +330,7 @@ export default function VisionIntelligencePage() {
                             </div>
 
                             {/* Editable Fields */}
-                            <div className="bg-navy-900 border border-navy-800 rounded-xl p-5 space-y-4">
+                            <div className="bg-[#0e1e33] border border-[#1e3a5f] rounded-xl p-5 space-y-4">
                                 <h4 className="text-white font-semibold mb-1">Extracted Contact — Review & Edit</h4>
                                 <p className="text-navy-500 text-xs mb-3">Edit any field before creating the contact.</p>
 

@@ -27,26 +27,26 @@ export default function HunterPage() {
             <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 border-b border-white/10 pb-6">
                 <div>
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-[#D4AF37]/10 rounded-lg border border-[#D4AF37]/20 backdrop-blur-md">
-                            <Radar className="h-6 w-6 text-[#D4AF37]" />
+                        <div className="p-2 bg-[#f5a623]/10 rounded-lg border border-[#f5a623]/20 backdrop-blur-md">
+                            <Radar className="h-6 w-6 text-[#f5a623]" />
                         </div>
                         <h2 className="text-3xl font-bold tracking-tight text-white">Hunter Engine</h2>
                     </div>
                     <p className="text-slate-400 text-sm">Advanced AI-driven lead generation and market intelligence terminal.</p>
                 </div>
 
-                <div className="flex items-center gap-3 bg-[#050a15]/60 backdrop-blur-md px-4 py-2 rounded-lg border border-white/5">
+                <div className="flex items-center gap-3 bg-[#12253f]/80 backdrop-blur-md px-4 py-2 rounded-lg border border-[#1e3a5f]">
                     <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
                     <span className="text-xs font-medium text-slate-300 uppercase tracking-widest">System Status: Optimal</span>
                 </div>
             </div>
 
             {/* Premium Mode Toggle (Glassmorphism) */}
-            <div className="flex p-1 bg-[#050a15]/60 backdrop-blur-xl border border-white/10 rounded-xl w-full max-w-md mx-auto relative overflow-hidden">
+            <div className="flex p-1 bg-[#12253f]/80 backdrop-blur-xl border border-[#1e3a5f] hover:border-[#f5a623]/30">
                 <button
                     onClick={() => { setActiveMode("sourcing"); setStatus("idle"); }}
                     className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all duration-300 z-10 ${activeMode === "sourcing"
-                        ? "bg-[#D4AF37] text-black shadow-[0_0_20px_rgba(212,175,55,0.4)]"
+                        ? "bg-[#f5a623] text-black shadow-[0_0_20px_rgba(245,166,35,0.4)]"
                         : "text-slate-400 hover:text-white"
                         }`}
                 >
@@ -55,7 +55,7 @@ export default function HunterPage() {
                 <button
                     onClick={() => { setActiveMode("sales"); setStatus("idle"); }}
                     className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all duration-300 z-10 ${activeMode === "sales"
-                        ? "bg-[#D4AF37] text-black shadow-[0_0_20px_rgba(212,175,55,0.4)]"
+                        ? "bg-[#f5a623] text-black shadow-[0_0_20px_rgba(245,166,35,0.4)]"
                         : "text-slate-400 hover:text-white"
                         }`}
                 >
@@ -64,13 +64,13 @@ export default function HunterPage() {
             </div>
 
             {/* Query Builder Form (Advanced Terminal Look) */}
-            <Card className="bg-[#050a15]/60 backdrop-blur-2xl border border-white/10 shadow-2xl overflow-hidden">
+            <Card className="bg-[#12253f]/80 backdrop-blur-xl border border-[#1e3a5f] hover:border-[#f5a623]/30">
                 {/* Decorative glowing top line */}
-                <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent opacity-50"></div>
+                <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#f5a623] to-transparent opacity-50"></div>
 
                 <CardHeader className="pb-4">
                     <CardTitle className="text-lg font-medium text-white flex items-center gap-2">
-                        <Filter className="h-4 w-4 text-[#D4AF37]" />
+                        <Filter className="h-4 w-4 text-[#f5a623]" />
                         {activeMode === "sourcing" ? "Target Supplier Parameters" : "Target Buyer Parameters"}
                     </CardTitle>
                 </CardHeader>
@@ -81,14 +81,14 @@ export default function HunterPage() {
                             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Commodity / HS Code</label>
                             <Input
                                 defaultValue={activeMode === "sourcing" ? "1001.99 - Wheat" : "1902.19 - Pasta"}
-                                className="bg-black/50 border-white/10 text-white focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 h-11"
+                                className="bg-black/50 border-white/10 text-white focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623]/50 h-11"
                             />
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Target Geographies</label>
                             <Input
                                 defaultValue={activeMode === "sourcing" ? "CIS, Russia, Ukraine" : "GCC, North Africa"}
-                                className="bg-black/50 border-white/10 text-white focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 h-11"
+                                className="bg-black/50 border-white/10 text-white focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623]/50 h-11"
                             />
                         </div>
                         <div className="space-y-2">
@@ -96,7 +96,7 @@ export default function HunterPage() {
                                 {activeMode === "sourcing" ? "Required Certifications" : "Buyer Persona"}
                             </label>
                             <Select defaultValue="all">
-                                <SelectTrigger className="bg-black/50 border-white/10 text-white h-11 focus:border-[#D4AF37]">
+                                <SelectTrigger className="bg-black/50 border-white/10 text-white h-11 focus:border-[#f5a623]">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="bg-slate-900 border-white/10 text-white">
@@ -131,8 +131,8 @@ export default function HunterPage() {
                         onClick={startDeepScan}
                         disabled={status !== "idle"}
                         className={`w-full h-14 text-base font-bold transition-all duration-500 ${status !== "idle"
-                            ? "bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30"
-                            : "bg-[#D4AF37] text-black hover:bg-[#F3E5AB] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)]"
+                            ? "bg-[#f5a623]/20 text-[#f5a623] border border-[#f5a623]/30"
+                            : "bg-[#f5a623] text-black hover:bg-[#F3E5AB] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)]"
                             }`}
                     >
                         {status === "idle" && <><Zap className="mr-2 h-5 w-5" /> Initialize Deep Web Scan</>}
@@ -147,7 +147,7 @@ export default function HunterPage() {
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
                     <div className="flex items-center justify-between">
                         <h3 className="text-xl font-semibold text-white flex items-center gap-2">
-                            <Target className="h-5 w-5 text-[#D4AF37]" />
+                            <Target className="h-5 w-5 text-[#f5a623]" />
                             {activeMode === "sourcing" ? "Verified Suppliers Found" : "Qualified Buyers Found"}
                             <span className="text-sm font-normal text-slate-400 ml-2">(Top Matches)</span>
                         </h3>
@@ -156,9 +156,9 @@ export default function HunterPage() {
                     <div className="grid lg:grid-cols-2 gap-6">
 
                         {/* Result Card 1 */}
-                        <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/50 transition-all duration-300 group overflow-hidden relative">
+                        <Card className="bg-[#12253f]/80 backdrop-blur-xl border border-[#1e3a5f] hover:border-[#f5a623]/30 transition-all duration-300 group overflow-hidden relative">
                             {/* Glow Effect */}
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/5 rounded-full blur-3xl -mr-20 -mt-20 transition-opacity opacity-0 group-hover:opacity-100"></div>
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-[#f5a623]/5 rounded-full blur-3xl -mr-20 -mt-20 transition-opacity opacity-0 group-hover:opacity-100"></div>
 
                             <CardContent className="p-6 relative z-10">
                                 <div className="flex justify-between items-start mb-6">
@@ -167,18 +167,18 @@ export default function HunterPage() {
                                             A
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-xl text-white group-hover:text-[#D4AF37] transition-colors">
+                                            <h4 className="font-bold text-xl text-white group-hover:text-[#f5a623] transition-colors">
                                                 {activeMode === "sourcing" ? "AgroExport Russia LLC" : "Al Maya Group Supermarkets"}
                                             </h4>
                                             <p className="text-sm text-slate-400 mt-1 flex items-center gap-2">
-                                                <Globe className="w-3 h-3 text-[#D4AF37]" />
+                                                <Globe className="w-3 h-3 text-[#f5a623]" />
                                                 {activeMode === "sourcing" ? "Novorossiysk, RU" : "Dubai, UAE"}
                                             </p>
                                         </div>
                                     </div>
                                     <div className="flex flex-col items-end">
                                         <span className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Match Score</span>
-                                        <div className="text-xl font-bold text-[#D4AF37] flex items-center gap-1">
+                                        <div className="text-xl font-bold text-[#f5a623] flex items-center gap-1">
                                             98.5% <Cpu className="w-4 h-4 opacity-50" />
                                         </div>
                                     </div>
@@ -204,7 +204,7 @@ export default function HunterPage() {
                                 </div>
 
                                 <div className="flex items-center gap-3">
-                                    <Button className="flex-1 bg-[#D4AF37] text-black hover:bg-white transition-colors h-11 font-bold">
+                                    <Button className="flex-1 bg-[#f5a623] text-black hover:bg-white transition-colors h-11 font-bold">
                                         {activeMode === "sourcing" ? "Draft Auto-RFQ" : "Push to CRM & Pitch"}
                                     </Button>
                                     <Button variant="outline" className="bg-transparent border-white/20 text-white hover:bg-white/10 h-11 px-4">
@@ -215,7 +215,7 @@ export default function HunterPage() {
                         </Card>
 
                         {/* Result Card 2 */}
-                        <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/50 transition-all duration-300 group overflow-hidden relative">
+                        <Card className="bg-[#12253f]/80 backdrop-blur-xl border border-[#1e3a5f] hover:border-[#f5a623]/30 transition-all duration-300 group overflow-hidden relative">
                             <CardContent className="p-6 relative z-10">
                                 <div className="flex justify-between items-start mb-6">
                                     <div className="flex gap-4">
@@ -223,11 +223,11 @@ export default function HunterPage() {
                                             C
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-xl text-white group-hover:text-[#D4AF37] transition-colors">
+                                            <h4 className="font-bold text-xl text-white group-hover:text-[#f5a623] transition-colors">
                                                 {activeMode === "sourcing" ? "Caspian Grain Holdco" : "Carrefour Regional Dist."}
                                             </h4>
                                             <p className="text-sm text-slate-400 mt-1 flex items-center gap-2">
-                                                <Globe className="w-3 h-3 text-[#D4AF37]" />
+                                                <Globe className="w-3 h-3 text-[#f5a623]" />
                                                 {activeMode === "sourcing" ? "Astrakhan, RU" : "Riyadh, KSA"}
                                             </p>
                                         </div>
@@ -260,7 +260,7 @@ export default function HunterPage() {
                                 </div>
 
                                 <div className="flex items-center gap-3">
-                                    <Button className="flex-1 bg-[#D4AF37] text-black hover:bg-white transition-colors h-11 font-bold">
+                                    <Button className="flex-1 bg-[#f5a623] text-black hover:bg-white transition-colors h-11 font-bold">
                                         {activeMode === "sourcing" ? "Draft Auto-RFQ" : "Push to CRM & Pitch"}
                                     </Button>
                                     <Button variant="outline" className="bg-transparent border-white/20 text-white hover:bg-white/10 h-11 px-4">

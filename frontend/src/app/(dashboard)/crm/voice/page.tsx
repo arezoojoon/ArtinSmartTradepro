@@ -156,12 +156,12 @@ export default function VoiceIntelligencePage() {
                         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                         onDragLeave={() => setDragOver(false)}
                         onDrop={handleDrop}
-                        className={`border-2 border-dashed rounded-xl p-12 text-center transition-all cursor-pointer ${dragOver ? 'border-gold-400 bg-gold-400/5' : 'border-navy-700 hover:border-navy-500 bg-navy-900/50'}`}
+                        className={`border-2 border-dashed rounded-xl p-12 text-center transition-all cursor-pointer ${dragOver ? 'border-gold-400 bg-[#f5a623]/5' : 'border-navy-700 hover:border-navy-500 bg-[#0e1e33]/50'}`}
                         onClick={() => document.getElementById("audio-input")?.click()}
                     >
                         <input id="audio-input" type="file" accept="audio/*" className="hidden"
                             onChange={(e) => e.target.files?.[0] && setFile(e.target.files[0])} />
-                        <Upload className={`h-12 w-12 mx-auto mb-4 ${dragOver ? 'text-gold-400' : 'text-navy-500'}`} />
+                        <Upload className={`h-12 w-12 mx-auto mb-4 ${dragOver ? 'text-[#f5a623]' : 'text-navy-500'}`} />
                         <p className="text-white font-semibold mb-2">
                             {file ? file.name : "Drop audio file here or click to browse"}
                         </p>
@@ -185,7 +185,7 @@ export default function VoiceIntelligencePage() {
                     </div>
 
                     {/* Recent Recordings */}
-                    <div className="bg-navy-900 border border-navy-800 rounded-xl p-6">
+                    <div className="bg-[#0e1e33] border border-[#1e3a5f] rounded-xl p-6">
                         <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
                             <Mic className="h-4 w-4 text-purple-400" /> Recent Recordings
                         </h3>
@@ -215,7 +215,7 @@ export default function VoiceIntelligencePage() {
                 {/* Results Panel */}
                 <div>
                     {!result && !analyzing && (
-                        <div className="bg-navy-900 border border-navy-800 rounded-xl p-12 text-center">
+                        <div className="bg-[#0e1e33] border border-[#1e3a5f] rounded-xl p-12 text-center">
                             <Brain className="h-16 w-16 mx-auto text-navy-700 mb-4" />
                             <h3 className="text-white font-semibold mb-2">Upload & Analyze</h3>
                             <p className="text-navy-500 text-sm">Upload a sales call to see AI-powered insights.</p>
@@ -223,7 +223,7 @@ export default function VoiceIntelligencePage() {
                     )}
 
                     {analyzing && (
-                        <div className="bg-navy-900 border border-navy-800 rounded-xl p-12 text-center">
+                        <div className="bg-[#0e1e33] border border-[#1e3a5f] rounded-xl p-12 text-center">
                             <div className="h-16 w-16 mx-auto border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4"></div>
                             <h3 className="text-white font-semibold mb-2">Analyzing with Gemini 2.0 Pro...</h3>
                             <p className="text-navy-500 text-sm">Extracting transcript, sentiment & action items</p>
@@ -243,14 +243,14 @@ export default function VoiceIntelligencePage() {
                                     <p className="text-xs opacity-70 mb-1">Urgency</p>
                                     <p className="font-bold text-lg capitalize">{result.urgency}</p>
                                 </div>
-                                <div className="rounded-xl p-4 border border-gold-400/20 text-gold-400 bg-gold-400/10">
+                                <div className="rounded-xl p-4 border border-gold-400/20 text-[#f5a623] bg-[#f5a623]/10">
                                     <p className="text-xs opacity-70 mb-1">Confidence</p>
                                     <p className="font-bold text-lg">{(result.confidence * 100).toFixed(0)}%</p>
                                 </div>
                             </div>
 
                             {/* Intent */}
-                            <div className="bg-navy-900 border border-navy-800 rounded-xl p-5">
+                            <div className="bg-[#0e1e33] border border-[#1e3a5f] rounded-xl p-5">
                                 <h4 className="text-white font-semibold mb-2 flex items-center gap-2">
                                     <Target className="h-4 w-4 text-purple-400" /> Intent
                                 </h4>
@@ -258,7 +258,7 @@ export default function VoiceIntelligencePage() {
                             </div>
 
                             {/* Transcript */}
-                            <div className="bg-navy-900 border border-navy-800 rounded-xl p-5">
+                            <div className="bg-[#0e1e33] border border-[#1e3a5f] rounded-xl p-5">
                                 <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
                                     <MessageSquare className="h-4 w-4 text-blue-400" /> Transcript
                                 </h4>
@@ -275,7 +275,7 @@ export default function VoiceIntelligencePage() {
                                     </h4>
                                     <ul className="space-y-2">
                                         {result.suggested_actions.map((action: any, i: number) => (
-                                            <li key={i} className="flex items-center justify-between p-3 bg-navy-900/80 rounded-lg">
+                                            <li key={i} className="flex items-center justify-between p-3 bg-[#0e1e33]/80 rounded-lg">
                                                 <div className="flex items-center gap-3">
                                                     {getActionIcon(action.type)}
                                                     <span className="text-sm text-navy-300">{action.label}</span>
@@ -294,9 +294,9 @@ export default function VoiceIntelligencePage() {
 
                             {/* Key Topics */}
                             {result.key_topics?.length > 0 && (
-                                <div className="bg-navy-900 border border-navy-800 rounded-xl p-5">
+                                <div className="bg-[#0e1e33] border border-[#1e3a5f] rounded-xl p-5">
                                     <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
-                                        <TrendingUp className="h-4 w-4 text-gold-400" /> Key Topics
+                                        <TrendingUp className="h-4 w-4 text-[#f5a623]" /> Key Topics
                                     </h4>
                                     <div className="flex flex-wrap gap-2">
                                         {result.key_topics.map((topic: string, i: number) => (

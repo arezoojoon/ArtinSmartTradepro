@@ -16,24 +16,24 @@ interface RecentLeadsProps {
 
 const RecentLeads = ({ className }: RecentLeadsProps) => {
     return (
-        <Card className={`col-span-3 border-navy-800 bg-navy-900 text-white ${className || ''}`}>
+        <Card className={`col-span-3 border-[#1e3a5f] bg-[#0e1e33] text-white ${className || ''}`}>
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg font-medium text-white">Recent Leads</CardTitle>
-                <Button variant="ghost" size="sm" className="text-gold-400 hover:text-gold-300">
+                <Button variant="ghost" size="sm" className="text-[#f5a623] hover:text-gold-300">
                     View All <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
                     {leads.map((lead) => (
-                        <div key={lead.id} className="flex items-center justify-between border-b border-navy-800 pb-4 last:border-0 last:pb-0">
+                        <div key={lead.id} className="flex items-center justify-between border-b border-[#1e3a5f] pb-4 last:border-0 last:pb-0">
                             <div>
                                 <p className="font-medium text-white">{lead.name}</p>
                                 <p className="text-sm text-gray-400">{lead.company}</p>
                             </div>
                             <div className="flex items-center space-x-4">
                                 <span className={`text-xs px-2 py-1 rounded-full ${lead.status === "New Lead" ? "bg-blue-500/10 text-blue-400" :
-                                        lead.status === "Negotiating" ? "bg-gold-500/10 text-gold-400" :
+                                        lead.status === "Negotiating" ? "bg-gold-500/10 text-[#f5a623]" :
                                             lead.status === "Closed" ? "bg-green-500/10 text-green-400" :
                                                 "bg-gray-500/10 text-gray-400"
                                     }`}>
@@ -42,7 +42,7 @@ const RecentLeads = ({ className }: RecentLeadsProps) => {
                                 <div className="text-right">
                                     <p className="text-xs text-gray-400">Confidence</p>
                                     <div className="h-1.5 w-16 bg-navy-800 rounded-full mt-1">
-                                        <div className="h-1.5 bg-gold-400 rounded-full" style={{ width: `${lead.confidence}%` }}></div>
+                                        <div className="h-1.5 bg-[#f5a623] rounded-full" style={{ width: `${lead.confidence}%` }}></div>
                                     </div>
                                 </div>
                             </div>

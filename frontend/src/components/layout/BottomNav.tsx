@@ -22,7 +22,7 @@ export default function BottomNav({ onMenuClick }: BottomNavProps) {
     ];
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-navy-900/95 backdrop-blur-md border-t border-navy-800 pb-safe z-50 md:hidden">
+        <div className="fixed bottom-0 left-0 right-0 bg-[#0e1e33]/95 backdrop-blur-md border-t border-[#1e3a5f] pb-safe z-50 md:hidden">
             <div className="flex justify-around items-center h-16">
                 {tabs.map((tab) => {
                     const isActive = pathname === tab.href || (tab.href !== "/dashboard" && pathname?.startsWith(tab.href + "/"));
@@ -30,7 +30,7 @@ export default function BottomNav({ onMenuClick }: BottomNavProps) {
                         <Link
                             key={tab.href}
                             href={tab.href}
-                            className={`flex flex-col items-center justify-center w-full h-full space-y-1 active:scale-95 transition-transform ${isActive ? "text-gold-400" : "text-gray-100 hover:text-white"
+                            className={`flex flex-col items-center justify-center w-full h-full space-y-1 active:scale-95 transition-transform ${isActive ? "text-[#f5a623]" : "text-gray-100 hover:text-white"
                                 }`}
                         >
                             <tab.icon className={`h-6 w-6 ${isActive ? "stroke-[2.5px]" : "stroke-2"}`} />

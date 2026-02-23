@@ -66,7 +66,7 @@ export default function SelectTenantPage() {
     if (loading) {
         return (
             <div className="flex h-screen items-center justify-center bg-[#071022] text-white">
-                <Loader2 className="h-8 w-8 animate-spin text-[#D4AF37]" />
+                <Loader2 className="h-8 w-8 animate-spin text-[#f5a623]" />
             </div>
         );
     }
@@ -75,7 +75,7 @@ export default function SelectTenantPage() {
         <div className="flex min-h-screen items-center justify-center bg-[#071022] p-4 text-white">
             <Card className="w-full max-w-md border-white/10 bg-[#0B1B3A] text-white">
                 <CardHeader>
-                    <CardTitle className="text-2xl text-[#D4AF37]">
+                    <CardTitle className="text-2xl text-[#f5a623]">
                         {tenants.length === 0 ? "Welcome! Let's get started." : "Select Organization"}
                     </CardTitle>
                     <CardDescription className="text-white/60">
@@ -91,7 +91,7 @@ export default function SelectTenantPage() {
                                 <button
                                     key={t.id}
                                     onClick={() => handleSelect(t.id)}
-                                    className="flex w-full items-center justify-between rounded-xl border border-white/10 p-4 hover:border-[#D4AF37]/50 hover:bg-white/5 transition-all"
+                                    className="flex w-full items-center justify-between rounded-xl border border-white/10 p-4 hover:border-[#f5a623]/50 hover:bg-white/5 transition-all"
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-white">
@@ -132,7 +132,7 @@ export default function SelectTenantPage() {
                         <Button
                             onClick={handleCreate}
                             disabled={creating || !newTenantName.trim()}
-                            className="w-full bg-[#D4AF37] text-[#0B1B3A] hover:bg-[#D4AF37]/90"
+                            className="w-full bg-[#f5a623] text-[#0B1B3A] hover:bg-[#f5a623]/90"
                         >
                             {creating ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -11,13 +11,13 @@ export default function TasksPage() {
                     <h1 className="text-2xl font-bold text-white">Tasks</h1>
                     <p className="text-sm text-navy-400">Manage your to-dos, follow-ups, and daily activities</p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-gold-400 text-navy-950 rounded-lg font-semibold hover:bg-gold-500 transition-colors">
+                <button className="flex items-center gap-2 px-4 py-2 bg-[#f5a623] text-navy-950 rounded-lg font-semibold hover:bg-gold-500 transition-colors">
                     <Plus className="h-4 w-4" />
                     New Task
                 </button>
             </div>
 
-            <div className="flex-1 bg-navy-900 border border-navy-800 rounded-xl p-8 flex flex-col items-center justify-center">
+            <div className="flex-1 bg-[#0e1e33] border border-[#1e3a5f] rounded-xl p-8 flex flex-col items-center justify-center">
                 <CheckCircle2 className="h-16 w-16 text-navy-700 mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2">No tasks yet</h3>
                 <p className="text-navy-400 text-center max-w-md mb-6">

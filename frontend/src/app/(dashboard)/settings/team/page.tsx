@@ -26,16 +26,16 @@ export default function TeamSettingsPage() {
         <div className="p-4 md:p-8 space-y-8 max-w-4xl text-white">
             <div>
                 <h1 className="text-2xl font-bold flex items-center gap-2">
-                    <Users className="h-6 w-6 text-gold-400" /> Team Management
+                    <Users className="h-6 w-6 text-[#f5a623]" /> Team Management
                 </h1>
                 <p className="text-white/60">Invite members and manage roles (RBAC).</p>
             </div>
 
             {/* Invite */}
-            <Card className="bg-navy-900 border-navy-800">
+            <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                 <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
-                        <UserPlus className="h-5 w-5 text-gold-400" /> Invite Team Member
+                        <UserPlus className="h-5 w-5 text-[#f5a623]" /> Invite Team Member
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -70,21 +70,21 @@ export default function TeamSettingsPage() {
             </Card>
 
             {/* Roles Reference */}
-            <Card className="bg-navy-900 border-navy-800">
+            <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                 <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
-                        <Shield className="h-5 w-5 text-gold-400" /> Available Roles
+                        <Shield className="h-5 w-5 text-[#f5a623]" /> Available Roles
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid gap-3">
                         {ROLES.map((role) => (
-                            <div key={role.value} className="flex items-center justify-between p-3 bg-navy-950 rounded-lg border border-navy-800">
+                            <div key={role.value} className="flex items-center justify-between p-3 bg-navy-950 rounded-lg border border-[#1e3a5f]">
                                 <div>
                                     <span className="font-semibold text-white">{role.label}</span>
                                     <p className="text-xs text-white/50">{role.desc}</p>
                                 </div>
-                                <Badge variant="outline" className="text-gold-400 border-gold-500/30">
+                                <Badge variant="outline" className="text-[#f5a623] border-gold-500/30">
                                     {role.value}
                                 </Badge>
                             </div>

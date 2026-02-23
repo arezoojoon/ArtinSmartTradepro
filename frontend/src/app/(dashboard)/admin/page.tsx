@@ -92,7 +92,7 @@ export default function SuperAdminDashboard() {
                 <Card className="bg-navy-800 border-navy-700">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium text-gray-200">Total Tenants</CardTitle>
-                        <Building2 className="h-4 w-4 text-gold-400" />
+                        <Building2 className="h-4 w-4 text-[#f5a623]" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-white">{stats?.total_tenants || 0}</div>
@@ -120,13 +120,13 @@ export default function SuperAdminDashboard() {
 
             {/* Tabs for Data */}
             <Tabs defaultValue="tenants" className="space-y-4">
-                <TabsList className="bg-navy-900 border border-navy-700">
+                <TabsList className="bg-[#0e1e33] border border-navy-700">
                     <TabsTrigger value="tenants" className="data-[state=active]:bg-gold-500 data-[state=active]:text-navy-900 text-gray-400">Tenants</TabsTrigger>
                     <TabsTrigger value="users" className="data-[state=active]:bg-gold-500 data-[state=active]:text-navy-900 text-gray-400">Users</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="tenants" className="space-y-4">
-                    <Card className="bg-navy-900 border-navy-800">
+                    <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                         <CardHeader>
                             <CardTitle className="text-white">All Tenants</CardTitle>
                             <CardDescription className="text-gray-400">Manage platform tenants.</CardDescription>
@@ -145,7 +145,7 @@ export default function SuperAdminDashboard() {
                                     </thead>
                                     <tbody>
                                         {tenants.map((tenant) => (
-                                            <tr key={tenant.id} className="bg-navy-900 border-b border-navy-800 hover:bg-navy-800">
+                                            <tr key={tenant.id} className="bg-[#0e1e33] border-b border-[#1e3a5f] hover:bg-navy-800">
                                                 <td className="px-6 py-4 font-medium text-white">{tenant.name}</td>
                                                 <td className="px-6 py-4">{tenant.slug}</td>
                                                 <td className="px-6 py-4">
@@ -165,7 +165,7 @@ export default function SuperAdminDashboard() {
                 </TabsContent>
 
                 <TabsContent value="users" className="space-y-4">
-                    <Card className="bg-navy-900 border-navy-800">
+                    <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                         <CardHeader>
                             <CardTitle className="text-white">All Users</CardTitle>
                             <CardDescription className="text-gray-400">System-wide user list.</CardDescription>
@@ -184,7 +184,7 @@ export default function SuperAdminDashboard() {
                                     </thead>
                                     <tbody>
                                         {users.map((u) => (
-                                            <tr key={u.id} className="bg-navy-900 border-b border-navy-800 hover:bg-navy-800">
+                                            <tr key={u.id} className="bg-[#0e1e33] border-b border-[#1e3a5f] hover:bg-navy-800">
                                                 <td className="px-6 py-4 font-medium text-white">{u.full_name || "N/A"}</td>
                                                 <td className="px-6 py-4">{u.email}</td>
                                                 <td className="px-6 py-4 uppercase text-xs">{u.role}</td>

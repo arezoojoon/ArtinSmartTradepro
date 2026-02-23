@@ -14,7 +14,7 @@ export default function ShipmentsPage() {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold flex items-center gap-2">
-                        <Ship className="h-6 w-6 text-gold-400" /> Shipment Tracking
+                        <Ship className="h-6 w-6 text-[#f5a623]" /> Shipment Tracking
                     </h1>
                     <p className="text-white/60 text-sm">
                         Track shipments, port delays, and manage trade documents
@@ -33,7 +33,7 @@ export default function ShipmentsPage() {
                     { label: "Delivered", value: "0", icon: Package, color: "text-emerald-400" },
                     { label: "Delayed", value: "0", icon: AlertTriangle, color: "text-rose-400" },
                 ].map((stat) => (
-                    <Card key={stat.label} className="bg-navy-900 border-navy-800">
+                    <Card key={stat.label} className="bg-[#0e1e33] border-[#1e3a5f]">
                         <CardContent className="p-4 flex items-center gap-3">
                             <div className="p-2 rounded-lg bg-navy-800">
                                 <stat.icon className={`h-5 w-5 ${stat.color}`} />
@@ -48,7 +48,7 @@ export default function ShipmentsPage() {
             </div>
 
             {/* Empty State */}
-            <Card className="bg-navy-900 border-navy-800">
+            <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                 <CardContent className="p-12 flex flex-col items-center justify-center text-center">
                     <Ship className="h-16 w-16 text-navy-700 mb-4" />
                     <h3 className="text-xl font-bold text-white mb-2">No shipments tracked</h3>
@@ -74,10 +74,10 @@ export default function ShipmentsPage() {
                     { icon: AlertTriangle, title: "Port Delay Alerts", desc: "Congestion, demurrage risk warnings" },
                     { icon: FileText, title: "Document Vault", desc: "BL, Invoice, COO, certificates — all in one place" },
                 ].map((feat) => (
-                    <Card key={feat.title} className="bg-navy-900/50 border-navy-800 hover:border-gold-500/30 transition-colors">
+                    <Card key={feat.title} className="bg-[#0e1e33]/50 border-[#1e3a5f] hover:border-gold-500/30 transition-colors">
                         <CardContent className="p-4 flex items-start gap-3">
                             <div className="p-2 rounded-lg bg-navy-800">
-                                <feat.icon className="h-5 w-5 text-gold-400" />
+                                <feat.icon className="h-5 w-5 text-[#f5a623]" />
                             </div>
                             <div>
                                 <h4 className="font-semibold text-white text-sm">{feat.title}</h4>

@@ -12,17 +12,17 @@ export default function DashboardPage() {
             <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 border-b border-white/10 pb-6">
                 <div>
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-[#D4AF37]/10 rounded-lg border border-[#D4AF37]/20 backdrop-blur-md">
-                            <Zap className="h-6 w-6 text-[#D4AF37]" />
+                        <div className="p-2 bg-[#f5a623]/10 rounded-lg border border-[#f5a623]/20 backdrop-blur-md">
+                            <Zap className="h-6 w-6 text-[#f5a623]" />
                         </div>
                         <h2 className="text-3xl font-bold tracking-tight text-white">Control Tower</h2>
                     </div>
                     <p className="text-slate-400 text-sm">Real-time operational intelligence and global trade oversight.</p>
                 </div>
 
-                <div className="flex items-center gap-3 bg-[#050a15]/60 backdrop-blur-md px-4 py-2 rounded-lg border border-white/5">
-                    <div className="h-2 w-2 rounded-full bg-[#D4AF37] animate-pulse"></div>
-                    <span className="text-xs font-medium text-slate-300 uppercase tracking-widest text-[#D4AF37]">Market Mode: Active</span>
+                <div className="flex items-center gap-3 bg-[#12253f]/80 backdrop-blur-md px-4 py-2 rounded-lg border border-[#1e3a5f]">
+                    <div className="h-2 w-2 rounded-full bg-[#f5a623] animate-pulse"></div>
+                    <span className="text-xs font-medium text-slate-300 uppercase tracking-widest text-[#f5a623]">Market Mode: Active</span>
                 </div>
             </div>
 
@@ -30,23 +30,23 @@ export default function DashboardPage() {
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
 
                 {/* 1. Opportunities */}
-                <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/30 transition-all group overflow-hidden relative">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-[#D4AF37] opacity-50"></div>
+                <Card className="bg-[#12253f]/80 backdrop-blur-xl border border-[#1e3a5f] hover:border-[#f5a623]/30 transition-all group overflow-hidden relative">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-[#f5a623] opacity-50"></div>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">Opportunities</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-[#D4AF37]" />
+                        <TrendingUp className="h-4 w-4 text-[#f5a623]" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-white group-hover:text-[#D4AF37] transition-colors">3 High Margin</div>
+                        <div className="text-2xl font-bold text-white group-hover:text-[#f5a623] transition-colors">3 High Margin</div>
                         <p className="text-[10px] text-slate-500 mt-1 uppercase">UAE to EU • 18% Est. Margin</p>
-                        <Link href="/brain" className="text-xs text-[#D4AF37] hover:text-white transition-colors mt-4 flex items-center gap-1 font-bold">
+                        <Link href="/brain" className="text-xs text-[#f5a623] hover:text-white transition-colors mt-4 flex items-center gap-1 font-bold">
                             Review in Brain <ChevronRight className="h-3 w-3" />
                         </Link>
                     </CardContent>
                 </Card>
 
                 {/* 2. Risk Alerts */}
-                <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 hover:border-red-500/30 transition-all group overflow-hidden relative">
+                <Card className="bg-[#12253f]/80 backdrop-blur-xl border border-[#1e3a5f] hover:border-[#f5a623]/30">
                     <div className="absolute top-0 left-0 w-1 h-full bg-red-500 opacity-50"></div>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">Risk Alerts</CardTitle>
@@ -62,7 +62,7 @@ export default function DashboardPage() {
                 </Card>
 
                 {/* 3. Cash Flow */}
-                <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 hover:border-emerald-500/30 transition-all group overflow-hidden relative">
+                <Card className="bg-[#12253f]/80 backdrop-blur-xl border border-[#1e3a5f] hover:border-emerald-500/30 transition-all group overflow-hidden relative">
                     <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 opacity-50"></div>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">Cash Flow</CardTitle>
@@ -78,7 +78,7 @@ export default function DashboardPage() {
                 </Card>
 
                 {/* 4. New Leads */}
-                <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 hover:border-purple-500/30 transition-all group overflow-hidden relative">
+                <Card className="bg-[#12253f]/80 backdrop-blur-xl border border-[#1e3a5f] hover:border-purple-500/30 transition-all group overflow-hidden relative">
                     <div className="absolute top-0 left-0 w-1 h-full bg-purple-500 opacity-50"></div>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">New Leads</CardTitle>
@@ -94,7 +94,7 @@ export default function DashboardPage() {
                 </Card>
 
                 {/* 5. Market Shocks */}
-                <Card className="bg-[#050a15]/60 backdrop-blur-xl border border-white/10 hover:border-orange-500/30 transition-all group overflow-hidden relative">
+                <Card className="bg-[#12253f]/80 backdrop-blur-xl border border-[#1e3a5f] hover:border-orange-500/30 transition-all group overflow-hidden relative">
                     <div className="absolute top-0 left-0 w-1 h-full bg-orange-500 opacity-50"></div>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">Market Shocks</CardTitle>
@@ -114,25 +114,25 @@ export default function DashboardPage() {
             <div className="grid gap-6 lg:grid-cols-7 mt-8">
 
                 {/* Pipeline Summary (Bloomberg Style) */}
-                <Card className="col-span-full lg:col-span-4 bg-[#050a15]/60 backdrop-blur-2xl border border-white/10 shadow-2xl overflow-hidden relative">
-                    <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent opacity-30"></div>
+                <Card className="col-span-full lg:col-span-4 bg-[#12253f]/80 backdrop-blur-2xl border border-[#1e3a5f] shadow-2xl overflow-hidden relative">
+                    <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#f5a623] to-transparent opacity-30"></div>
                     <CardHeader>
                         <CardTitle className="text-white text-lg flex items-center gap-2">
-                            <Target className="h-5 w-5 text-[#D4AF37]" /> Pipeline Intelligence Summary
+                            <Target className="h-5 w-5 text-[#f5a623]" /> Pipeline Intelligence Summary
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-8">
                             <div className="flex items-center justify-between">
                                 <span className="text-sm font-semibold text-slate-400 uppercase tracking-widest">Global Conversion Rate</span>
-                                <span className="text-xl font-bold text-[#D4AF37]">24.8%</span>
+                                <span className="text-xl font-bold text-[#f5a623]">24.8%</span>
                             </div>
 
                             <div className="space-y-2">
                                 <div className="w-full bg-white/5 rounded-full h-8 relative overflow-hidden flex border border-white/5">
                                     <div className="bg-white/20 h-full flex items-center justify-center text-[10px] text-white font-bold border-r border-white/10" style={{ width: '40%' }}>Leads</div>
-                                    <div className="bg-[#D4AF37]/40 h-full flex items-center justify-center text-[10px] text-white font-bold border-r border-white/10" style={{ width: '30%' }}>Quoted</div>
-                                    <div className="bg-[#D4AF37] h-full flex items-center justify-center text-[10px] text-black font-bold" style={{ width: '30%' }}>Won</div>
+                                    <div className="bg-[#f5a623]/40 h-full flex items-center justify-center text-[10px] text-white font-bold border-r border-white/10" style={{ width: '30%' }}>Quoted</div>
+                                    <div className="bg-[#f5a623] h-full flex items-center justify-center text-[10px] text-black font-bold" style={{ width: '30%' }}>Won</div>
                                 </div>
                                 <div className="flex justify-between px-1 text-[10px] text-slate-500 uppercase font-bold tracking-tighter">
                                     <span>Inbound Discovery</span>
@@ -142,17 +142,17 @@ export default function DashboardPage() {
                             </div>
 
                             <div className="grid grid-cols-3 gap-4 text-center">
-                                <div className="p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-[#D4AF37]/20 transition-all">
+                                <div className="p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-[#f5a623]/20 transition-all">
                                     <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Total Pipeline</p>
-                                    <p className="text-xl font-bold text-white group-hover:text-[#D4AF37] transición-colors">$850,000</p>
+                                    <p className="text-xl font-bold text-white group-hover:text-[#f5a623] transition-colors">$850,000</p>
                                 </div>
-                                <div className="p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-[#D4AF37]/20 transition-all">
+                                <div className="p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-[#f5a623]/20 transition-all">
                                     <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Gross Margin</p>
-                                    <p className="text-xl font-bold text-white group-hover:text-[#D4AF37] transición-colors">18.5%</p>
+                                    <p className="text-xl font-bold text-white group-hover:text-[#f5a623] transition-colors">18.5%</p>
                                 </div>
-                                <div className="p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-[#D4AF37]/20 transition-all">
+                                <div className="p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-[#f5a623]/20 transition-all">
                                     <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Active Deals</p>
-                                    <p className="text-xl font-bold text-white group-hover:text-[#D4AF37] transición-colors">24</p>
+                                    <p className="text-xl font-bold text-white group-hover:text-[#f5a623] transition-colors">24</p>
                                 </div>
                             </div>
                         </div>
@@ -160,7 +160,7 @@ export default function DashboardPage() {
                 </Card>
 
                 {/* Risk Heatmap (Terminal Style) */}
-                <Card className="col-span-full lg:col-span-3 bg-[#050a15]/60 backdrop-blur-2xl border border-white/10 shadow-2xl relative">
+                <Card className="col-span-full lg:col-span-3 bg-[#12253f]/80 backdrop-blur-2xl border border-[#1e3a5f] shadow-2xl relative">
                     <CardHeader>
                         <CardTitle className="text-white text-lg flex items-center gap-2">
                             <ShieldCheck className="h-5 w-5 text-red-500" /> AI Risk Terminal

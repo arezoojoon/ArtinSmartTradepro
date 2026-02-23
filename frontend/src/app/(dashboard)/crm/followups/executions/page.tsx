@@ -56,9 +56,9 @@ export default function ExecutionsPage() {
                 </div>
             </div>
 
-            <div className="bg-navy-900 border border-navy-800 rounded-xl overflow-hidden">
+            <div className="bg-[#0e1e33] border border-[#1e3a5f] rounded-xl overflow-hidden">
                 <table className="w-full text-left text-sm">
-                    <thead className="bg-navy-950 text-navy-400 border-b border-navy-800">
+                    <thead className="bg-navy-950 text-navy-400 border-b border-[#1e3a5f]">
                         <tr>
                             <th className="px-6 py-4 font-medium">Scheduled / Sent</th>
                             <th className="px-6 py-4 font-medium">Status</th>

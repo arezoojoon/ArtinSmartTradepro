@@ -71,7 +71,7 @@ export default function DeepLinksPage() {
             </div>
 
             {/* Generator */}
-            <Card className="bg-navy-900 border-navy-800">
+            <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                 <CardHeader>
                     <CardTitle>Generate New Link</CardTitle>
                 </CardHeader>
@@ -95,7 +95,7 @@ export default function DeepLinksPage() {
 
             {/* Links List */}
             {links.length === 0 ? (
-                <Card className="bg-navy-900 border-navy-800">
+                <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                     <CardContent className="py-16 text-center">
                         <Link2 className="h-16 w-16 mx-auto mb-4 text-gray-700" />
                         <p className="text-gray-500">No deep links generated yet. Create one above.</p>
@@ -107,7 +107,7 @@ export default function DeepLinksPage() {
             ) : (
                 <div className="space-y-4">
                     {links.map((link) => (
-                        <Card key={link.id} className="bg-navy-900 border-navy-800">
+                        <Card key={link.id} className="bg-[#0e1e33] border-[#1e3a5f]">
                             <CardContent className="pt-4">
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1">

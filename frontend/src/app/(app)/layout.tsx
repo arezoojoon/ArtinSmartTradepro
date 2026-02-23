@@ -43,7 +43,7 @@ export default function AppLayout({
                 <div className="flex items-center justify-between px-4 py-2">
                     <div className="flex items-center gap-4">
                         <Link href="/dashboard" className="text-lg font-bold">
-                            Artin<span className="text-[#D4AF37]">Trade</span>
+                            Artin<span className="text-[#f5a623]">Trade</span>
                         </Link>
                         <div className="h-6 w-px bg-white/10" />
                         <TenantSwitcher />
@@ -70,7 +70,7 @@ export default function AppLayout({
                             className={[
                                 "flex flex-col items-center justify-center rounded-lg py-2 text-xs",
                                 pathname.startsWith(item.href)
-                                    ? "bg-white/10 text-[#D4AF37]"
+                                    ? "bg-white/10 text-[#f5a623]"
                                     : "text-white/60",
                             ].join(" ")}
                         >

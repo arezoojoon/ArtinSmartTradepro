@@ -59,9 +59,9 @@ export default function RegisterPage() {
     };
 
     return (
-        <Card className="border-navy-800 bg-navy-900 text-white w-full max-w-lg">
+        <Card className="border-[#1e3a5f] bg-[#0e1e33] text-white w-full max-w-lg">
             <CardHeader>
-                <CardTitle className="text-center text-xl text-gold-400">Create Account</CardTitle>
+                <CardTitle className="text-center text-xl text-[#f5a623]">Create Account</CardTitle>
                 <CardDescription className="text-center text-gray-400">
                     Join the AI Trade Operating System
                 </CardDescription>
@@ -169,7 +169,7 @@ export default function RegisterPage() {
             <CardFooter className="justify-center">
                 <p className="text-sm text-gray-400">
                     Already have an account?{" "}
-                    <Link href="/login" className="text-gold-400 hover:text-gold-300">
+                    <Link href="/login" className="text-[#f5a623] hover:text-gold-300">
                         Sign in
                     </Link>
                 </p>

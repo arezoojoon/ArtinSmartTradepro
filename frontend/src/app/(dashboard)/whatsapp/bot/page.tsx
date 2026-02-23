@@ -54,7 +54,7 @@ export default function BotSessionsPage() {
             {loading ? (
                 <div className="text-center py-16 text-gray-500">Loading sessions...</div>
             ) : sessions.length === 0 ? (
-                <Card className="bg-navy-900 border-navy-800">
+                <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                     <CardContent className="py-16 text-center">
                         <Bot className="h-16 w-16 mx-auto mb-4 text-gray-700" />
                         <p className="text-gray-500">No active bot sessions.</p>
@@ -66,7 +66,7 @@ export default function BotSessionsPage() {
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {sessions.map((s: any) => (
-                        <Card key={s.id} className="bg-navy-900 border-navy-800">
+                        <Card key={s.id} className="bg-[#0e1e33] border-[#1e3a5f]">
                             <CardContent className="pt-4">
                                 <div className="flex items-center justify-between mb-3">
                                     <span className="font-semibold text-white">{s.name || s.phone}</span>

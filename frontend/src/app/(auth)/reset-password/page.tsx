@@ -58,7 +58,7 @@ function ResetPasswordForm() {
 
     if (!token) {
         return (
-            <Card className="border-navy-800 bg-navy-900 text-white">
+            <Card className="border-[#1e3a5f] bg-[#0e1e33] text-white">
                 <CardHeader>
                     <CardTitle className="text-center text-xl text-red-400">Invalid Link</CardTitle>
                     <CardDescription className="text-center text-gray-400">
@@ -66,7 +66,7 @@ function ResetPasswordForm() {
                     </CardDescription>
                 </CardHeader>
                 <CardFooter className="justify-center">
-                    <Link href="/forgot-password" className="text-sm text-gold-400 hover:text-gold-300">
+                    <Link href="/forgot-password" className="text-sm text-[#f5a623] hover:text-gold-300">
                         Request a new link
                     </Link>
                 </CardFooter>
@@ -76,7 +76,7 @@ function ResetPasswordForm() {
 
     if (success) {
         return (
-            <Card className="border-navy-800 bg-navy-900 text-white">
+            <Card className="border-[#1e3a5f] bg-[#0e1e33] text-white">
                 <CardHeader>
                     <CardTitle className="text-center text-xl text-green-400">Password Reset Successful</CardTitle>
                     <CardDescription className="text-center text-gray-400">
@@ -84,7 +84,7 @@ function ResetPasswordForm() {
                     </CardDescription>
                 </CardHeader>
                 <CardFooter className="justify-center">
-                    <Link href="/login" className="text-sm text-gold-400 hover:text-gold-300">
+                    <Link href="/login" className="text-sm text-[#f5a623] hover:text-gold-300">
                         Go to Login
                     </Link>
                 </CardFooter>
@@ -93,9 +93,9 @@ function ResetPasswordForm() {
     }
 
     return (
-        <Card className="border-navy-800 bg-navy-900 text-white">
+        <Card className="border-[#1e3a5f] bg-[#0e1e33] text-white">
             <CardHeader>
-                <CardTitle className="text-center text-xl text-gold-400">Set New Password</CardTitle>
+                <CardTitle className="text-center text-xl text-[#f5a623]">Set New Password</CardTitle>
                 <CardDescription className="text-center text-gray-400">
                     Create a new, strong password for your account.
                 </CardDescription>
@@ -131,7 +131,7 @@ function ResetPasswordForm() {
                 </form>
             </CardContent>
             <CardFooter className="justify-center">
-                <Link href="/login" className="text-sm text-gold-400 hover:text-gold-300">
+                <Link href="/login" className="text-sm text-[#f5a623] hover:text-gold-300">
                     Back to Login
                 </Link>
             </CardFooter>

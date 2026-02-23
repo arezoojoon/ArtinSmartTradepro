@@ -28,7 +28,7 @@ export default function DealsPage() {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold flex items-center gap-2">
-                        <Handshake className="h-6 w-6 text-gold-400" /> Deal Room
+                        <Handshake className="h-6 w-6 text-[#f5a623]" /> Deal Room
                     </h1>
                     <p className="text-white/60 text-sm">
                         Manage end-to-end trade deals: buyer, supplier, incoterms, docs, margins
@@ -44,7 +44,7 @@ export default function DealsPage() {
                 {DEAL_STAGES.map((stage) => (
                     <div
                         key={stage.id}
-                        className="flex items-center gap-2 px-4 py-2 bg-navy-900 border border-navy-800 rounded-lg whitespace-nowrap"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#0e1e33] border border-[#1e3a5f] rounded-lg whitespace-nowrap"
                     >
                         <div className={`h-2.5 w-2.5 rounded-full ${stage.color}`}></div>
                         <span className="text-sm font-medium">{stage.label}</span>
@@ -57,7 +57,7 @@ export default function DealsPage() {
 
             {/* Deal List / Empty State */}
             {MOCK_DEALS.length === 0 ? (
-                <Card className="bg-navy-900 border-navy-800">
+                <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                     <CardContent className="p-12 flex flex-col items-center justify-center text-center">
                         <Handshake className="h-16 w-16 text-navy-700 mb-4" />
                         <h3 className="text-xl font-bold text-white mb-2">No deals yet</h3>
@@ -87,10 +87,10 @@ export default function DealsPage() {
                     { icon: Shield, title: "Risk Checklist", desc: "Sanction, customs, FX, supplier" },
                     { icon: Clock, title: "Timeline", desc: "Key dates and milestones" },
                 ].map((feat) => (
-                    <Card key={feat.title} className="bg-navy-900/50 border-navy-800 hover:border-gold-500/30 transition-colors cursor-pointer">
+                    <Card key={feat.title} className="bg-[#0e1e33]/50 border-[#1e3a5f] hover:border-gold-500/30 transition-colors cursor-pointer">
                         <CardContent className="p-4 flex items-start gap-3">
                             <div className="p-2 rounded-lg bg-navy-800">
-                                <feat.icon className="h-5 w-5 text-gold-400" />
+                                <feat.icon className="h-5 w-5 text-[#f5a623]" />
                             </div>
                             <div>
                                 <h4 className="font-semibold text-white text-sm">{feat.title}</h4>

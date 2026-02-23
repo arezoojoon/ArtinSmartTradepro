@@ -64,7 +64,7 @@ export default function FollowUpRulesPage() {
                     </button>
                     <button
                         onClick={() => router.push("/crm/followups/new")}
-                        className="flex items-center gap-2 px-4 py-2 bg-gold-400 text-navy-950 rounded-lg font-semibold hover:bg-gold-500 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#f5a623] text-navy-950 rounded-lg font-semibold hover:bg-gold-500 transition-colors"
                     >
                         <Plus className="h-4 w-4" />
                         New Rule
@@ -76,15 +76,15 @@ export default function FollowUpRulesPage() {
                 {loading ? (
                     <div className="col-span-3 text-center text-navy-500 py-12">Loading rules...</div>
                 ) : rules.length === 0 ? (
-                    <div className="col-span-3 text-center text-navy-500 py-12 bg-navy-900/50 rounded-xl border border-navy-800 border-dashed">
+                    <div className="col-span-3 text-center text-navy-500 py-12 bg-[#0e1e33]/50 rounded-xl border border-[#1e3a5f] border-dashed">
                         No active follow-up rules. Create one to start automating.
                     </div>
                 ) : (
                     rules.map((rule: any) => (
-                        <div key={rule.id} className={`bg-navy-900 border ${rule.is_active ? 'border-navy-700' : 'border-navy-800 opacity-75'} rounded-xl p-6 transition-all`}>
+                        <div key={rule.id} className={`bg-[#0e1e33] border ${rule.is_active ? 'border-navy-700' : 'border-[#1e3a5f] opacity-75'} rounded-xl p-6 transition-all`}>
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-3">
-                                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${rule.is_active ? 'bg-gold-500/10 text-gold-400' : 'bg-navy-800 text-navy-500'}`}>
+                                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${rule.is_active ? 'bg-gold-500/10 text-[#f5a623]' : 'bg-navy-800 text-navy-500'}`}>
                                         <Zap className="h-5 w-5" />
                                     </div>
                                     <div>
@@ -116,7 +116,7 @@ export default function FollowUpRulesPage() {
                                 {rule.template_body}
                             </div>
 
-                            <div className="flex justify-between items-center text-xs text-navy-500 pt-4 border-t border-navy-800">
+                            <div className="flex justify-between items-center text-xs text-navy-500 pt-4 border-t border-[#1e3a5f]">
                                 <span>Created {formatDistanceToNow(new Date(rule.created_at), { addSuffix: true })}</span>
                                 <div className="flex items-center gap-1">
                                     <div className={`h-1.5 w-1.5 rounded-full ${rule.is_active ? 'bg-green-500' : 'bg-gray-500'}`}></div>

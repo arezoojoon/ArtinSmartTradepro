@@ -22,17 +22,17 @@ export function FeatureLock({ featureName, requiredPlan = "Enterprise", children
 
     return (
         <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center max-w-md px-8 py-12 bg-navy-900/50 border border-navy-700/30 rounded-2xl">
+            <div className="text-center max-w-md px-8 py-12 bg-[#0e1e33]/50 border border-navy-700/30 rounded-2xl">
                 <div className="mx-auto w-16 h-16 rounded-full bg-navy-800 flex items-center justify-center mb-6">
-                    <Lock className="h-8 w-8 text-gold-400" />
+                    <Lock className="h-8 w-8 text-[#f5a623]" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">{featureName}</h3>
                 <p className="text-navy-400 text-sm mb-6">
-                    This feature is available on the <span className="text-gold-400 font-semibold">{requiredPlan}</span> plan and above.
+                    This feature is available on the <span className="text-[#f5a623] font-semibold">{requiredPlan}</span> plan and above.
                 </p>
                 <Link
                     href="/pricing"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-gold-400 text-navy-950 rounded-xl font-semibold text-sm hover:bg-gold-300 transition-all"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#f5a623] text-navy-950 rounded-xl font-semibold text-sm hover:bg-gold-300 transition-all"
                 >
                     Upgrade Plan <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -59,7 +59,7 @@ export function FeatureLockButton({ featureName, requiredPlan = "Enterprise" }: 
                 <Lock className="h-3.5 w-3.5" />
                 {featureName}
             </button>
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-navy-800 border border-navy-600 rounded-lg text-xs text-gold-400 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-navy-800 border border-navy-600 rounded-lg text-xs text-[#f5a623] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                 Requires {requiredPlan} plan
             </div>
         </div>

@@ -105,7 +105,7 @@ function WalletContent() {
                         <CardDescription className="text-gray-400">Available credits for trading actions</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-4xl font-bold text-gold-400 mb-4">
+                        <div className="text-4xl font-bold text-[#f5a623] mb-4">
                             {formatCurrency(balance)}
                         </div>
                         <div className="flex space-x-4">
@@ -117,7 +117,7 @@ function WalletContent() {
                                     placeholder="Enter amount"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
-                                    className="bg-navy-900 border-navy-600 text-white mt-2"
+                                    className="bg-[#0e1e33] border-navy-600 text-white mt-2"
                                 />
                             </div>
                             <Button
@@ -134,12 +134,12 @@ function WalletContent() {
                 {/* Quick Stats or Promo */}
                 <Card className="bg-navy-800 border-navy-700 text-white flex flex-col justify-center items-center p-6 bg-gradient-to-br from-navy-800 to-navy-900">
                     <div className="text-center space-y-2">
-                        <h3 className="text-xl font-bold text-gold-400">Pro Tip</h3>
+                        <h3 className="text-xl font-bold text-[#f5a623]">Pro Tip</h3>
                         <p className="text-gray-300">
                             Each lead scrape costs <strong>1 Credit</strong>.<br />
                             Each WhatsApp message costs <strong>0.5 Credits</strong>.
                         </p>
-                        <Badge variant="outline" className="mt-4 border-gold-500 text-gold-400">
+                        <Badge variant="outline" className="mt-4 border-gold-500 text-[#f5a623]">
                             Enterprise Plan: 20% Discount
                         </Badge>
                     </div>
@@ -147,7 +147,7 @@ function WalletContent() {
             </div>
 
             {/* Transactions History */}
-            <Card className="bg-navy-900 border-navy-800 text-white">
+            <Card className="bg-[#0e1e33] border-[#1e3a5f] text-white">
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center">

@@ -15,7 +15,7 @@ interface MoneyCardProps {
 
 const MoneyCard = ({ title, value, icon: Icon, trend, trendUp, color = "blue", isCount, isCurrency }: MoneyCardProps) => {
     const colorClasses = {
-        gold: "text-gold-400 bg-gold-400/10",
+        gold: "text-[#f5a623] bg-[#f5a623]/10",
         blue: "text-blue-400 bg-blue-400/10",
         green: "text-green-400 bg-green-400/10",
     };
@@ -36,7 +36,7 @@ const MoneyCard = ({ title, value, icon: Icon, trend, trendUp, color = "blue", i
     };
 
     return (
-        <Card className="border-navy-800 bg-navy-900 text-white">
+        <Card className="border-[#1e3a5f] bg-[#0e1e33] text-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-400">
                     {title}

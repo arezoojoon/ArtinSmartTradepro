@@ -31,15 +31,15 @@ export default function ForgotPasswordPage() {
 
     if (submitted) {
         return (
-            <Card className="border-navy-800 bg-navy-900 text-white">
+            <Card className="border-[#1e3a5f] bg-[#0e1e33] text-white">
                 <CardHeader>
-                    <CardTitle className="text-center text-xl text-gold-400">Check Your Email</CardTitle>
+                    <CardTitle className="text-center text-xl text-[#f5a623]">Check Your Email</CardTitle>
                     <CardDescription className="text-center text-gray-400">
                         If an account exists for {email}, you will receive a password reset link shortly.
                     </CardDescription>
                 </CardHeader>
                 <CardFooter className="justify-center">
-                    <Link href="/login" className="text-sm text-gold-400 hover:text-gold-300">
+                    <Link href="/login" className="text-sm text-[#f5a623] hover:text-gold-300">
                         Back to Login
                     </Link>
                 </CardFooter>
@@ -48,9 +48,9 @@ export default function ForgotPasswordPage() {
     }
 
     return (
-        <Card className="border-navy-800 bg-navy-900 text-white">
+        <Card className="border-[#1e3a5f] bg-[#0e1e33] text-white">
             <CardHeader>
-                <CardTitle className="text-center text-xl text-gold-400">Reset Password</CardTitle>
+                <CardTitle className="text-center text-xl text-[#f5a623]">Reset Password</CardTitle>
                 <CardDescription className="text-center text-gray-400">
                     Enter your email address and we'll send you a link to reset your password.
                 </CardDescription>
@@ -76,7 +76,7 @@ export default function ForgotPasswordPage() {
                 </form>
             </CardContent>
             <CardFooter className="justify-center">
-                <Link href="/login" className="text-sm text-gold-400 hover:text-gold-300">
+                <Link href="/login" className="text-sm text-[#f5a623] hover:text-gold-300">
                     Back to Login
                 </Link>
             </CardFooter>

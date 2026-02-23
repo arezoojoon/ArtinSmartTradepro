@@ -49,27 +49,27 @@ export default function PricingPage() {
               className={[
                 "rounded-2xl border p-6",
                 tier.highlight
-                  ? "border-[#D4AF37]/50 bg-[#0B1B3A]"
+                  ? "border-[#f5a623]/50 bg-[#0B1B3A]"
                   : "border-white/10 bg-white/5",
               ].join(" ")}
             >
               <div className="flex items-center justify-between">
                 <div className="text-lg font-semibold">{tier.name}</div>
                 {tier.highlight && (
-                  <span className="rounded-full bg-[#D4AF37] px-2 py-1 text-xs font-semibold text-[#0B1B3A]">
+                  <span className="rounded-full bg-[#f5a623] px-2 py-1 text-xs font-semibold text-[#0B1B3A]">
                     Most Popular
                   </span>
                 )}
               </div>
 
-              <div className="mt-4 text-2xl font-semibold text-[#D4AF37]">
+              <div className="mt-4 text-2xl font-semibold text-[#f5a623]">
                 {tier.price}
               </div>
 
               <ul className="mt-5 space-y-2 text-sm text-white/75">
                 {tier.features.map((f) => (
                   <li key={f} className="flex gap-2">
-                    <span className="text-[#D4AF37]">•</span>
+                    <span className="text-[#f5a623]">•</span>
                     <span>{f}</span>
                   </li>
                 ))}
@@ -80,7 +80,7 @@ export default function PricingPage() {
                 className={[
                   "mt-6 block rounded-2xl px-4 py-3 text-center text-sm font-semibold",
                   tier.highlight
-                    ? "bg-[#D4AF37] text-[#0B1B3A]"
+                    ? "bg-[#f5a623] text-[#0B1B3A]"
                     : "border border-white/15 text-white hover:border-white/25",
                 ].join(" ")}
               >

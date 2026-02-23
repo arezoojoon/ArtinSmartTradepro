@@ -60,7 +60,7 @@ export default function Sidebar({ forceExpanded = false, onItemClick }: SidebarP
     return (
         <aside
             className={cn(
-                "h-full bg-navy-900 border-r border-navy-800 flex flex-col transition-all duration-300 relative",
+                "h-full bg-[#0e1e33] border-r border-[#1e3a5f] flex flex-col transition-all duration-300 relative",
                 effectiveCollapsed ? "w-20" : "w-64"
             )}
         >
@@ -70,7 +70,7 @@ export default function Sidebar({ forceExpanded = false, onItemClick }: SidebarP
                     variant="ghost"
                     size="icon"
                     onClick={toggleCollapse}
-                    className="absolute -right-3 top-6 h-6 w-6 rounded-full border border-navy-700 bg-navy-800 text-navy-400 hover:text-white hover:bg-navy-700 z-50 shadow-md hidden md:flex"
+                    className="absolute -right-3 top-6 h-6 w-6 rounded-full border-[#1e3a5f] bg-[#12253f] text-navy-400 hover:text-white hover:bg-[#1e3a5f] z-50 shadow-md hidden md:flex"
                 >
                     {effectiveCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
                 </Button>
@@ -78,7 +78,7 @@ export default function Sidebar({ forceExpanded = false, onItemClick }: SidebarP
 
             {/* Logo area */}
             <div className={cn(
-                "border-b border-navy-800 flex flex-col items-center justify-center gap-4 transition-all overflow-hidden",
+                "border-b border-[#1e3a5f] flex flex-col items-center justify-center gap-4 transition-all overflow-hidden",
                 effectiveCollapsed ? "p-4 h-20" : "p-6"
             )}>
                 <div className={cn("relative transition-all", effectiveCollapsed ? "w-10 h-10" : "w-16 h-16")}>
@@ -114,7 +114,7 @@ export default function Sidebar({ forceExpanded = false, onItemClick }: SidebarP
                             onClick={onItemClick}
                             className={cn(
                                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative",
-                                isActive ? "bg-gold-400/10 text-gold-400" : "text-gray-100 hover:text-white hover:bg-navy-800",
+                                isActive ? "bg-[#f5a623]/10 text-[#f5a623]" : "text-gray-100 hover:text-white hover:bg-[#12253f]",
                                 effectiveCollapsed && "justify-center px-2"
                             )}
                             title={effectiveCollapsed ? item.label : undefined}
@@ -127,7 +127,7 @@ export default function Sidebar({ forceExpanded = false, onItemClick }: SidebarP
             </nav>
 
             {/* Footer / Logout */}
-            <div className="p-4 border-t border-navy-800 space-y-4">
+            <div className="border-t border-[#1e3a5f] space-y-4">
                 <button
                     onClick={() => {
                         onItemClick?.();

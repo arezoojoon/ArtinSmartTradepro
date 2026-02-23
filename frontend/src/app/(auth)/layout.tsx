@@ -19,7 +19,7 @@ export default function AuthLayout({
                         />
                     </div>
                     <h2 className="mt-6 text-3xl font-extrabold text-white tracking-tight">
-                        <span className="text-gold-400">Artin</span> Smart Trade
+                        <span className="text-[#f5a623]">Artin</span> Smart Trade
                     </h2>
                 </div>
                 {children}

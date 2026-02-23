@@ -117,10 +117,10 @@ export default function WhatsAppInbox() {
                 </div>
             </div>
 
-            <div className="flex flex-1 overflow-hidden bg-navy-900 border border-navy-700/50 rounded-2xl shadow-xl">
+            <div className="flex flex-1 overflow-hidden bg-[#0e1e33] border border-navy-700/50 rounded-2xl shadow-xl">
                 {/* Sidebar */}
-                <div className="w-1/3 flex flex-col border-r border-navy-800 bg-navy-950/50">
-                    <div className="p-4 border-b border-navy-800">
+                <div className="w-1/3 flex flex-col border-r border-[#1e3a5f] bg-navy-950/50">
+                    <div className="p-4 border-b border-[#1e3a5f]">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-navy-400" />
                             <input
@@ -128,7 +128,7 @@ export default function WhatsAppInbox() {
                                 placeholder="Search phone or name..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-navy-900 border border-navy-700 rounded-lg text-white text-sm focus:border-green-500 focus:outline-none transition-colors"
+                                className="w-full pl-9 pr-4 py-2 bg-[#0e1e33] border border-navy-700 rounded-lg text-white text-sm focus:border-green-500 focus:outline-none transition-colors"
                             />
                         </div>
                     </div>
@@ -179,10 +179,10 @@ export default function WhatsAppInbox() {
                 {/* Main Chat Area */}
                 {activeConv ? (
                     <div className="flex-1 flex flex-col bg-[url('/whatsapp-bg.png')] bg-cover relative">
-                        <div className="absolute inset-0 bg-navy-900/90 z-0"></div>
+                        <div className="absolute inset-0 bg-[#0e1e33]/90 z-0"></div>
 
                         {/* Chat Header */}
-                        <div className="relative z-10 px-6 py-4 bg-navy-950 border-b border-navy-800 flex justify-between items-center">
+                        <div className="relative z-10 px-6 py-4 bg-navy-950 border-b border-[#1e3a5f] flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <div className="h-10 w-10 bg-navy-800 rounded-full flex items-center justify-center">
                                     <User className="h-5 w-5 text-navy-400" />
@@ -230,7 +230,7 @@ export default function WhatsAppInbox() {
                         </div>
 
                         {/* Input Area */}
-                        <div className="relative z-10 p-4 bg-navy-950 border-t border-navy-800">
+                        <div className="relative z-10 p-4 bg-navy-950 border-t border-[#1e3a5f]">
                             <form
                                 onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
                                 className="flex gap-3 max-w-4xl mx-auto"
@@ -240,7 +240,7 @@ export default function WhatsAppInbox() {
                                     value={replyText}
                                     onChange={(e) => setReplyText(e.target.value)}
                                     placeholder="Type a message..."
-                                    className="flex-1 bg-navy-900 border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500 transition-colors"
+                                    className="flex-1 bg-[#0e1e33] border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500 transition-colors"
                                 />
                                 <button
                                     type="submit"
@@ -258,8 +258,8 @@ export default function WhatsAppInbox() {
                         </div>
                     </div>
                 ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center bg-navy-900 z-10 bg-[url('/whatsapp-bg.png')] bg-cover relative">
-                        <div className="absolute inset-0 bg-navy-900/90 z-0"></div>
+                    <div className="flex-1 flex flex-col items-center justify-center bg-[#0e1e33] z-10 bg-[url('/whatsapp-bg.png')] bg-cover relative">
+                        <div className="absolute inset-0 bg-[#0e1e33]/90 z-0"></div>
                         <div className="relative z-10 text-center">
                             <Phone className="h-20 w-20 text-navy-700 mx-auto mb-4" />
                             <h2 className="text-xl font-bold text-white">No Conversation Selected</h2>

@@ -64,7 +64,7 @@ export default function TenantSwitcher({ collapsed = false }: { collapsed?: bool
     if (collapsed) {
         return (
             <div className="h-10 w-10 rounded bg-navy-800 flex items-center justify-center border border-navy-600 shrink-0" title={currentTenant?.name}>
-                <Building2 className="h-5 w-5 text-gold-400" />
+                <Building2 className="h-5 w-5 text-[#f5a623]" />
             </div>
         );
     }
@@ -75,10 +75,10 @@ export default function TenantSwitcher({ collapsed = false }: { collapsed?: bool
             onValueChange={handleSwitch}
             disabled={loading}
         >
-            <SelectTrigger className="w-full h-12 bg-navy-900 border-navy-700 text-white hover:bg-navy-800 transition-colors focus:ring-gold-500">
+            <SelectTrigger className="w-full h-12 bg-[#0e1e33] border-navy-700 text-white hover:bg-navy-800 transition-colors focus:ring-gold-500">
                 <div className="flex items-center gap-2 overflow-hidden text-left w-full">
                     <div className="h-6 w-6 rounded bg-navy-800 flex items-center justify-center border border-navy-600 shrink-0">
-                        <Building2 className="h-3 w-3 text-gold-400" />
+                        <Building2 className="h-3 w-3 text-[#f5a623]" />
                     </div>
                     <div className="flex-1 overflow-hidden">
                         <SelectValue placeholder="Select Organization">
@@ -87,14 +87,14 @@ export default function TenantSwitcher({ collapsed = false }: { collapsed?: bool
                     </div>
                 </div>
             </SelectTrigger>
-            <SelectContent className="bg-navy-900 border-navy-700 text-white">
+            <SelectContent className="bg-[#0e1e33] border-navy-700 text-white">
                 <SelectGroup>
                     <SelectLabel className="text-navy-400 text-xs uppercase tracking-wider pl-2">My Organizations</SelectLabel>
                     {tenants.map((tenant) => (
                         <SelectItem
                             key={tenant.id}
                             value={tenant.id}
-                            className="cursor-pointer focus:bg-navy-800 focus:text-gold-400"
+                            className="cursor-pointer focus:bg-navy-800 focus:text-[#f5a623]"
                         >
                             <span className="flex items-center gap-2">
                                 <span>{tenant.name}</span>

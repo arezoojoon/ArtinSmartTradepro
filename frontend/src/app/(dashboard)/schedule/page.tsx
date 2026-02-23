@@ -13,7 +13,7 @@ export default function SchedulePage() {
                 </h1>
                 <p className="text-gray-400 mt-1">Manage tasks, meetings, and follow-up schedules</p>
             </div>
-            <Card className="bg-navy-900 border-navy-800">
+            <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                 <CardContent className="py-16 text-center">
                     <Calendar className="h-16 w-16 mx-auto mb-4 text-gray-700" />
                     <p className="text-gray-500">Scheduler — Coming Soon</p>
