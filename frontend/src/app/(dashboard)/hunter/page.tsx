@@ -12,7 +12,7 @@ import {
     Radar, ShoppingCart, TrendingUp, Globe, Loader2, Target,
     ShieldCheck, CloudLightning, BrainCircuit, Activity, ArrowRight,
     Scale, AlertTriangle, Building2, Landmark, Filter, Search,
-    Linkedin, Facebook, MessageSquare, Database, Users, Briefcase
+    Linkedin, Facebook, MessageSquare, Database, Users, Briefcase, Cpu
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -311,8 +311,8 @@ export default function HunterTerminalPage() {
                                 onClick={runHunterEngine}
                                 disabled={status === "scraping" || status === "analyzing"}
                                 className={`w-full h-14 mt-6 text-base font-bold uppercase tracking-widest transition-all duration-500 rounded-md border ${status !== "idle" && status !== "completed"
-                                        ? "bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/30"
-                                        : "bg-[#D4AF37] text-[#050A15] border-[#D4AF37] hover:bg-[#F3E5AB] hover:shadow-[0_0_30px_rgba(212,175,55,0.6)]"
+                                    ? "bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/30"
+                                    : "bg-[#D4AF37] text-[#050A15] border-[#D4AF37] hover:bg-[#F3E5AB] hover:shadow-[0_0_30px_rgba(212,175,55,0.6)]"
                                     }`}
                             >
                                 {status === "idle" && <><Search className="mr-2 h-5 w-5" /> Deploy Hunter Agents</>}
