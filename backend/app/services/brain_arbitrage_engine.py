@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 from ..models.brain_assets import AssetArbitrageHistory, ArbitrageOutcome
 from ..services.brain_assets_repository import BrainAssetRepository
 from ..services.brain_registry import BrainEngineRegistry, BrainEngineValidator, make_data_used_item
+from ..integrations.un_comtrade_client import UNComtradeClient
+from ..integrations.freight_client import FreightClient
 from ..schemas.brain import (
     ArbitrageInput, ArbitrageOutput, ArbitrageOpportunityCard, 
     SimilarDeal, ExplainabilityBundle
@@ -26,8 +28,10 @@ class ArbitrageEngine:
         self.repo = BrainAssetRepository(db)
         self.registry = BrainEngineRegistry(db)
         self.validator = BrainEngineValidator()
+        self.comtrade = UNComtradeClient()
+        self.freight = FreightClient()
     
-    def run_analysis(self, tenant_id: UUID, input_data: ArbitrageInput) -> ArbitrageOutput:
+    async def run_analysis(self, tenant_id: UUID, input_data: ArbitrageInput) -> ArbitrageOutput:
         """
         Run complete arbitrage analysis
         
@@ -47,7 +51,7 @@ class ArbitrageEngine:
                 )
             
             # Compute arbitrage analysis
-            analysis_result = self._compute_arbitrage(tenant_id, input_data)
+            analysis_result = await self._compute_arbitrage(tenant_id, input_data)
             
             # Find similar past deals
             similar_deals = self._find_similar_deals(tenant_id, input_data)
@@ -60,9 +64,26 @@ class ArbitrageEngine:
             # Create opportunity card
             opportunity_card = self._create_opportunity_card(analysis_result)
             
+            # Create financials
+            from ..schemas.brain import ArbitrageFinancials
+            financials = ArbitrageFinancials(
+                buy_price_usd=analysis_result["buy_price_usd"],
+                sell_price_usd=analysis_result["sell_price_usd"],
+                total_cost_usd=analysis_result["total_cost_usd"],
+                total_revenue_usd=analysis_result["total_revenue_usd"],
+                total_freight_cost=analysis_result["total_freight_cost"],
+                tariff_cost_usd=analysis_result["tariff_cost_usd"],
+                tariff_pct=analysis_result["tariff_pct"],
+                total_fees=analysis_result["total_fees"],
+                total_profit_usd=analysis_result["total_revenue_usd"] - analysis_result["total_cost_usd"],
+                estimated_margin_pct=analysis_result["estimated_margin_pct"],
+                base_currency=analysis_result["base_currency"]
+            )
+            
             # Save engine run
             output_payload = {
                 "opportunity_card": opportunity_card.dict(),
+                "financials": financials.dict(),
                 "similar_deals": [deal.dict() for deal in similar_deals],
                 "analysis_result": analysis_result
             }
@@ -77,6 +98,7 @@ class ArbitrageEngine:
             
             return ArbitrageOutput(
                 status="success",
+                financials=financials,
                 opportunity_card=opportunity_card,
                 similar_deals=similar_deals,
                 explainability=explainability
@@ -130,7 +152,7 @@ class ArbitrageEngine:
         
         return (len(missing_fields) == 0), missing_fields
     
-    def _compute_arbitrage(self, tenant_id: UUID, input_data: ArbitrageInput) -> Dict[str, Any]:
+    async def _compute_arbitrage(self, tenant_id: UUID, input_data: ArbitrageInput) -> Dict[str, Any]:
         """
         Compute arbitrage analysis with deterministic calculations
         
@@ -159,8 +181,38 @@ class ArbitrageEngine:
             sell_fx_rate = fx_rates.get(fx_key, 1.0)
             sell_price_usd = input_data.sell_price * sell_fx_rate
         
-        # Add freight cost if provided
-        total_freight_cost = input_data.freight_cost or 0.0
+        # Add freight cost if provided, otherwise fetch from integration
+        total_freight_cost = input_data.freight_cost
+        freight_source = "provided"
+        
+        if total_freight_cost is None:
+            try:
+                freight_data = await self.freight.get_rate(input_data.origin_country, input_data.destination_country)
+                # Estimate: 20ft container ≈ 20,000 kg. If not specified, default to 1 container per analysis unit?
+                # For per-unit analysis, we might need a standard weight. Let's assume input is for 1000kg if not specified elsewhere.
+                total_freight_cost = freight_data["total_cost_usd"] / 20.0 # Per 1000kg (1 ton)
+                freight_source = "freight_integration"
+            except Exception:
+                total_freight_cost = 0.0
+                freight_source = "missing"
+        
+        # Add Tariff cost
+        hs_code = input_data.hs_code or input_data.product_key
+        tariff_pct = 0.0
+        tariff_source = "missing"
+        
+        try:
+            tariff_data = await self.comtrade.get_tariff_rate(
+                input_data.origin_country, 
+                input_data.destination_country, 
+                hs_code
+            )
+            tariff_pct = tariff_data["applied_rate"]
+            tariff_source = "un_comtrade"
+        except Exception:
+            pass
+            
+        tariff_cost_usd = sell_price_usd * (tariff_pct / 100.0)
         
         # Add fees if provided
         total_fees = 0.0
@@ -177,7 +229,7 @@ class ArbitrageEngine:
                 total_fees += fee_amount
         
         # Calculate total cost and revenue
-        total_cost_usd = buy_price_usd + total_freight_cost + total_fees
+        total_cost_usd = buy_price_usd + total_freight_cost + tariff_cost_usd + total_fees
         total_revenue_usd = sell_price_usd
         
         # Calculate margin
@@ -188,6 +240,8 @@ class ArbitrageEngine:
         
         # Calculate confidence
         confidence = self._calculate_confidence(input_data)
+        if tariff_source != "missing":
+            confidence = min(confidence + 0.1, 1.0)
         
         return {
             "buy_price_usd": buy_price_usd,
@@ -195,15 +249,19 @@ class ArbitrageEngine:
             "total_cost_usd": total_cost_usd,
             "total_revenue_usd": total_revenue_usd,
             "total_freight_cost": total_freight_cost,
+            "tariff_cost_usd": tariff_cost_usd,
+            "tariff_pct": tariff_pct,
             "total_fees": total_fees,
             "estimated_margin_pct": margin_pct,
             "base_currency": base_currency,
             "confidence": confidence,
-            "assumptions": self._get_assumptions(input_data),
+            "assumptions": self._get_assumptions(input_data, tariff_source, freight_source),
             "target_margin_met": (
                 input_data.target_margin_pct is None or 
                 margin_pct >= input_data.target_margin_pct
-            )
+            ),
+            "tariff_source": tariff_source,
+            "freight_source": freight_source
         }
     
     def _calculate_confidence(self, input_data: ArbitrageInput) -> float:
@@ -230,15 +288,26 @@ class ArbitrageEngine:
         
         return min(confidence, 0.9)
     
-    def _get_assumptions(self, input_data: ArbitrageInput) -> List[str]:
+    def _get_assumptions(self, input_data: ArbitrageInput, tariff_source: str, freight_source: str) -> List[str]:
         """Get list of assumptions made during calculation"""
         assumptions = ["Base currency set to USD"]
         
         if not input_data.fx_rates:
             assumptions.append("FX rates not provided, using 1.0 (no conversion)")
         
-        if not input_data.freight_cost:
-            assumptions.append("Freight cost not provided, using 0.0")
+        if freight_source == "provided":
+            assumptions.append("Using user-provided freight costs")
+        elif freight_source == "freight_integration":
+            assumptions.append("Freight costs estimated via integration")
+        else:
+            assumptions.append("Freight costs missing, using 0.0")
+            
+        if tariff_source == "provided":
+            assumptions.append("Using user-provided tariff rates")
+        elif tariff_source == "un_comtrade":
+            assumptions.append("Tariff rates fetched from UN Comtrade")
+        else:
+            assumptions.append("Tariff rates missing, using 0.0%")
         
         if not input_data.fees:
             assumptions.append("Additional fees not provided, using 0.0")
@@ -286,7 +355,10 @@ class ArbitrageEngine:
             key_drivers.append(f"Low margin ({margin_pct:.1f}%)")
         
         if analysis_result["total_freight_cost"] > 0:
-            key_drivers.append(f"Freight cost: ${analysis_result['total_freight_cost']:.2f}")
+            key_drivers.append(f"Freight cost: ${analysis_result['total_freight_cost']:.2f} ({analysis_result['freight_source']})")
+        
+        if analysis_result["tariff_cost_usd"] > 0:
+            key_drivers.append(f"Tariff: {analysis_result['tariff_pct']}% (${analysis_result['tariff_cost_usd']:.2f})")
         
         if analysis_result["total_fees"] > 0:
             key_drivers.append(f"Additional fees: ${analysis_result['total_fees']:.2f}")
@@ -345,6 +417,24 @@ class ArbitrageEngine:
                 coverage=f"{len(similar_deals)} similar deals",
                 record_count=len(similar_deals),
                 confidence=0.8
+            ))
+        
+        # Add Tariff data source
+        if analysis_result.get("tariff_source") == "un_comtrade":
+            data_used.append(make_data_used_item(
+                source_name="un_comtrade",
+                dataset="tariffs_v1",
+                coverage=f"{input_data.origin_country}->{input_data.destination_country} HS:{input_data.hs_code or input_data.product_key}",
+                confidence=0.9
+            ))
+        
+        # Add Freight data source
+        if analysis_result.get("freight_source") == "freight_integration":
+            data_used.append(make_data_used_item(
+                source_name="freight_client",
+                dataset="real_time_rates",
+                coverage=f"{input_data.origin_country}->{input_data.destination_country}",
+                confidence=0.85
             ))
         
         # Assumptions

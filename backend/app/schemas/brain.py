@@ -58,9 +58,12 @@ class ExplainabilityBundle(BaseModel):
 # Arbitrage Engine Models
 class ArbitrageInput(BaseModel):
     """Input for arbitrage engine"""
-    product_key: str = Field(..., description="HS code or internal product ID")
-    buy_market: str = Field(..., description="Buy market (country/port)")
-    sell_market: str = Field(..., description="Sell market (country/port)")
+    product_key: str = Field(..., description="Internal product ID or generic name")
+    hs_code: Optional[str] = Field(None, description="HS code for tariff lookup (6-8 digits)")
+    origin_country: str = Field(..., description="Origin country ISO 2-letter code")
+    destination_country: str = Field(..., description="Destination country ISO 2-letter code")
+    buy_market: str = Field(..., description="Buy market (port/city)")
+    sell_market: str = Field(..., description="Sell market (port/city)")
     buy_price: float = Field(..., gt=0, description="Buy price")
     buy_currency: str = Field(..., description="Buy currency code")
     sell_price: float = Field(..., gt=0, description="Sell price")
@@ -71,6 +74,12 @@ class ArbitrageInput(BaseModel):
     target_margin_pct: Optional[float] = Field(None, description="Target margin percentage")
     constraints: Optional[Dict[str, Any]] = Field(None, description="Constraints like MOQ, lead time")
     
+    @validator('origin_country', 'destination_country')
+    def validate_country(cls, v):
+        if len(v) != 2:
+            raise ValueError("Country code must be ISO 2-letter format")
+        return v.upper()
+
     @validator('buy_currency', 'sell_currency')
     def validate_currency(cls, v):
         valid_currencies = {'USD', 'EUR', 'GBP', 'JPY', 'CNY', 'AUD', 'CAD', 'CHF', 'SEK', 'NOK', 'DKK'}
@@ -96,9 +105,24 @@ class ArbitrageOpportunityCard(BaseModel):
     next_actions: List[str] = Field(..., description="Recommended next steps")
     risk_factors: List[str] = Field(default_factory=list, description="Risk factors")
 
+class ArbitrageFinancials(BaseModel):
+    """Detailed financial breakdown of an arbitrage opportunity"""
+    buy_price_usd: float
+    sell_price_usd: float
+    total_cost_usd: float
+    total_revenue_usd: float
+    total_freight_cost: float
+    tariff_cost_usd: float
+    tariff_pct: float
+    total_fees: float
+    total_profit_usd: float
+    estimated_margin_pct: float
+    base_currency: str = "USD"
+
 class ArbitrageOutput(BaseModel):
     """Output from arbitrage engine"""
     status: str = Field(..., description="Computation status")
+    financials: Optional[ArbitrageFinancials] = None
     opportunity_card: Optional[ArbitrageOpportunityCard] = None
     similar_deals: List[SimilarDeal] = Field(default_factory=list)
     explainability: ExplainabilityBundle

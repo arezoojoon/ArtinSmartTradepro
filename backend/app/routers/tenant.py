@@ -86,18 +86,27 @@ def switch_tenant(
     Verify membership and return a new access token scoped to this tenant.
     """
     # Verify membership
-    membership = db.query(TenantMembership).filter(
-        TenantMembership.user_id == current_user.id,
-        TenantMembership.tenant_id == tenant_id
-    ).first()
+    is_super = getattr(current_user, "is_superuser", False) or current_user.role == "super_admin"
     
-    if not membership:
-        raise HTTPException(status_code=403, detail="Not a member of this tenant")
+    membership = None
+    if not is_super:
+        membership = db.query(TenantMembership).filter(
+            TenantMembership.user_id == current_user.id,
+            TenantMembership.tenant_id == tenant_id
+        ).first()
+        
+        if not membership:
+            raise HTTPException(status_code=403, detail="Not a member of this tenant")
+    else:
+        # For super admin, we just need the tenant exists
+        tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
+        if not tenant:
+            raise HTTPException(status_code=404, detail="Tenant not found")
     
     # Generate new token
     claims = {
         "tenant_id": str(tenant_id),
-        "role": membership.role
+        "role": membership.role if membership else "super_admin"
     }
     
     access_token = create_access_token(

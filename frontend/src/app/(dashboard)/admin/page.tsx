@@ -39,7 +39,7 @@ interface AdminStats {
 }
 
 export default function SuperAdminDashboard() {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, switchTenant } = useAuth();
     const router = useRouter();
 
     const [stats, setStats] = useState<AdminStats | null>(null);
@@ -141,6 +141,7 @@ export default function SuperAdminDashboard() {
                                             <th scope="col" className="px-6 py-3">Status</th>
                                             <th scope="col" className="px-6 py-3">Balance</th>
                                             <th scope="col" className="px-6 py-3">ID</th>
+                                            <th scope="col" className="px-6 py-3">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -155,6 +156,14 @@ export default function SuperAdminDashboard() {
                                                 </td>
                                                 <td className="px-6 py-4">${tenant.balance.toFixed(2)}</td>
                                                 <td className="px-6 py-4 font-mono text-xs">{tenant.id}</td>
+                                                <td className="px-6 py-4">
+                                                    <button
+                                                        onClick={() => switchTenant(tenant.id)}
+                                                        className="text-gold-500 hover:text-gold-400 text-xs font-bold"
+                                                    >
+                                                        View Dash
+                                                    </button>
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -180,6 +189,7 @@ export default function SuperAdminDashboard() {
                                             <th scope="col" className="px-6 py-3">Role</th>
                                             <th scope="col" className="px-6 py-3">Tenant ID</th>
                                             <th scope="col" className="px-6 py-3">Status</th>
+                                            <th scope="col" className="px-6 py-3">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -193,6 +203,16 @@ export default function SuperAdminDashboard() {
                                                     <span className={`px-2 py-1 rounded text-xs ${u.is_active ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
                                                         {u.is_active ? 'Active' : 'Disabled'}
                                                     </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    {u.tenant_id && (
+                                                        <button
+                                                            onClick={() => switchTenant(u.tenant_id as string)}
+                                                            className="text-gold-500 hover:text-gold-400 text-xs font-bold"
+                                                        >
+                                                            View Dash
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}

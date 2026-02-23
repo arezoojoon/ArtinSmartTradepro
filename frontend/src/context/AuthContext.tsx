@@ -118,13 +118,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const switchTenant = async (tenantId: string) => {
         setLoading(true);
         try {
-            await api.post(`/tenants/${tenantId}/switch`);
+            const res = await api.post(`/tenants/${tenantId}/switch`);
 
-            // Backend updates user.current_tenant_id in DB.
-            // No new token is returned, current token is still valid.
-            // We just need to refresh the user profile to see the new tenant context.
+            // Store the new tenant-scoped token
+            if (res.data?.access_token) {
+                localStorage.setItem("token", res.data.access_token);
+            }
 
-            // Refresh User
+            // Refresh User Profile with new context
             const userRes = await api.get("/users/me");
             const userData = userRes.data;
             setUser(userData);
@@ -142,7 +143,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
         } catch (error) {
             console.error("Switch tenant failed", error);
-            // Stay put or show error toast
         } finally {
             setLoading(false);
         }

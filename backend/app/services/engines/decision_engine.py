@@ -3,7 +3,7 @@ Decision Intelligence Layer — One-click trade decisions.
 Combines all engines into a unified trade recommendation.
 Includes 3 scenarios: optimistic, pessimistic, realistic.
 """
-from app.services.engines.arbitrage_engine import ArbitrageEngine
+from app.services.brain_arbitrage_engine import ArbitrageEngine as BrainArbitrageEngine
 from app.services.engines.risk_engine import RiskEngine
 from app.services.engines.demand_forecast_engine import DemandForecastEngine
 from app.services.engines.cultural_engine import CulturalNegotiationEngine
@@ -39,18 +39,62 @@ class DecisionEngine:
         One call → full intelligence picture.
         """
         # 1. Arbitrage (financial analysis)
-        arbitrage = await ArbitrageEngine.calculate(
-            db=db,
-            tenant_id=tenant_id,
-            product_hs=product_hs,
+        from app.schemas.brain import ArbitrageInput
+        
+        input_data = ArbitrageInput(
+            product_key=product_hs, # Using HS as product key for lookup
+            hs_code=product_hs,
             origin_country=origin_country,
             destination_country=destination_country,
-            buy_price_per_kg=buy_price_per_kg,
-            sell_price_per_kg=sell_price_per_kg,
-            quantity_kg=quantity_kg,
+            buy_market=origin_country,
+            sell_market=destination_country,
+            buy_price=buy_price_per_kg,
             buy_currency=buy_currency,
+            sell_price=sell_price_per_kg,
             sell_currency=sell_currency,
+            # freight_cost and others will be auto-calculated
         )
+        
+        arb_engine = BrainArbitrageEngine(db)
+        arb_output = await arb_engine.run_analysis(
+            tenant_id=tenant_id,
+            input_data=input_data
+        )
+        
+        # Bridge to legacy-style dict for rest of DecisionEngine
+        if arb_output.status == "success" and arb_output.financials:
+            f = arb_output.financials
+            arbitrage = {
+                "buy_price_usd_per_kg": f.buy_price_usd,
+                "sell_price_usd_per_kg": f.sell_price_usd,
+                "cost_breakdown": {
+                    "product_cost": f.buy_price_usd,
+                    "freight_per_kg": f.total_freight_cost,
+                    "tariff_per_kg": f.tariff_cost_usd,
+                    "insurance_per_kg": f.buy_price_usd * 0.005, # Insurance logic from old engine
+                    "landed_cost_per_kg": f.total_cost_usd + (f.buy_price_usd * 0.005),
+                },
+                "freight": {
+                    "total_cost": f.total_freight_cost * quantity_kg,
+                    "containers": round(quantity_kg / 20000, 1), # Logic from old engine
+                    "transit_days": 15, # Mock
+                },
+                "tariff": {
+                    "applied_rate_pct": f.tariff_pct,
+                    "preferential_available": False,
+                },
+                "total_profit": f.total_profit_usd * quantity_kg, # Adjust to total if needed
+                "total_revenue": f.total_revenue_usd * quantity_kg,
+                "gross_margin_pct": f.estimated_margin_pct,
+                "risk_adjusted_margin_pct": f.estimated_margin_pct, # Will be adjusted below
+                "profit_probability_score": 70, # Initial
+                "origin": origin_country,
+                "destination": destination_country,
+                "recommendation": arb_output.opportunity_card.next_actions[0] if arb_output.opportunity_card.next_actions else "Monitor"
+            }
+        else:
+            # Fallback for insufficient data
+            raise ValueError(f"Arbitrage analysis failed: {arb_output.status}")
 
         # 2. Risk assessment
         risk = await RiskEngine.assess(

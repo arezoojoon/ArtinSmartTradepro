@@ -14,7 +14,7 @@ from app.constants import Feature
 from app.services.billing import BillingService
 from app.services.ai_worker import AIWorkerService
 from app.services.engines.decision_engine import DecisionEngine
-from app.services.engines.arbitrage_engine import ArbitrageEngine
+from app.services.brain_arbitrage_engine import ArbitrageEngine as BrainArbitrageEngine
 from app.services.engines.risk_engine import RiskEngine
 from app.services.engines.demand_forecast_engine import DemandForecastEngine
 from app.services.engines.cultural_engine import CulturalNegotiationEngine
@@ -139,21 +139,30 @@ async def arbitrage_analysis(
     db.commit()
 
     try:
-        result = await ArbitrageEngine.calculate(
-            db=db,
-            tenant_id=current_user.tenant_id,
-            product_hs=req.product_hs,
+        from app.schemas.brain import ArbitrageInput
+        
+        # Bridge ArbitrageRequest to ArbitrageInput
+        input_data = ArbitrageInput(
+            product_key=req.product_hs,
             origin_country=req.origin_country,
             destination_country=req.destination_country,
-            buy_price_per_kg=req.buy_price_per_kg,
-            sell_price_per_kg=req.sell_price_per_kg,
-            quantity_kg=req.quantity_kg,
+            buy_market=req.origin_country, # Port not provided in request, use country as proxy
+            sell_market=req.destination_country,
+            buy_price=req.buy_price_per_kg,
             buy_currency=req.buy_currency,
+            sell_price=req.sell_price_per_kg,
             sell_currency=req.sell_currency,
+            # We skip freight_cost here to let the engine fetch it from integration
         )
-        return {"cost": CREDIT_COST_SINGLE, "result": result}
+        
+        engine = BrainArbitrageEngine(db)
+        result = await engine.run_analysis(
+            tenant_id=current_user.tenant_id,
+            input_data=input_data
+        )
+        return {"cost": CREDIT_COST_SINGLE, "result": result.dict()}
     except Exception as e:
-        BillingService.refund(db, current_user.tenant_id, CREDIT_COST_SINGLE, "Refund: arbitrage failed")
+        BillingService.refund(db, current_user.tenant_id, CREDIT_COST_SINGLE, f"Refund: arbitrage failed: {str(e)}")
         db.commit()
         raise HTTPException(status_code=500, detail=str(e))
 

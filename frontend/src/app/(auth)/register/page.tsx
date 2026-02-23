@@ -52,7 +52,21 @@ export default function RegisterPage() {
             // Redirect to login with success flag
             router.push("/login?registered=true");
         } catch (err: any) {
-            setError(err.data?.detail || err.data?.error?.message || "Failed to register");
+            console.error("Registration error:", err);
+            let errorMessage = "Failed to register";
+
+            if (err.data?.detail) {
+                if (typeof err.data.detail === 'string') {
+                    errorMessage = err.data.detail;
+                } else if (Array.isArray(err.data.detail)) {
+                    // Handle FastAPI 422 validation errors
+                    errorMessage = err.data.detail.map((d: any) => `${d.loc.join('.')}: ${d.msg}`).join(', ');
+                }
+            } else if (err.data?.error?.message) {
+                errorMessage = err.data.error.message;
+            }
+
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -136,7 +150,10 @@ export default function RegisterPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
+                            <div className="flex justify-between items-center">
+                                <Label htmlFor="password">Password</Label>
+                                <span className="text-[10px] text-gray-500">Min. 10 chars</span>
+                            </div>
                             <Input
                                 id="password"
                                 type="password"
