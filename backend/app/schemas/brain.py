@@ -195,9 +195,12 @@ class DemandInput(BaseModel):
 
 class ForecastPoint(BaseModel):
     """Single forecast point"""
-    date: date = Field(..., description="Forecast date")
+    forecast_date: date = Field(..., alias="date", description="Forecast date")
     demand_value: float = Field(..., description="Forecasted demand value")
     confidence_interval: Optional[Dict[str, float]] = Field(None, description="Confidence interval")
+
+    class Config:
+        populate_by_name = True
 
 class PeakWindow(BaseModel):
     """Peak demand window"""
@@ -335,7 +338,10 @@ class DemandTimeSeriesCreate(BaseModel):
     """Create demand time series record"""
     product_key: str
     country: str
-    date: date
+    entry_date: date = Field(..., alias="date")
     demand_value: Optional[float]
     source_name: str
     data_used: Optional[Dict[str, Any]]
+
+    class Config:
+        populate_by_name = True
