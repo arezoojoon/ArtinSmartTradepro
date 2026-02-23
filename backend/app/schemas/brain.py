@@ -140,6 +140,33 @@ class RiskInput(BaseModel):
     buyer_country: Optional[str] = Field(None, description="Buyer country")
     route_tags: Optional[List[str]] = Field(None, description="Route tags like 'RedSea'")
 
+class LogisticsRiskData(BaseModel):
+    score: float = Field(..., description="0-100")
+    port_efficiency: float = Field(..., description="0-100")
+    lane_safety: float = Field(..., description="0-100")
+    reason: str
+
+class SanctionsData(BaseModel):
+    score: float = Field(..., description="0-100")
+    level: str
+    primary: bool
+    secondary: bool
+    reason: str
+
+class USDLiquidityData(BaseModel):
+    score: float = Field(..., description="0-100")
+    level: str
+    reason: str
+
+class RiskFactors(BaseModel):
+    logistics_risk: LogisticsRiskData
+    sanctions_depth: SanctionsData
+    usd_liquidity: USDLiquidityData
+    political_risk_score: float
+    fx_volatility_score: float
+    buyer_default_probability: float
+    supplier_reliability_score: float
+
 class RiskItem(BaseModel):
     """Individual risk item"""
     type: str = Field(..., description="Risk type (political/payment/supplier/customs/route)")
@@ -152,6 +179,9 @@ class RiskOutput(BaseModel):
     status: str = Field(..., description="Computation status")
     risk_register: List[RiskItem] = Field(default_factory=list)
     overall_risk_level: Optional[RiskSeverity] = None
+    composite_risk_score: float = Field(0.0, description="Overall risk score 0-100")
+    risk_adjusted_margin_penalty_pct: float = Field(0.0, description="Percentage to deduct from expected margin due to risk")
+    factors: Optional[RiskFactors] = None
     explainability: ExplainabilityBundle
 
 # Demand Forecast Models
@@ -180,6 +210,9 @@ class DemandOutput(BaseModel):
     status: str = Field(..., description="Computation status")
     forecast_points: List[ForecastPoint] = Field(default_factory=list)
     peak_windows: List[PeakWindow] = Field(default_factory=list)
+    stockout_risk_score: float = Field(0.0, description="0-100")
+    best_profit_month: Optional[str] = None
+    best_shipment_month: Optional[str] = None
     method_used: str = Field(..., description="Forecast method used")
     data_points_used: int = Field(..., description="Number of historical data points used")
     explainability: ExplainabilityBundle
@@ -213,6 +246,7 @@ class CulturalOutput(BaseModel):
     templates: List[CulturalTemplate] = Field(default_factory=list)
     negotiation_tips: List[str] = Field(default_factory=list)
     objection_handling: List[str] = Field(default_factory=list)
+    walk_away_points: List[str] = Field(default_factory=list)
     referenced_profile_ids: List[UUID] = Field(default_factory=list)
     explainability: ExplainabilityBundle
 

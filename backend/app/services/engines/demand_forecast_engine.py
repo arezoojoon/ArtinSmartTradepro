@@ -91,9 +91,13 @@ class DemandForecastEngine:
         peak_month = max(forecast_months, key=lambda x: x["demand_index"])
         trough_month = min(forecast_months, key=lambda x: x["demand_index"])
 
-        # Best entry = 1-2 months before peak (for procurement lead time)
+        # Profit Timing: SHIP 2 months before peak, SELL at peak
         peak_idx = forecast_months.index(peak_month)
-        entry_idx = max(0, peak_idx - 2)
+        ship_idx = max(0, peak_idx - 2)
+        
+        # Stockout Risk: Scaled by demand peak and proximity
+        # High demand = high stockout risk if not pre-ordered
+        stockout_risk = round(peak_month["demand_index"] * 95, 2)
 
         result = {
             "commodity": commodity,
@@ -107,8 +111,10 @@ class DemandForecastEngine:
             "trough_month": trough_month["month"],
             "trough_demand_index": trough_month["demand_index"],
 
-            "best_entry_month": forecast_months[entry_idx]["month"],
-            "best_entry_reason": f"Procurement window before demand peak in {peak_month['month']}",
+            "stockout_risk_score": stockout_risk,
+            "best_profit_month": peak_month["month"],
+            "best_shipment_month": forecast_months[ship_idx]["month"],
+            "best_entry_reason": f"Procurement window 60 days before demand peak in {peak_month['month']} to maximize profit window.",
 
             "cultural_events": active_events,
             "seasonality_strength": round(max(base_pattern) - min(base_pattern), 2),

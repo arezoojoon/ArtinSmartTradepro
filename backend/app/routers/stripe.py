@@ -202,7 +202,8 @@ async def stripe_webhook(
         invalidate_plan_cache(tenant_id)
         
         # [NEW] Trigger Provisioning Async
-        background_tasks.add_task(trigger_provisioning, tenant_id)
+        from uuid import UUID
+        background_tasks.add_task(trigger_provisioning, UUID(tenant_id))
         
         print(f"[STRIPE] ✅ Plan activated and provisioning triggered for tenant {tenant_id}")
     
@@ -295,3 +296,4 @@ def billing_portal(
         return {"portal_url": session.url}
     except stripe.error.StripeError as e:
         raise HTTPException(status_code=400, detail=f"Stripe error: {str(e)}")
+

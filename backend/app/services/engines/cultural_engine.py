@@ -60,10 +60,11 @@ Respond in this exact JSON format:
     "contract_type": "Recommended contract format",
     "red_flags": ["Things to absolutely avoid"],
     "power_moves": ["Cultural leverage points that build trust"],
+    "deal_closer_playbook": "Step-by-step strategy to close this specific deal based on size and role",
+    "objection_handling": ["Specific phrases to use when buyer asks for lower price or longer terms"],
+    "walk_away_points": ["Recommendation on when to stop negotiating for this deal size"],
     "timeline_expectation": "How long deals typically take with this culture",
     "follow_up_style": "How to follow up without being pushy or too passive",
-    "gift_protocol": "Business gift customs (if applicable)",
-    "dining_etiquette": "If a business meal is expected, key rules",
     "confidence": 0.0-1.0,
     "disclaimer": "Cultural generalization. Individual behavior may vary."
 }}

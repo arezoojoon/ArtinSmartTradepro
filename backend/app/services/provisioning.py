@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class ProvisioningService:
     @staticmethod
-    async def run_for_tenant(db: Session, tenant_id: UUID):
+    async def run_for_tenant(db: Session, tenant_id: UUID, max_retries: int = 3):
         """
         Main entry point for provisioning a tenant's resources.
         Idempotent: checks status before running each step.
@@ -30,82 +30,85 @@ class ProvisioningService:
             db.refresh(status)
 
         if status.overall_status == ProvisioningState.READY:
-            return # Already done
+            logger.info(f"Provisioning already complete for tenant {tenant_id}")
+            return
 
         status.overall_status = ProvisioningState.RUNNING
         db.commit()
 
-        try:
-            # Step A: CRM Seeding (Idempotent)
-            if status.crm_status != ProvisioningState.READY:
+        # Step A: CRM Seeding (Idempotent)
+        if status.crm_status != ProvisioningState.READY:
+            try:
                 status.crm_status = ProvisioningState.RUNNING
                 db.commit()
-                # seed_new_tenant handles roles/pipelines.
-                # Note: We use a wrapper or modified version if needed for idempotency.
                 await seed_new_tenant(db, tenant_id)
                 status.crm_status = ProvisioningState.READY
-                db.commit()
+            except Exception as e:
+                logger.error(f"CRM provisioning failed for {tenant_id}: {e}")
+                status.crm_status = ProvisioningState.FAILED
+                status.last_error = f"CRM Error: {str(e)}"
+            db.commit()
 
-            # Step B: WAHA Session Initialization
-            if status.waha_status != ProvisioningState.READY:
-                status.waha_status = ProvisioningState.RUNNING
-                db.commit()
-                
-                tenant = db.execute(select(Tenant).where(Tenant.id == tenant_id)).scalar_one_or_none()
-                session_name = f"tenant_{tenant.slug if tenant else tenant_id}"
-                
+        # Step B: WAHA Session Initialization (with Retries)
+        if status.waha_status != ProvisioningState.READY:
+            for attempt in range(max_retries):
                 try:
-                    # Call WAHA to create session
-                    async with httpx.AsyncClient(timeout=10.0) as client:
+                    status.waha_status = ProvisioningState.RUNNING
+                    db.commit()
+                    
+                    tenant = db.execute(select(Tenant).where(Tenant.id == tenant_id)).scalar_one_or_none()
+                    session_name = f"tenant_{tenant.slug if tenant else tenant_id}"
+                    
+                    async with httpx.AsyncClient(timeout=15.0) as client:
                         headers = {"X-Api-Key": WAHA_API_KEY} if WAHA_API_KEY else {}
-                        # Just a placeholder for actual WAHA session creation endpoint
-                        # WAHA usually auto-creates on first use or has a specific /sessions endpoint
                         resp = await client.post(
                             f"{WAHA_API_URL}/api/sessions",
                             json={"name": session_name, "start": True},
                             headers=headers
                         )
-                        # 409 means already exists, which is fine
                         if resp.status_code not in (200, 201, 409):
                             resp.raise_for_status()
                     
                     status.waha_session_name = session_name
                     status.waha_status = ProvisioningState.READY
+                    status.last_error = None
+                    break # Success
                 except Exception as e:
-                    logger.error(f"WAHA provisioning failed for {tenant_id}: {e}")
-                    status.waha_status = ProvisioningState.FAILED
-                    status.last_error = f"WAHA Error: {str(e)}"
-                db.commit()
+                    status.retry_count += 1
+                    status.last_error = f"WAHA Attempt {attempt+1} failed: {str(e)}"
+                    logger.warning(status.last_error)
+                    db.commit()
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(2 ** attempt) # Exponential backoff
+                    else:
+                        status.waha_status = ProvisioningState.FAILED
 
-            # Step C: Managed Telegram Stub
-            if status.telegram_status != ProvisioningState.READY:
-                status.telegram_status = ProvisioningState.READY # Managed bot is instant
-                status.telegram_deeplink = f"https://t.me/ArtinSmartBot?start={tenant_id}"
-                db.commit()
-
-            # Finalize
-            if status.crm_status == ProvisioningState.READY and status.waha_status == ProvisioningState.READY:
-                status.overall_status = ProvisioningState.READY
-            else:
-                status.overall_status = ProvisioningState.PARTIAL
-            
             db.commit()
 
-        except Exception as e:
-            logger.exception(f"Provisioning failed for tenant {tenant_id}")
-            status.overall_status = ProvisioningState.FAILED
-            status.last_error = str(e)
+        # Step C: Managed Telegram (Instant)
+        if status.telegram_status != ProvisioningState.READY:
+            status.telegram_status = ProvisioningState.READY
+            status.telegram_deeplink = f"https://t.me/ArtinSmartBot?start={tenant_id}"
             db.commit()
+
+        # Finalize Overall Status
+        if status.crm_status == ProvisioningState.READY and status.waha_status == ProvisioningState.READY:
+            status.overall_status = ProvisioningState.READY
+            print(f"[PROVISIONING] ✅ Tenant {tenant_id} is READY")
+        else:
+            status.overall_status = ProvisioningState.PARTIAL
+            print(f"[PROVISIONING] ⚠️ Tenant {tenant_id} is PARTIAL")
+        
+        db.commit()
 
 async def trigger_provisioning(tenant_id: UUID):
-    """
-    Wrapper to trigger provisioning in a background task.
-    In a real app, this would enqueue a Celery task.
-    """
+    """ Enqueue provisioning logic. """
     from app.database import SessionLocal
     db = SessionLocal()
     try:
         service = ProvisioningService()
         await service.run_for_tenant(db, tenant_id)
+    except Exception as e:
+        logger.error(f"Fatal error in trigger_provisioning: {e}")
     finally:
         db.close()

@@ -14,6 +14,7 @@ interface ProvisioningStatus {
     overall: "pending" | "running" | "ready" | "failed" | "partial";
     waha: "pending" | "running" | "ready" | "failed";
     crm: "pending" | "running" | "ready" | "failed";
+    telegram: "pending" | "running" | "ready" | "failed";
     resources: {
         waha_session_name?: string;
         qr_ref?: string;
@@ -161,14 +162,33 @@ function WalletContent() {
                                 <span className="text-sm text-gray-300">WhatsApp Engine (WAHA)</span>
                                 <StatusBadge status={provStatus.waha} />
                             </div>
+                            {provStatus.resources?.qr_ref && provStatus.waha !== "ready" && (
+                                <div className="p-3 bg-white rounded-lg inline-block mx-auto">
+                                    {/* In a real app, this would be a QR component. We show the ref/link for now. */}
+                                    <p className="text-[10px] text-gray-500 mb-1">Scan to Connect:</p>
+                                    <img src={provStatus.resources.qr_ref} alt="WhatsApp QR" className="h-32 w-32" />
+                                </div>
+                            )}
                             <div className="flex items-center justify-between">
                                 <span className="text-sm text-gray-300">CRM Pipelines & Roles</span>
                                 <StatusBadge status={provStatus.crm} />
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-sm text-gray-300">Managed Telegram Bot</span>
-                                <StatusBadge status="ready" />
+                                <StatusBadge status={provStatus.telegram || "ready"} />
                             </div>
+                            {provStatus.resources?.telegram_deeplink && (
+                                <div className="mt-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full text-xs border-[#1e3a5f] hover:bg-[#1e3a5f]"
+                                        onClick={() => window.open(provStatus.resources.telegram_deeplink, '_blank')}
+                                    >
+                                        Open Telegram Bot
+                                    </Button>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 )}
