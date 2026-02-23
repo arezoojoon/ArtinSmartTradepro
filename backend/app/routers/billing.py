@@ -10,6 +10,7 @@ from app.models.user import User
 from app.models.tenant import Tenant
 from app.models.billing import Wallet, WalletTransaction, Invoice, BillingCustomer
 from app.models.subscription import Subscription, Plan
+from app.models.billing_ext import BillingCheckoutSession, ProvisioningStatus, CheckoutSessionStatus, ProvisioningState
 from app.middleware.auth import get_current_active_user
 from app.services.audit import log_audit_event
 from pydantic import BaseModel
@@ -62,6 +63,67 @@ async def create_checkout_session(
     log_audit_event(db, "billing.checkout_session_created", user_id=current_user.id, tenant_id=tenant_id, details={"plan": data.plan_name})
     
     return {"url": checkout_url, "session_id": session_id}
+
+@router.get("/checkout-session")
+async def verify_checkout_session(
+    session_id: str = Query(..., description="Stripe Checkout Session ID"),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    [SECURE] Verify a checkout session and return its provisioning status.
+    Strictly checks tenant_id binding.
+    """
+    # 1. Fetch the bound session
+    bound_session = db.execute(
+        select(BillingCheckoutSession).where(
+            BillingCheckoutSession.stripe_session_id == session_id,
+            BillingCheckoutSession.tenant_id == current_user.tenant_id
+        )
+    ).scalar_one_or_none()
+    
+    if not bound_session:
+        # Cross-tenant check or invalid ID
+        raise HTTPException(status_code=403, detail="Unauthorized access to this session or invalid ID")
+
+    # 2. Fetch Subscription Status
+    sub = db.execute(
+        select(Subscription).where(Subscription.tenant_id == current_user.tenant_id)
+    ).scalar_one_or_none()
+    
+    subscription_status = sub.status if sub else "pending"
+    
+    # 3. Fetch Provisioning Status
+    prov = db.execute(
+        select(ProvisioningStatus).where(ProvisioningStatus.tenant_id == current_user.tenant_id)
+    ).scalar_one_or_none()
+    
+    prov_data = {
+        "overall": "pending",
+        "waha": "pending",
+        "crm": "pending",
+        "resources": {}
+    }
+    
+    if prov:
+        prov_data = {
+            "overall": prov.overall_status,
+            "waha": prov.waha_status,
+            "crm": prov.crm_status,
+            "resources": {
+                "waha_session_name": prov.waha_session_name,
+                "qr_ref": prov.qr_ref,
+                "telegram_deeplink": prov.telegram_deeplink
+            },
+            "last_error": prov.last_error
+        }
+
+    return {
+        "session_id": session_id,
+        "subscription_status": subscription_status,
+        "plan_code": bound_session.plan_code,
+        "provisioning": prov_data
+    }
 
 @router.get("/subscription")
 async def get_subscription(

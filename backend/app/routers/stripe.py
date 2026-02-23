@@ -2,16 +2,18 @@
 Stripe Integration Router.
 CRITICAL RULE: Plan activation ONLY happens via webhook, never from frontend redirect.
 """
-from fastapi import APIRouter, Depends, HTTPException, Request, Header
+from fastapi import APIRouter, Depends, HTTPException, Request, Header, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from app.database import get_db
 from app.models.user import User
 from app.models.tenant import Tenant
 from app.models.subscription import Subscription, Plan
+from app.models.billing_ext import BillingCheckoutSession, StripeEvent, CheckoutSessionStatus
 from app.middleware.auth import get_current_active_user
 from app.middleware.plan_gate import invalidate_plan_cache
 from app.config import get_settings
+from app.services.provisioning import trigger_provisioning
 from pydantic import BaseModel
 from typing import Optional
 import stripe
@@ -79,7 +81,7 @@ def create_checkout_session(
             customer=customer_id,
             mode="subscription",
             line_items=[{"price": price_id, "quantity": 1}],
-            success_url=f"{_FRONTEND_ORIGIN}/wallet?success=true&session_id={{CHECKOUT_SESSION_ID}}",
+            success_url=f"{_FRONTEND_ORIGIN}/wallet?session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{_FRONTEND_ORIGIN}/wallet?canceled=true",
             metadata={
                 "tenant_id": str(current_user.tenant_id),
@@ -87,6 +89,18 @@ def create_checkout_session(
                 "plan_name": plan.name,
             },
         )
+        
+        # [NEW] Secure Session Binding
+        checkout_session = BillingCheckoutSession(
+            tenant_id=current_user.tenant_id,
+            user_id=current_user.id,
+            stripe_session_id=session.id,
+            stripe_customer_id=customer_id,
+            plan_code=plan.name,
+            status=CheckoutSessionStatus.OPEN
+        )
+        db.add(checkout_session)
+        db.commit()
         
         return CheckoutResponse(checkout_url=session.url, session_id=session.id)
         
@@ -96,6 +110,7 @@ def create_checkout_session(
 @router.post("/webhook")
 async def stripe_webhook(
     request: Request,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     """
@@ -123,6 +138,17 @@ async def stripe_webhook(
     
     event_type = event.get("type", "") if isinstance(event, dict) else event.type
     data = event.get("data", {}).get("object", {}) if isinstance(event, dict) else event.data.object
+    
+    # [NEW] Idempotency Check
+    existing_event = db.execute(
+        select(StripeEvent).where(StripeEvent.event_id == event.id)
+    ).scalar_one_or_none()
+    if existing_event:
+        return {"status": "ignored", "reason": "already processed"}
+    
+    # Register event
+    db.add(StripeEvent(event_id=event.id, event_type=event_type))
+    db.commit()
     
     # --- checkout.session.completed ---
     if event_type == "checkout.session.completed":
@@ -164,8 +190,21 @@ async def stripe_webhook(
             db.add(sub)
         
         db.commit()
+        
+        # 3. Update internal binding status
+        bound_session = db.execute(
+            select(BillingCheckoutSession).where(BillingCheckoutSession.stripe_session_id == data.id)
+        ).scalar_one_or_none()
+        if bound_session:
+            bound_session.status = CheckoutSessionStatus.COMPLETED
+            db.commit()
+
         invalidate_plan_cache(tenant_id)
-        print(f"[STRIPE] ✅ Plan activated for tenant {tenant_id} → plan {plan_id}")
+        
+        # [NEW] Trigger Provisioning Async
+        background_tasks.add_task(trigger_provisioning, tenant_id)
+        
+        print(f"[STRIPE] ✅ Plan activated and provisioning triggered for tenant {tenant_id}")
     
     # --- customer.subscription.updated ---
     elif event_type == "customer.subscription.updated":
