@@ -85,7 +85,7 @@ export default function CRMExecutionLayer() {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold text-red-400">3</div>
-                                <p className="text-xs text-red-400/80 mt-1">Leads untouched > 48h</p>
+                                <p className="text-xs text-red-400/80 mt-1">Leads untouched &gt; 48h</p>
                             </CardContent>
                         </Card>
                     </div>
