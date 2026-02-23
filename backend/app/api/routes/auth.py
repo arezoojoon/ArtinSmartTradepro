@@ -8,6 +8,7 @@ from sqlalchemy import select, delete
 from ...db.session import get_db
 from ...models.user import User
 from ...models.auth import Session, PasswordResetToken, EmailVerificationToken
+from ...models.tenant import Tenant, TenantMembership
 from ...models.audit import AuditLog
 from ...core.security import (
     get_password_hash, 
@@ -71,12 +72,55 @@ async def register(
         email=user_data.email,
         hashed_password=get_password_hash(user_data.password),
         full_name=user_data.full_name,
-        email_verified=False  # Require email verification
+        role=user_data.role or "user",
+        persona=user_data.persona or "trader",
+        email_verified=False
     )
     
     db.add(user)
     await db.commit()
-    await db.refresh(user)  # This ensures created_at/updated_at are populated from DB defaults
+    await db.refresh(user)
+    
+    # Create tenant if company name is provided
+    if user_data.company_name:
+        slug = user_data.company_name.lower().replace(" ", "-")
+        # Ensure slug is unique
+        existing_slug = await db.execute(
+            select(Tenant).where(Tenant.slug == slug)
+        )
+        if existing_slug.scalar_one_or_none():
+            slug = f"{slug}-{uuid.uuid4().hex[:4]}"
+            
+        tenant = Tenant(
+            name=user_data.company_name,
+            slug=slug,
+            plan="starter", # Default plan
+            is_active=True
+        )
+        db.add(tenant)
+        await db.commit()
+        await db.refresh(tenant)
+        
+        # Create owner membership
+        membership = TenantMembership(
+            tenant_id=tenant.id,
+            user_id=user.id,
+            role="owner"
+        )
+        db.add(membership)
+        
+        # Set as current tenant
+        user.current_tenant_id = tenant.id
+        
+        # Seed default tenant data (roles, permissions)
+        from ...services.tenant_seeder import seed_new_tenant
+        try:
+            await seed_new_tenant(db, tenant.id, user.id)
+        except Exception as e:
+            # Don't fail registration if seeder fails, but log it
+            print(f"Failed to seed tenant: {e}")
+            
+        await db.commit()
     
     # Create email verification token
     token = generate_email_verification_token()
@@ -89,19 +133,18 @@ async def register(
     )
     
     db.add(verification_token)
-    
-    # Log registration
-    # We skip AuditLog here because the user is just registering and has no tenant yet.
-    # AuditLog requires tenant_id.
-    
     await db.commit()
     
     # Send verification email
-    await email_service.send_email(
-        to_email=user.email,
-        subject="Verify your email - Artin Smart Trade",
-        content=f"Please verify your email by clicking: {settings.APP_URL if hasattr(settings, 'APP_URL') else 'http://localhost:3000'}/verify-email?token={token}"
-    )
+    try:
+        await email_service.send_email(
+            to_email=user.email,
+            subject="Verify your email - Artin Smart Trade",
+            content=f"Please verify your email by clicking: {settings.APP_URL if hasattr(settings, 'APP_URL') else 'http://localhost:3000'}/verify-email?token={token}"
+        )
+    except Exception as e:
+        # Don't fail registration if email fails, but log it
+        print(f"Failed to send verification email: {e}")
     
     return UserResponse.model_validate(user)
 

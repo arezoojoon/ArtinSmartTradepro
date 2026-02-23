@@ -94,3 +94,6 @@ from .support_ticket import (
     TicketMetrics,
 )
 
+# Email Outbox
+from .email import EmailOutbox
+

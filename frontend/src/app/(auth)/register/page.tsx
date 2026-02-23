@@ -52,7 +52,7 @@ export default function RegisterPage() {
             // Redirect to login with success flag
             router.push("/login?registered=true");
         } catch (err: any) {
-            setError(err.response?.data?.detail || "Failed to register");
+            setError(err.data?.detail || err.data?.error?.message || "Failed to register");
         } finally {
             setLoading(false);
         }

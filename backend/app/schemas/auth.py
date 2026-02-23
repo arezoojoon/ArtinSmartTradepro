@@ -9,6 +9,10 @@ class UserRegisterRequest(BaseModel):
     email: EmailStr = Field(..., description="User email address")
     password: str = Field(..., min_length=10, description="Password (min 10 chars)")
     full_name: Optional[str] = Field(None, description="User full name")
+    company_name: Optional[str] = Field(None, description="Company/Tenant name")
+    role: Optional[str] = Field("user", description="User role in the system")
+    tenant_mode: Optional[str] = Field("hybrid", description="Business mode (buyer/seller/hybrid)")
+    persona: Optional[str] = Field("trader", description="User persona (trader/logistics/etc)")
 
 
 class UserLoginRequest(BaseModel):
