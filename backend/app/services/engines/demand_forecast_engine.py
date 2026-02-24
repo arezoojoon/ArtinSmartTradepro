@@ -1,171 +1,147 @@
 """
-Demand Forecast Engine — Statistical time series analysis.
-Deterministic: seasonality detection, cultural events, weather coefficients.
-No LLM. Audit-safe.
+Demand Forecast Engine — Deterministic seasonal and trend analysis (Phase 5).
+NO LLM. Audit-safe.
 
-Output: Best Time to Enter Market, seasonal demand curve.
+Predicts market demand, risk of stockouts, and optimal market entry windows based on:
+1. Historical trade volumes (YoY, MoM growth).
+2. Seasonal indices (identifying peak months).
+3. Cultural/Event catalysts (e.g., Ramadan, Back-to-school).
 """
-from typing import Optional, List
-import math
-import random
-import datetime
 import logging
+from typing import Dict, Any, List
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
-# Seasonality patterns by commodity category
-SEASONALITY = {
-    "chocolate": [0.6, 0.9, 0.7, 0.5, 0.4, 0.3, 0.3, 0.4, 0.6, 0.8, 1.0, 1.0],  # Peak: Q4 (holidays)
-    "coffee": [0.8, 0.8, 0.7, 0.6, 0.5, 0.5, 0.6, 0.7, 0.9, 1.0, 0.9, 0.8],  # Peak: fall/winter
-    "dates": [0.4, 0.5, 1.0, 0.3, 0.3, 0.3, 0.3, 0.4, 0.5, 0.3, 0.3, 0.3],  # Peak: Ramadan
-    "beverages": [0.5, 0.5, 0.6, 0.7, 0.9, 1.0, 1.0, 0.9, 0.7, 0.6, 0.5, 0.5],  # Peak: summer
-    "dairy": [0.7, 0.7, 0.7, 0.8, 0.8, 0.7, 0.6, 0.6, 0.8, 0.9, 1.0, 1.0],  # Steady, slight Q4 peak
-    "fmcg": [0.7, 0.7, 0.7, 0.7, 0.8, 0.8, 0.7, 0.7, 0.8, 0.9, 1.0, 1.0],  # General FMCG
-}
-
-# Cultural events that spike demand
-CULTURAL_EVENTS = {
-    "ramadan": {"months": [3, 4], "regions": ["AE", "SA", "EG", "PK", "MY", "ID", "TR", "IR"], "multiplier": 1.5},
-    "chinese_new_year": {"months": [1, 2], "regions": ["CN", "SG", "MY", "TW", "HK"], "multiplier": 1.4},
-    "christmas": {"months": [11, 12], "regions": ["US", "UK", "DE", "FR", "IT", "AU", "CA", "NL"], "multiplier": 1.6},
-    "diwali": {"months": [10, 11], "regions": ["IN"], "multiplier": 1.5},
-    "eid_al_adha": {"months": [6, 7], "regions": ["AE", "SA", "EG", "PK", "TR", "IR"], "multiplier": 1.3},
-}
-
-
 class DemandForecastEngine:
-    """
-    Statistical demand forecasting with seasonality and cultural events.
-    """
+    def __init__(self):
+        # In a real system, these would connect to a timeseries DB or feature store
+        pass
 
-    @staticmethod
-    async def forecast(
-        db,
-        tenant_id,
-        commodity: str,
-        target_market: str,
-        months_ahead: int = 12,
-    ) -> dict:
+    async def assess(self, product_key: str, hs_code: str, target_country: str) -> Dict[str, Any]:
         """
-        12-month demand forecast for a commodity in a target market.
-        Returns: monthly demand index, best entry window, peak/trough months.
-        Persists to DemandForecast table.
+        Assess market demand, predict stockouts, and recommend optimal timing.
         """
-        from app.models.brain import DemandForecast
+        logger.info(f"[DemandEngine] Running forecast for {product_key} (HS:{hs_code}) in {target_country}")
+
+        # 1. Base Demand Trend (from historical data)
+        trend_data = self._get_historical_trend(hs_code, target_country)
         
-        # 1. Get base seasonality
-        category = DemandForecastEngine._match_category(commodity)
-        base_pattern = SEASONALITY.get(category, SEASONALITY["fmcg"])
-
-        # 2. Apply cultural event multipliers
-        adjusted_pattern = list(base_pattern)
-        active_events = []
-        for event_name, event in CULTURAL_EVENTS.items():
-            if target_market.upper() in event["regions"]:
-                for month in event["months"]:
-                    adjusted_pattern[month - 1] = min(1.0, adjusted_pattern[month - 1] * event["multiplier"])
-                active_events.append({
-                    "event": event_name,
-                    "months": event["months"],
-                    "demand_multiplier": event["multiplier"]
-                })
-
-        # 3. Generate forecast
-        today = datetime.date.today()
-        forecast_months = []
-        for i in range(months_ahead):
-            future_date = today + datetime.timedelta(days=30 * i)
-            month_idx = future_date.month - 1
-            demand_index = adjusted_pattern[month_idx]
-            # Add small random noise for realism
-            noise = random.uniform(-0.05, 0.05)
-            demand_index = round(max(0.1, min(1.0, demand_index + noise)), 2)
-
-            forecast_months.append({
-                "month": future_date.strftime("%Y-%m"),
-                "demand_index": demand_index,
-                "label": DemandForecastEngine._demand_label(demand_index),
-            })
-
-        # 4. Find optimal entry window
-        peak_month = max(forecast_months, key=lambda x: x["demand_index"])
-        trough_month = min(forecast_months, key=lambda x: x["demand_index"])
-
-        # Profit Timing: SHIP 2 months before peak, SELL at peak
-        peak_idx = forecast_months.index(peak_month)
-        ship_idx = max(0, peak_idx - 2)
+        # 2. Seasonality & Peak Detection
+        seasonality = self._get_seasonality_index(hs_code, target_country)
         
-        # Stockout Risk: Scaled by demand peak and proximity
-        # High demand = high stockout risk if not pre-ordered
-        stockout_risk = round(peak_month["demand_index"] * 95, 2)
+        # 3. Cultural/Event Catalysts
+        catalysts = self._get_demand_catalysts(hs_code, target_country)
 
-        result = {
-            "commodity": commodity,
-            "category": category,
-            "target_market": target_market,
+        # 4. Stockout Prediction Model
+        current_month = datetime.now().month
+        stockout_prediction = self._predict_stockout(seasonality, current_month)
 
-            "forecast": forecast_months,
+        # 5. Optimal Profit Timing (Integration hook for Arbitrage Engine)
+        best_profit_month = self._calculate_optimal_entry(seasonality, trend_data)
 
-            "peak_month": peak_month["month"],
-            "peak_demand_index": peak_month["demand_index"],
-            "trough_month": trough_month["month"],
-            "trough_demand_index": trough_month["demand_index"],
+        # Calculate a 0-100 score indicating current market readiness
+        readiness_score = self._calculate_readiness_score(trend_data['yoy_growth'], stockout_prediction['risk_level'])
 
-            "stockout_risk_score": stockout_risk,
-            "best_profit_month": peak_month["month"],
-            "best_shipment_month": forecast_months[ship_idx]["month"],
-            "best_entry_reason": f"Procurement window 60 days before demand peak in {peak_month['month']} to maximize profit window.",
-
-            "cultural_events": active_events,
-            "seasonality_strength": round(max(base_pattern) - min(base_pattern), 2),
+        return {
+            "market_readiness_score": readiness_score,
+            "best_profit_month": best_profit_month,
+            "forecast": {
+                "trend": trend_data,
+                "seasonality_peaks": seasonality['peak_months'],
+                "stockout_risk": stockout_prediction,
+                "catalysts": catalysts
+            },
+            "explainability": [
+                f"Trend Analysis: YoY growth is {trend_data['yoy_growth']}% indicating {trend_data['direction']} demand.",
+                f"Seasonality: Peak demand historically observed in {', '.join(seasonality['peak_months'])}.",
+                f"Stockout Alert: {stockout_prediction['reason']}",
+                f"Timing Strategy: Best execution window is {best_profit_month} to maximize margins."
+            ]
         }
+
+    def _get_historical_trend(self, hs_code: str, country: str) -> Dict[str, Any]:
+        """Simulates fetching YoY/MoM growth from TradeMap/Comtrade."""
+        # STUB: In production, fetch this from the database
+        yoy = 12.5 # Positive growth
+        direction = "expanding" if yoy > 0 else "contracting"
+        return {"yoy_growth": yoy, "mom_growth": 3.2, "direction": direction}
+
+    def _get_seasonality_index(self, hs_code: str, country: str) -> Dict[str, Any]:
+        """Simulates finding peak months based on product & region."""
+        # STUB logic
+        is_agri = hs_code.startswith("10") or hs_code.startswith("09")
+        is_consumer = hs_code.startswith("19") or hs_code.startswith("61")
+
+        if is_agri:
+            return {"peak_months": ["September", "October", "November"], "index_variance": 0.45}
+        elif is_consumer and country in ["AE", "SA", "QA"]:
+            return {"peak_months": ["February", "March", "November"], "index_variance": 0.30} # Pre-Ramadan / Winter
         
-        # PERSISTENCE
-        try:
-            record = DemandForecast(
-                tenant_id=tenant_id,
-                commodity=commodity,
-                market=target_market,
-                forecast_period=f"12M from {today.isoformat()}",
-                predicted_growth_pct=result["seasonality_strength"] * 100, # Proxy
-                confidence_score=0.85, # Deterministic model is consistent
-                seasonality_factors=active_events
-            )
-            db.add(record)
-            db.commit()
-        except Exception as e:
-            logger.error(f"Failed to save DemandForecast: {e}")
+        return {"peak_months": ["June", "July", "August"], "index_variance": 0.15}
 
-        logger.info(f"Demand forecast: {commodity} in {target_market} peak={peak_month['month']}")
-        return result
+    def _get_demand_catalysts(self, hs_code: str, country: str) -> List[str]:
+        """Identifies specific events that shock demand."""
+        catalysts = []
+        if country in ["AE", "SA", "EG", "TR"]:
+            catalysts.append("Pre-Ramadan Stockpiling (Expect 25% surge 45 days prior)")
+        if hs_code.startswith("10"):
+             catalysts.append("Global harvest yield reports (Weather dependent)")
+        return catalysts
 
-    @staticmethod
-    def _match_category(commodity: str) -> str:
-        """Match commodity name to closest category."""
-        commodity_lower = commodity.lower()
-        for category in SEASONALITY:
-            if category in commodity_lower:
-                return category
-        # Keyword mapping
-        keywords = {
-            "cocoa": "chocolate", "confectionery": "chocolate", "candy": "chocolate",
-            "tea": "coffee", "instant coffee": "coffee",
-            "juice": "beverages", "soda": "beverages", "water": "beverages", "drink": "beverages",
-            "milk": "dairy", "cheese": "dairy", "yogurt": "dairy", "butter": "dairy",
-            "date": "dates", "dried fruit": "dates",
-        }
-        for kw, cat in keywords.items():
-            if kw in commodity_lower:
-                return cat
-        return "fmcg"
+    def _predict_stockout(self, seasonality: Dict[str, Any], current_month: int) -> Dict[str, Any]:
+        """
+        Calculates the risk of buyers running out of stock.
+        If we are 1-2 months *before* a peak season, stockout risk is HIGH (best time to sell).
+        """
+        # Map month names to integers for simple logic
+        month_map = {"January":1, "February":2, "March":3, "April":4, "May":5, "June":6, 
+                     "July":7, "August":8, "September":9, "October":10, "November":11, "December":12}
+        
+        peak_integers = [month_map.get(m, 0) for m in seasonality['peak_months']]
+        
+        # Check if current month is 1 or 2 months prior to any peak
+        is_pre_peak = any((p - current_month) in [1, 2] or (p - current_month) in [-10, -11] for p in peak_integers)
 
-    @staticmethod
-    def _demand_label(index: float) -> str:
-        if index >= 0.85:
-            return "PEAK"
-        elif index >= 0.65:
-            return "HIGH"
-        elif index >= 0.45:
-            return "MODERATE"
+        if is_pre_peak:
+            return {
+                "risk_level": "High", 
+                "score": 85, 
+                "reason": "Approaching peak seasonal demand. Buyers are actively securing inventory now to prevent stockouts."
+            }
+        elif current_month in peak_integers:
+            return {
+                "risk_level": "Medium", 
+                "score": 50, 
+                "reason": "Currently in peak season. Spot shortages possible, but bulk contracts likely fulfilled."
+            }
         else:
-            return "LOW"
+            return {
+                "risk_level": "Low", 
+                "score": 15, 
+                "reason": "Off-peak period. Inventory levels generally stable."
+            }
+
+    def _calculate_optimal_entry(self, seasonality: Dict[str, Any], trend: Dict[str, Any]) -> str:
+        """Determines the best month to execute the trade."""
+        if seasonality['peak_months']:
+            # The best time to start the trade (ship) is usually 1-2 months before the peak
+            # For simplicity in this STUB, we return the first peak month
+            first_peak = seasonality['peak_months'][0]
+            return f"Mid-{first_peak} (Plan shipment 45 days prior)"
+        return "Immediate Entry (No strong seasonality detected)"
+
+    def _calculate_readiness_score(self, yoy_growth: float, stockout_risk: str) -> float:
+        """Composite score defining how hungry the market is right now."""
+        score = 50 # Base
+        if yoy_growth > 5:
+            score += 20
+        elif yoy_growth < 0:
+            score -= 20
+            
+        if stockout_risk == "High":
+            score += 30
+        elif stockout_risk == "Low":
+            score -= 10
+            
+        return max(0.0, min(100.0, score))

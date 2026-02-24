@@ -208,17 +208,35 @@ class PeakWindow(BaseModel):
     end_date: date = Field(..., description="Peak window end")
     demand_multiplier: float = Field(..., description="Demand multiplier during peak")
 
+class TrendData(BaseModel):
+    yoy_growth: float
+    mom_growth: float
+    direction: str
+
+class StockoutRisk(BaseModel):
+    risk_level: str
+    score: int
+    reason: str
+
+class ForecastData(BaseModel):
+    trend: TrendData
+    seasonality_peaks: List[str]
+    stockout_risk: StockoutRisk
+    catalysts: List[str]
+
 class DemandOutput(BaseModel):
     """Output from demand forecast engine"""
     status: str = Field(..., description="Computation status")
+    market_readiness_score: float = Field(..., description="0-100 score of how ready the market is to buy")
+    best_profit_month: str = Field(..., description="The optimal month to target for maximum margin")
+    forecast: ForecastData
     forecast_points: List[ForecastPoint] = Field(default_factory=list)
     peak_windows: List[PeakWindow] = Field(default_factory=list)
-    stockout_risk_score: float = Field(0.0, description="0-100")
-    best_profit_month: Optional[str] = None
+    stockout_risk_score: float = Field(0.0, description="0-100 (Legacy - Use forecast.stockout_risk)")
     best_shipment_month: Optional[str] = None
     method_used: str = Field(..., description="Forecast method used")
     data_points_used: int = Field(..., description="Number of historical data points used")
-    explainability: ExplainabilityBundle
+    explainability: List[str]
 
 # Cultural Strategy Models
 class CulturalInput(BaseModel):
