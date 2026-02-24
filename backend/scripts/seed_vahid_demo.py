@@ -2,19 +2,15 @@
 import asyncio
 import os
 import sys
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 
 # اضافه کردن مسیر پروژه
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.db.session import AsyncSessionLocal
-from app.models.tenant import Tenant
+from app.models.tenant import Tenant, TenantMembership, TenantRole
 from app.models.user import User
-from app.models.tenant import TenantMembership
-from app.models.crm import Lead
+from app.models.lead import Lead
 from app.core.security import get_password_hash
-from app.models.tenant import TenantRole
 
 async def seed_vahid_demo():
     async with AsyncSessionLocal() as session:
@@ -22,6 +18,7 @@ async def seed_vahid_demo():
         print("Creating Fard Foodstuff Tenant...")
         tenant = Tenant(
             name="Fard Foodstuff Industry LLC",
+            slug="fard-foodstuff",
             domain="fardfood.artinsmartagent.com",
             plan="enterprise",
             is_active=True
@@ -47,7 +44,7 @@ async def seed_vahid_demo():
         membership = TenantMembership(
             user_id=vahid.id,
             tenant_id=tenant.id,
-            role=TenantRole.OWNER
+            role=TenantRole.OWNER.value
         )
         session.add(membership)
 
@@ -56,7 +53,6 @@ async def seed_vahid_demo():
         gulfood_leads = [
             Lead(
                 tenant_id=tenant.id,
-                title="Gulfood 2026 - Russian Importer",
                 company_name="ELITE GROUPS (Fayuzulleov)",
                 contact_name="Fayuzulleov",
                 email="import@elitegroups.ru",
@@ -64,12 +60,11 @@ async def seed_vahid_demo():
                 country="Russia",
                 status="new",
                 source="Gulfood Expo",
-                score=95, # نمره بالا چون محصول تطابق دارد
-                custom_data={"interested_in": ["Pistachio Akbari", "Dates"], "language": "Russian"}
+                intent_score=95.0,
+                tags=["Pistachio Akbari", "Dates", "Russian"]
             ),
             Lead(
                 tenant_id=tenant.id,
-                title="Gulfood 2026 - GCC Distributor",
                 company_name="MAXONSNUTS",
                 contact_name="Procurement Manager",
                 email="purchasing@maxonsnuts.ae",
@@ -77,21 +72,20 @@ async def seed_vahid_demo():
                 country="UAE",
                 status="contacted",
                 source="Gulfood Expo",
-                score=88,
-                custom_data={"interested_in": ["Walnuts", "Mixed Nuts"], "language": "Arabic/English"}
+                intent_score=88.0,
+                tags=["Walnuts", "Mixed Nuts", "Arabic/English"]
             ),
             Lead(
                 tenant_id=tenant.id,
-                title="Gulfood 2026 - Indian Wholesaler",
                 company_name="CHAMAN DRY FRUITS",
                 contact_name="Rajiv Chaman",
                 email="info@chamandryfruits.in",
                 phone="+91 98 000 00000",
                 country="India",
-                status="negotiation",
+                status="contacted",
                 source="Gulfood Expo",
-                score=92,
-                custom_data={"interested_in": ["Dates", "Spices"], "language": "English"}
+                intent_score=92.0,
+                tags=["Dates", "Spices", "English"]
             )
         ]
         session.add_all(gulfood_leads)
