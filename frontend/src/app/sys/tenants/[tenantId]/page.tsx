@@ -104,7 +104,7 @@ export default function TenantDetailPage() {
                                 className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 text-slate-200 rounded-lg text-sm focus:outline-none focus:border-amber-500">
                                 <option value="">— No plan —</option>
                                 {plans.map((p: any) => (
-                                    <option key={p.code} value={p.code}>{p.name} (${p.monthly_price_usd}/mo)</option>
+                                    <option key={p.code} value={p.code}>{p.name}{p.monthly_price_usd != null ? ` ($${p.monthly_price_usd}/mo)` : ''}</option>
                                 ))}
                             </select>
                             <button onClick={handleSetPlan} disabled={acting || !selectedPlan}

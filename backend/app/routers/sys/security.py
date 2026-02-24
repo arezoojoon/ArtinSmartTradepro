@@ -4,7 +4,7 @@ Phase 6 Enhancement - Key rotation, anomaly detection, and compliance monitoring
 """
 from uuid import UUID
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -274,7 +274,7 @@ def get_security_audit_trail(
     
     # Apply severity filter (from metadata)
     if severity:
-        query = query.filter(SysAuditLog.metadata["severity"].astext == severity)
+        query = query.filter(SysAuditLog.extra["severity"].astext == severity)
     
     # Order and limit
     audit_logs = query.order_by(SysAuditLog.created_at.desc()).limit(limit).all()
@@ -290,7 +290,7 @@ def get_security_audit_trail(
             "actor_sys_admin_id": str(log.actor_sys_admin_id) if log.actor_sys_admin_id else None,
             "ip_address": log.ip_address,
             "user_agent": log.user_agent,
-            "metadata": log.metadata,
+            "metadata": log.extra,
             "created_at": log.created_at.isoformat()
         }
         entries.append(entry)

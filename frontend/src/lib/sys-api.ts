@@ -3,7 +3,9 @@
  * Uses sessionStorage['sys_token'] (separate from tenant token)
  */
 
-const SYS_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Strip /api/v1 suffix — sys routes are mounted at /sys/* not /api/v1/sys/*
+const _raw = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+const SYS_BASE = _raw.replace(/\/api\/v1\/?$/, '');
 
 function getSysToken(): string | null {
     if (typeof window === 'undefined') return null;

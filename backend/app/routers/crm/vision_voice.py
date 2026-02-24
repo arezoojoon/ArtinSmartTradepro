@@ -4,7 +4,7 @@ Phase 6 Enhancement - Vision and voice parsing for CRM automation
 """
 from uuid import UUID
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 from sqlalchemy.orm import Session

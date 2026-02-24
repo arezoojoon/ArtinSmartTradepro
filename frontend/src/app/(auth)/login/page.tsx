@@ -33,7 +33,7 @@ export default function LoginPage() {
             const response = await api.post("/auth/login", payload);
             login(response.data.access_token, response.data.refresh_token);
         } catch (err: any) {
-            setError(err.response?.data?.detail || "Failed to login");
+            setError(err?.data?.error?.message || err?.data?.detail || err?.message || "Failed to login");
         } finally {
             setLoading(false);
         }

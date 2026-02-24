@@ -4,7 +4,7 @@ Phase 6 Enhancement - Automated stage transitions and notifications
 """
 from uuid import UUID
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -40,7 +40,7 @@ class AutomationRuleUpdateRequest(BaseModel):
     is_active: Optional[bool] = None
     priority: Optional[int] = None
     trigger_conditions: Optional[Dict[str, Any]] = None
-    actions: Optional[List[Dict[str, Any]] = None
+    actions: Optional[List[Dict[str, Any]]] = None
 
 
 class AutomationRuleListResponse(BaseModel):

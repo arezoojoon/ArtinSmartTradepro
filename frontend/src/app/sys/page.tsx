@@ -68,7 +68,7 @@ export default function SysOverviewPage() {
             {dlqCount > 0 && (
                 <div className="flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
                     <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                    <span><strong>{dlqCount}</strong> items in the dead-letter queue. <a href="/sys/dlq" className="underline hover:text-red-300">Review DLQ →</a></span>
+                    <span><strong>{dlqCount}</strong> items in the dead-letter queue. <a href="/sys/audit" className="underline hover:text-red-300">Review in Audit →</a></span>
                 </div>
             )}
 

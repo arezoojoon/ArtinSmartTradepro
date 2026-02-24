@@ -4,7 +4,7 @@ Phase 6 Enhancement - Monitor connectors, scrapers, and external APIs
 """
 from uuid import UUID
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from sqlalchemy.orm import Session

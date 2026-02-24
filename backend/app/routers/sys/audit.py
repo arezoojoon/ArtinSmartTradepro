@@ -46,7 +46,7 @@ def get_audit_logs(
                 "actor_sys_admin_id": str(l.actor_sys_admin_id) if l.actor_sys_admin_id else None,
                 "before_state": l.before_state,
                 "after_state": l.after_state,
-                "metadata": l.metadata,
+                "metadata": l.extra,
                 "ip_address": l.ip_address,
                 "created_at": l.created_at.isoformat() if l.created_at else None,
             }
