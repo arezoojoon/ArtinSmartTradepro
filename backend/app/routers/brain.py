@@ -11,6 +11,7 @@ from ..database import get_db
 from ..schemas.brain import (
     ArbitrageInput, ArbitrageOutput, RiskInput, RiskOutput,
     DemandInput, DemandOutput, CulturalInput, CulturalOutput,
+    PlaybookRequest, CulturalEngineOutput,
     EngineRunResponse, BrainRunStatus
 )
 from ..services.brain_registry import BrainEngineRegistry, BrainEngineValidator, make_insufficient_data_bundle
@@ -19,6 +20,7 @@ from ..services.brain_arbitrage_engine import ArbitrageEngine
 from ..services.brain_risk_engine import RiskEngine
 from ..services.brain_demand_engine import DemandForecastEngine
 from ..services.brain_cultural_engine import CulturalStrategyEngine
+from ..services.engines.cultural_engine import CulturalEngine
 from ..models.brain_assets import BrainEngineType
 from ..core.auth import get_current_user, get_current_tenant
 from ..models.user import User
@@ -94,7 +96,7 @@ def run_cultural_engine(
     current_user: User = Depends(require_brain_run_permission),
     current_tenant: Tenant = Depends(get_current_tenant)
 ):
-    """Run cultural strategy engine"""
+    """Run cultural strategy engine (legacy v1)"""
     engine = CulturalStrategyEngine(db)
     
     try:
@@ -103,6 +105,40 @@ def run_cultural_engine(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Cultural engine error: {str(e)}"
+        )
+
+@router.post("/cultural/playbook", response_model=CulturalEngineOutput)
+async def generate_negotiation_playbook(
+    input_data: PlaybookRequest,
+    current_user: User = Depends(require_brain_run_permission),
+):
+    """
+    Generate a full negotiation playbook for a target country.
+    
+    Returns strategic playbook (communication style, preferred channel, tactics),
+    objection handling scripts, and walk-away red-lines based on the counterparty's
+    business culture and the deal context (sourcing vs sales).
+    
+    Example: POST /brain/cultural/playbook
+    {
+        "country": "AE",
+        "deal_type": "sales",
+        "product": "Sunflower Oil"
+    }
+    """
+    engine = CulturalEngine()
+    
+    try:
+        result = await engine.generate_playbook(
+            country=input_data.country,
+            deal_type=input_data.deal_type,
+            product=input_data.product,
+        )
+        return CulturalEngineOutput(**result)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Cultural playbook engine error: {str(e)}"
         )
 
 @router.get("/runs", response_model=Dict[str, Any])

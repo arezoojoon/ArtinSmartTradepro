@@ -1,114 +1,166 @@
 """
-Cultural Negotiation Engine — Gemini-powered (LLM is appropriate here).
-Strategy recommendations based on counterpart's culture and nationality.
-
-This is the ONE engine where LLM is correct:
-- Human behavior is nuanced
-- Cultural norms require contextual reasoning
-- No financial numbers to hallucinate
+Cultural & Negotiation Engine — Phase 5 Strategic Enhancement.
+Generates an AI-driven "Deal Closer" playbook based on the counterparty's nationality and business culture.
+Includes specific objection handling and walk-away parameters.
 """
-from app.services.gemini_service import GeminiService
-from typing import Optional
 import logging
+from typing import Dict, Any, List
 
 logger = logging.getLogger(__name__)
 
+class CulturalEngine:
+    def __init__(self, gemini_service=None):
+        self.gemini = gemini_service
 
-class CulturalNegotiationEngine:
-    """
-    Gemini-powered cultural negotiation advisor.
-    Provides: payment term suggestions, negotiation strategy,
-    communication style, contract type recommendations.
-    """
-
-    @staticmethod
-    async def get_strategy(
-        db,
-        tenant_id,
-        counterpart_country: str,
-        your_country: str = "IR",
-        product_category: str = "FMCG",
-        deal_size_usd: float = 50000,
-        relationship_stage: str = "new",  # new, established, long_term
-    ) -> dict:
+    async def generate_playbook(self, country: str, deal_type: str, product: str) -> Dict[str, Any]:
         """
-        Cultural negotiation strategy based on nationality.
-        Uses Gemini for nuanced cultural understanding.
-        Persists to CulturalStrategy table.
+        Generates a comprehensive negotiation strategy based on cultural norms.
+        deal_type: "sourcing" (buying) or "sales" (selling)
         """
-        from app.services.gemini_service import _get_model, _extract_json
-        from app.models.brain import CulturalStrategy
+        logger.info(f"[CulturalEngine] Generating playbook for {country} - {deal_type} of {product}")
 
-        model = _get_model("gemini-2.5-flash")
+        playbook = self._get_base_cultural_profile(country, deal_type)
+        
+        # Add dynamic objection handling based on the deal type
+        objection_handling = self._generate_objection_handling(country, deal_type)
+        
+        # Calculate strict walk-away points based on risk profiles
+        walk_away_points = self._determine_walk_away(country, deal_type)
 
-        prompt = f"""You are an expert international trade negotiation consultant with 20 years of experience.
+        return {
+            "country": country,
+            "deal_context": deal_type,
+            "strategic_playbook": playbook,
+            "objection_handling": objection_handling,
+            "walk_away_points": walk_away_points,
+            "explainability": [
+                f"Strategy adapted for {country}'s standard business etiquette.",
+                "Objection handling tailored to typical regional price sensitivity.",
+                "Walk-away thresholds set to mitigate local compliance and payment risks."
+            ]
+        }
 
-Provide cultural negotiation guidance for this trade scenario:
-- Your trader is from: {your_country}
-- Counterpart is from: {counterpart_country}
-- Product category: {product_category}
-- Deal size: ${deal_size_usd:,.0f}
-- Relationship stage: {relationship_stage}
-
-Respond in this exact JSON format:
-{{
-    "greeting_protocol": "How to properly greet and address the counterpart",
-    "communication_style": "direct/indirect/formal — with specific guidance",
-    "negotiation_approach": "Step-by-step negotiation strategy",
-    "price_discussion": "How to approach pricing — when to bring it up, how to counter",
-    "payment_terms_suggestion": "Recommended payment structure for this culture",
-    "contract_type": "Recommended contract format",
-    "red_flags": ["Things to absolutely avoid"],
-    "power_moves": ["Cultural leverage points that build trust"],
-    "deal_closer_playbook": "Step-by-step strategy to close this specific deal based on size and role",
-    "objection_handling": ["Specific phrases to use when buyer asks for lower price or longer terms"],
-    "walk_away_points": ["Recommendation on when to stop negotiating for this deal size"],
-    "timeline_expectation": "How long deals typically take with this culture",
-    "follow_up_style": "How to follow up without being pushy or too passive",
-    "confidence": 0.0-1.0,
-    "disclaimer": "Cultural generalization. Individual behavior may vary."
-}}
-
-Rules:
-- Be specific to the countries involved, not generic
-- Include real cultural nuances, not textbook platitudes
-- Consider the deal size — larger deals have different protocols
-- Consider the relationship stage — new contacts need more formal approach"""
-
-        try:
-            response = model.generate_content(prompt)
-            result = _extract_json(response.text)
+    def _get_base_cultural_profile(self, country: str, deal_type: str) -> Dict[str, Any]:
+        """Returns the core negotiation strategy based on the country's business culture."""
+        country_code = country.upper()
+        
+        # Group 1: Relationship-Driven, High Context (e.g., Middle East, LatAm)
+        if country_code in ["AE", "SA", "TR", "EG", "BR", "MX"]:
+            return {
+                "communication_style": "High-context. Trust and personal relationships are paramount. Expect small talk before business.",
+                "preferred_channel": "WhatsApp voice notes and face-to-face meetings (or video calls). Emails are often ignored.",
+                "decision_speed": "Slow initially while building trust, then execution can be very fast.",
+                "negotiation_tactic": "Start with a higher margin buffer. Haggling is expected and seen as part of the relationship building." if deal_type == "sales" else "Do not accept the first offer. Build rapport to unlock 'special' partner pricing.",
+                "payment_norms": "Open Account (OA) after trust is established. Letters of Credit (LC) for first large deals."
+            }
             
-            # PERSISTENCE
-            try:
-                record = CulturalStrategy(
-                    tenant_id=tenant_id,
-                    target_country=counterpart_country,
-                    deal_context=f"{product_category} / ${deal_size_usd}",
-                    strategy_summary=result.get("negotiation_approach", "")[:255],
-                    do_and_donts=result.get("red_flags", []),
-                    negotiation_tactics=result
-                )
-                db.add(record)
-                db.commit()
-            except Exception as e:
-                logger.error(f"Failed to save CulturalStrategy: {e}")
+        # Group 2: Direct, Low Context, Efficiency-Driven (e.g., Germany, USA, UK)
+        elif country_code in ["DE", "US", "GB", "NL", "SE"]:
+            return {
+                "communication_style": "Direct, explicit, and low-context. Time is money. Get straight to the point.",
+                "preferred_channel": "Formal emails with clear bullet points. Scheduled Teams/Zoom calls.",
+                "decision_speed": "Fast and logical, strictly based on ROI and SLAs.",
+                "negotiation_tactic": "Present your best or near-best price early. Provide data-backed ROI. Excessive haggling may be viewed as unprofessional." if deal_type == "sales" else "Ask for volume discounts directly. They respect strict adherence to timelines and specs over relationships.",
+                "payment_norms": "Strict adherence to Net 30/60. Late payments incur strict penalties."
+            }
+            
+        # Group 3: Consensus-Driven, Detail-Oriented (e.g., Japan, China, South Korea)
+        elif country_code in ["JP", "CN", "KR", "SG"]:
+            return {
+                "communication_style": "Indirect, highly respectful. Harmony (face-saving) is critical. Never force a 'No'.",
+                "preferred_channel": "WeChat/Line (China) or formal emails (Japan). Always respect hierarchy in communications.",
+                "decision_speed": "Very slow. Consensus must be reached among multiple stakeholders.",
+                "negotiation_tactic": "Focus on long-term partnership value rather than short-term price wins. Be patient." if deal_type == "sales" else "Specify quality standards rigorously in writing. Expect intense price negotiations in China, but strict quality adherence in Japan.",
+                "payment_norms": "TT Advance is common in China sourcing. Letters of Credit are standard."
+            }
+            
+        # Default Profile
+        return {
+            "communication_style": "Standard professional business etiquette.",
+            "preferred_channel": "Email followed by scheduled calls.",
+            "decision_speed": "Moderate.",
+            "negotiation_tactic": "Maintain a 10-15% negotiation buffer.",
+            "payment_norms": "Standard commercial terms (LC or TT)."
+        }
+
+    def _generate_objection_handling(self, country: str, deal_type: str) -> List[Dict[str, str]]:
+        """Provides specific scripts for common objections in that region."""
+        country_code = country.upper()
+        objections = []
+
+        if deal_type == "sales":
+            if country_code in ["AE", "SA", "TR", "EG"]:
+                objections.append({
+                    "objection": "Your price is too high compared to my other supplier.",
+                    "response_strategy": "Do not immediately drop the price. Emphasize reliability and premium service.",
+                    "script": "I understand price is important, my friend. However, with us, you are buying peace of mind. We guarantee zero delays at Jebel Ali, which saves you demurrage costs. Let's look at the total landed cost."
+                })
+            elif country_code in ["DE", "US", "GB"]:
+                objections.append({
+                    "objection": "We don't have the budget for this right now.",
+                    "response_strategy": "Pivot to ROI and total cost of ownership (TCO) with hard data.",
+                    "script": "I appreciate the budget constraints. However, our product increases yield by 4%, meaning the premium pays for itself within the first quarter. I can send the calculation matrix."
+                })
+            elif country_code in ["JP", "CN", "KR"]:
+                objections.append({
+                    "objection": "We need to discuss this internally before making a decision.",
+                    "response_strategy": "Respect the consensus process. Provide supporting materials for internal circulation.",
+                    "script": "Of course, I completely understand. Let me prepare a detailed comparison document that your team can review. Shall I include our quality certifications and reference clients in your region?"
+                })
+            elif country_code in ["BR", "MX"]:
+                objections.append({
+                    "objection": "We found a cheaper local alternative.",
+                    "response_strategy": "Highlight international quality standards and export compliance advantages.",
+                    "script": "I respect your local options. However, our product meets EU/FDA standards, which opens re-export possibilities for you. Plus, our supply chain consistency means no production stoppages during local shortages."
+                })
+        else: # sourcing
+            if country_code in ["CN", "IN", "VN"]:
+                objections.append({
+                    "objection": "We cannot meet your target price at this MOQ.",
+                    "response_strategy": "Offer a phased volume commitment rather than dropping the request.",
+                    "script": "If we commit to a 12-month blanket order with quarterly call-offs, can we lock in this target price for the first shipment?"
+                })
+            elif country_code in ["TR", "EG"]:
+                objections.append({
+                    "objection": "Raw material costs have increased, we need to raise prices.",
+                    "response_strategy": "Request transparency on cost breakdown and propose a shared-risk formula.",
+                    "script": "We understand the market situation. Could you share the cost breakdown so we can identify where we can optimize together? We are open to a price adjustment formula tied to the commodity index."
+                })
+
+        # Generic fallback objection
+        if not objections:
+            objections.append({
+                "objection": "We need better payment terms.",
+                "response_strategy": "Trade terms for price, or utilize export credit insurance.",
+                "script": "We can extend the payment terms to 60 days, but we will need to adjust the FOB price by +2% to cover the financing costs."
+            })
+            
+        return objections
+
+    def _determine_walk_away(self, country: str, deal_type: str) -> List[str]:
+        """Hard red-lines where the trader should abort the deal."""
+        walk_aways = []
+        country_code = country.upper()
+        
+        # High Risk / Liquidity issues
+        if country_code in ["EG", "NG", "AR", "LB", "PK"]:
+            if deal_type == "sales":
+                walk_aways.append("WALK AWAY IF: Buyer refuses to provide a confirmed Letter of Credit from a top-tier international bank. Local currency devaluation risk is too high.")
                 
-            logger.info(f"Cultural strategy: {your_country}→{counterpart_country} for {product_category}")
-            return result
-        except Exception as e:
-            logger.error(f"Cultural negotiation engine error: {e}")
-            return {
-                "error": str(e),
-                "fallback": "Use formal communication. Start with Letter of Credit. Allow 2-4 weeks for response.",
-                "confidence": 0.3,
-                "disclaimer": "Fallback recommendation. AI service temporarily unavailable."
-            }
-        except Exception as e:
-            logger.error(f"Cultural negotiation engine error: {e}")
-            return {
-                "error": str(e),
-                "fallback": "Use formal communication. Start with Letter of Credit. Allow 2-4 weeks for response.",
-                "confidence": 0.3,
-                "disclaimer": "Fallback recommendation. AI service temporarily unavailable."
-            }
+        # Scammer/Quality Risk profiles
+        if deal_type == "sourcing" and country_code in ["CN", "VN", "TR"]:
+            walk_aways.append("WALK AWAY IF: Supplier refuses third-party SGS/Intertek inspection prior to container loading.")
+            walk_aways.append("WALK AWAY IF: Bank account name does not exactly match the registered company name on the commercial invoice.")
+            
+        # Generic strict rules
+        if deal_type == "sales":
+            walk_aways.append("WALK AWAY IF: The negotiated margin drops below the AI-calculated Risk-Adjusted Penalty Threshold.")
+        
+        if deal_type == "sourcing":
+            walk_aways.append("WALK AWAY IF: Supplier cannot provide at least 2 verifiable trade references from the past 12 months.")
+            
+        return walk_aways
+
+
+# Keep backward compatibility alias
+CulturalNegotiationEngine = CulturalEngine

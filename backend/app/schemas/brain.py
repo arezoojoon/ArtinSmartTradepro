@@ -238,7 +238,7 @@ class DemandOutput(BaseModel):
     data_points_used: int = Field(..., description="Number of historical data points used")
     explainability: List[str]
 
-# Cultural Strategy Models
+# Cultural Strategy Models (Legacy — used by brain_cultural_engine.py)
 class CulturalInput(BaseModel):
     """Input for cultural strategy engine"""
     destination_country: str = Field(..., description="Destination country")
@@ -270,6 +270,47 @@ class CulturalOutput(BaseModel):
     walk_away_points: List[str] = Field(default_factory=list)
     referenced_profile_ids: List[UUID] = Field(default_factory=list)
     explainability: ExplainabilityBundle
+
+# ── Cultural & Negotiation Engine v2 (Playbook) ──────────────────────────
+
+class PlaybookRequest(BaseModel):
+    """Input for the Cultural Negotiation Playbook engine"""
+    country: str = Field(..., min_length=2, max_length=2, description="ISO 2-letter country code (e.g. AE, DE, CN)")
+    deal_type: str = Field(..., description="'sourcing' (buying) or 'sales' (selling)")
+    product: str = Field("General", description="Product or category name")
+
+    @validator('country')
+    def validate_country(cls, v):
+        return v.upper()
+
+    @validator('deal_type')
+    def validate_deal_type(cls, v):
+        if v.lower() not in ("sourcing", "sales"):
+            raise ValueError("deal_type must be 'sourcing' or 'sales'")
+        return v.lower()
+
+class StrategicPlaybook(BaseModel):
+    """Core negotiation strategy based on cultural norms"""
+    communication_style: str
+    preferred_channel: str
+    decision_speed: str
+    negotiation_tactic: str
+    payment_norms: str
+
+class ObjectionHandler(BaseModel):
+    """Specific objection handling script"""
+    objection: str
+    response_strategy: str
+    script: str
+
+class CulturalEngineOutput(BaseModel):
+    """Full output of the Cultural & Negotiation Playbook engine"""
+    country: str = Field(..., description="Target country code")
+    deal_context: str = Field(..., description="'sourcing' or 'sales'")
+    strategic_playbook: StrategicPlaybook
+    objection_handling: List[ObjectionHandler]
+    walk_away_points: List[str]
+    explainability: List[str]
 
 # Engine Run Models
 class EngineRunCreate(BaseModel):
