@@ -1,237 +1,226 @@
 """
-Phase 5 Brain API Router
-Brain engine endpoints with deterministic validation and explainability
+Brain Router - API Endpoints for Strategic Trade Intelligence (Phase 5).
+Connects the frontend to the Arbitrage, Risk, Demand, and Cultural engines.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from typing import Dict, Any
+import logging
 
-from ..database import get_db
-from ..schemas.brain import (
-    ArbitrageInput, ArbitrageOutput, RiskInput, RiskOutput,
-    DemandInput, DemandOutput, CulturalInput, CulturalOutput,
+from app.db.session import get_db
+from app.api.deps import get_current_user
+from app.models.user import User
+from app.schemas.brain import (
+    RiskEngineOutput,
+    DemandForecastOutput,
     PlaybookRequest, CulturalEngineOutput,
-    EngineRunResponse, BrainRunStatus
 )
-from ..services.brain_registry import BrainEngineRegistry, BrainEngineValidator, make_insufficient_data_bundle
-from ..services.brain_assets_repository import BrainAssetRepository
-from ..services.brain_arbitrage_engine import ArbitrageEngine
-from ..services.brain_risk_engine import RiskEngine
-from ..services.brain_demand_engine import DemandForecastEngine
-from ..services.brain_cultural_engine import CulturalStrategyEngine
-from ..services.engines.cultural_engine import CulturalEngine
-from ..models.brain_assets import BrainEngineType
-from ..core.auth import get_current_user, get_current_tenant
-from ..models.user import User
-from ..models.tenant import Tenant
 
-router = APIRouter(prefix="/brain", tags=["brain"])
+# Import the deterministic engines
+from app.services.engines.risk_engine import RiskEngine
+from app.services.engines.demand_forecast_engine import DemandForecastEngine
+from app.services.engines.cultural_engine import CulturalEngine
 
-# Permission guard for brain operations
-def require_brain_run_permission(current_user: User):
-    """Check if user has brain.run permission"""
-    # For now, all authenticated users have brain.run permission
-    # In production, this would check user permissions
-    return current_user
+logger = logging.getLogger(__name__)
 
-@router.post("/arbitrage/run", response_model=ArbitrageOutput)
-def run_arbitrage_engine(
-    input_data: ArbitrageInput,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_brain_run_permission),
-    current_tenant: Tenant = Depends(get_current_tenant)
+router = APIRouter(tags=["Strategic Intelligence Brain"])
+
+# Initialize stateless engines
+demand_engine = DemandForecastEngine()
+cultural_engine = CulturalEngine()
+
+
+# -------------------------------------------------------------------
+# Individual Engine Endpoints
+# -------------------------------------------------------------------
+
+@router.get("/risk/assess", response_model=RiskEngineOutput)
+async def assess_trade_risk(
+    origin_country: str,
+    destination_country: str,
+    commodity: str = "General",
+    sell_currency: str = "USD",
+    supplier_id: str = None,
+    buyer_id: str = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Run arbitrage analysis engine"""
-    engine = ArbitrageEngine(db)
-    
+    """
+    Assess comprehensive trade risk (Sanctions, USD Liquidity, Logistics).
+    Returns a Risk-Adjusted Margin penalty score.
+    """
+    logger.info(
+        f"Tenant {current_user.tenant_id} requested risk assessment: "
+        f"{origin_country} -> {destination_country}"
+    )
     try:
-        return engine.run_analysis(current_tenant.id, input_data)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Arbitrage engine error: {str(e)}"
+        risk_data = await RiskEngine.assess(
+            db=db,
+            tenant_id=current_user.tenant_id,
+            destination_country=destination_country,
+            origin_country=origin_country,
+            commodity=commodity,
+            sell_currency=sell_currency,
+            buyer_id=buyer_id,
+            supplier_id=supplier_id,
         )
+        return risk_data
+    except Exception as e:
+        logger.error(f"Risk Assessment failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to compute risk metrics.")
 
-@router.post("/risk/run", response_model=RiskOutput)
-def run_risk_engine(
-    input_data: RiskInput,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_brain_run_permission),
-    current_tenant: Tenant = Depends(get_current_tenant)
-):
-    """Run risk analysis engine"""
-    engine = RiskEngine(db)
-    
-    try:
-        return engine.run_analysis(current_tenant.id, input_data)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Risk engine error: {str(e)}"
-        )
 
-@router.post("/demand/run", response_model=DemandOutput)
-def run_demand_engine(
-    input_data: DemandInput,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_brain_run_permission),
-    current_tenant: Tenant = Depends(get_current_tenant)
+@router.get("/demand/forecast", response_model=DemandForecastOutput)
+async def forecast_market_demand(
+    product_key: str,
+    hs_code: str,
+    target_country: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Run demand forecast engine"""
-    engine = DemandForecastEngine(db)
-    
+    """
+    Predicts stockout risks, seasonal peaks, and calculates the optimal profit window.
+    """
+    logger.info(
+        f"Tenant {current_user.tenant_id} requested demand forecast for "
+        f"HS:{hs_code} in {target_country}"
+    )
     try:
-        return engine.run_forecast(current_tenant.id, input_data)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Demand engine error: {str(e)}"
+        demand_data = await demand_engine.assess(
+            product_key=product_key,
+            hs_code=hs_code,
+            target_country=target_country,
         )
+        return demand_data
+    except Exception as e:
+        logger.error(f"Demand Forecast failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to forecast market demand.")
 
-@router.post("/cultural/run", response_model=CulturalOutput)
-def run_cultural_engine(
-    input_data: CulturalInput,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_brain_run_permission),
-    current_tenant: Tenant = Depends(get_current_tenant)
+
+@router.get("/culture/playbook", response_model=CulturalEngineOutput)
+async def get_negotiation_playbook(
+    target_country: str,
+    deal_type: str,
+    product_key: str = "General Commodity",
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Run cultural strategy engine (legacy v1)"""
-    engine = CulturalStrategyEngine(db)
-    
+    """
+    Generates an AI-driven "Deal Closer" playbook (GET version).
+    Includes region-specific objection handling and strict walk-away points.
+    """
+    if deal_type not in ("sourcing", "sales"):
+        raise HTTPException(status_code=400, detail="deal_type must be 'sourcing' or 'sales'")
+
+    logger.info(
+        f"Tenant {current_user.tenant_id} requested {deal_type} playbook for {target_country}"
+    )
     try:
-        return engine.run_analysis(current_tenant.id, input_data)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Cultural engine error: {str(e)}"
+        playbook_data = await cultural_engine.generate_playbook(
+            country=target_country,
+            deal_type=deal_type,
+            product=product_key,
         )
+        return CulturalEngineOutput(**playbook_data)
+    except Exception as e:
+        logger.error(f"Cultural Playbook generation failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate strategic playbook.")
+
 
 @router.post("/cultural/playbook", response_model=CulturalEngineOutput)
 async def generate_negotiation_playbook(
     input_data: PlaybookRequest,
-    current_user: User = Depends(require_brain_run_permission),
+    current_user: User = Depends(get_current_user),
 ):
     """
-    Generate a full negotiation playbook for a target country.
-    
-    Returns strategic playbook (communication style, preferred channel, tactics),
-    objection handling scripts, and walk-away red-lines based on the counterparty's
-    business culture and the deal context (sourcing vs sales).
-    
-    Example: POST /brain/cultural/playbook
+    Generate a full negotiation playbook for a target country (POST version).
+
+    Example: POST /api/v1/brain/cultural/playbook
     {
         "country": "AE",
         "deal_type": "sales",
         "product": "Sunflower Oil"
     }
     """
-    engine = CulturalEngine()
-    
     try:
-        result = await engine.generate_playbook(
+        result = await cultural_engine.generate_playbook(
             country=input_data.country,
             deal_type=input_data.deal_type,
             product=input_data.product,
         )
         return CulturalEngineOutput(**result)
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Cultural playbook engine error: {str(e)}"
+        logger.error(f"Cultural playbook engine error: {e}")
+        raise HTTPException(status_code=500, detail=f"Cultural playbook engine error: {str(e)}")
+
+
+# -------------------------------------------------------------------
+# Macro Engine: The "One-Click" Decision Intelligence Hub
+# -------------------------------------------------------------------
+
+@router.post("/run-macro-intelligence")
+async def run_full_macro_intelligence(
+    payload: dict,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Orchestrates all Brain Engines (Risk, Demand, Culture) simultaneously.
+    This is what the 'Hunter Control Tower' frontend calls to display
+    the Arbitrage Score, Climate Matrix, and Playbook boxes.
+
+    Expected payload keys: product, hs_code, origin_country, destination_country, deal_type
+    """
+    product = payload.get("product", "Unknown")
+    hs_code = payload.get("hs_code", "0000.00")
+    origin = payload.get("origin_country", "Global")
+    destination = payload.get("destination_country", "Global")
+    deal_type = payload.get("deal_type", "sales")
+
+    # Fallback values
+    safe_dest = destination if destination != "Global" else "AE"
+    safe_orig = origin if origin != "Global" else "CN"
+
+    try:
+        # Run all three engines (could use asyncio.gather in production)
+        risk_res = await RiskEngine.assess(
+            db=db,
+            tenant_id=current_user.tenant_id,
+            destination_country=safe_dest,
+            origin_country=safe_orig,
+            commodity=product,
         )
+        demand_res = await demand_engine.assess(product, hs_code, safe_dest)
+        culture_res = await cultural_engine.generate_playbook(safe_dest, deal_type, product)
 
-@router.get("/runs", response_model=Dict[str, Any])
-def list_engine_runs(
-    engine_type: str = None,
-    limit: int = 50,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_brain_run_permission),
-    current_tenant: Tenant = Depends(get_current_tenant)
-):
-    """List brain engine runs"""
-    registry = BrainEngineRegistry(db)
-    
-    # Validate engine type
-    engine_type_enum = None
-    if engine_type:
-        try:
-            engine_type_enum = BrainEngineType(engine_type)
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid engine type: {engine_type}"
-            )
-    
-    runs = registry.get_run_history(current_tenant.id, engine_type_enum, limit)
-    
-    return {
-        "runs": [
-            {
-                "id": run.id,
-                "engine_type": run.engine_type.value,
-                "status": run.status.value,
-                "created_at": run.created_at,
-                "input_payload": run.input_payload,
-                "output_payload": run.output_payload,
-                "explainability": run.explainability
-            }
-            for run in runs
-        ],
-        "total": len(runs)
-    }
-
-@router.get("/runs/{run_id}", response_model=Dict[str, Any])
-def get_engine_run(
-    run_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_brain_run_permission),
-    current_tenant: Tenant = Depends(get_current_tenant)
-):
-    """Get specific brain engine run"""
-    registry = BrainEngineRegistry(db)
-    
-    run = registry.get_run(current_tenant.id, run_id)
-    if not run:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Engine run not found"
-        )
-    
-    return {
-        "id": run.id,
-        "engine_type": run.engine_type.value,
-        "status": run.status.value,
-        "created_at": run.created_at,
-        "input_payload": run.input_payload,
-        "output_payload": run.output_payload,
-        "explainability": run.explainability,
-        "error": run.error
-    }
-
-@router.get("/data-sources", response_model=Dict[str, Any])
-def list_data_sources(
-    active_only: bool = True,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_brain_run_permission),
-    current_tenant: Tenant = Depends(get_current_tenant)
-):
-    """List available brain data sources"""
-    registry = BrainEngineRegistry(db)
-    
-    sources = registry.get_data_sources(current_tenant.id, active_only)
-    
-    return {
-        "sources": [
-            {
-                "id": source.id,
-                "name": source.name,
-                "type": source.type,
-                "is_active": source.is_active,
-                "meta": source.meta,
-                "created_at": source.created_at
-            }
-            for source in sources
-        ],
-        "total": len(sources)
-    }
+        # Merge the strategic insights into one unified JSON response
+        return {
+            "status": "success",
+            "engines_executed": ["risk", "demand", "culture"],
+            "insights": {
+                "arbitrage_score": round(100 - risk_res.get("composite_risk_score", 50), 2),
+                "est_margin": (
+                    f"Target Gross: 20% | Risk Adjusted: "
+                    f"{20 - risk_res.get('risk_adjusted_margin_penalty_pct', 0):.1f}%"
+                ),
+                "climate_impact": " | ".join(
+                    demand_res.get("forecast", {}).get("catalysts", ["Normal conditions"])
+                ),
+                "cultural_playbook": culture_res.get("strategic_playbook", {}).get(
+                    "negotiation_tactic", "Standard negotiation."
+                ),
+                "stockout_alert": demand_res.get("forecast", {}).get("stockout_risk", {}).get(
+                    "reason", "Stable"
+                ),
+                "walk_away_points": culture_res.get("walk_away_points", []),
+            },
+            "raw_engine_data": {
+                "risk": risk_res,
+                "demand": demand_res,
+                "culture": culture_res,
+            },
+        }
+    except Exception as e:
+        logger.error(f"Macro Engine failure: {e}")
+        raise HTTPException(status_code=500, detail="Macro Intelligence execution failed.")

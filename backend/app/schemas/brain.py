@@ -271,6 +271,48 @@ class CulturalOutput(BaseModel):
     referenced_profile_ids: List[UUID] = Field(default_factory=list)
     explainability: ExplainabilityBundle
 
+# ── Risk Engine v2 Output (for /brain/risk/assess endpoint) ──────────────
+
+class RiskAlert(BaseModel):
+    """Actionable risk alert"""
+    severity: str = Field(..., description="critical / warning / info")
+    message: str
+
+class RiskEngineOutput(BaseModel):
+    """Output of the standalone Risk Assessment endpoint"""
+    composite_risk_score: float = Field(..., description="0-100 composite risk")
+    risk_adjusted_margin_penalty_pct: float = Field(..., description="Margin penalty %")
+    risk_level: str = Field(..., description="LOW / MODERATE / ELEVATED / HIGH / CRITICAL")
+    risk_color: str = Field(..., description="UI color hint")
+    factors: Dict[str, Any] = Field(default_factory=dict, description="Breakdown by factor")
+    explainability: List[str] = Field(default_factory=list)
+    alerts: List[RiskAlert] = Field(default_factory=list)
+
+# ── Demand Forecast v2 Output (for /brain/demand/forecast endpoint) ──────
+
+class StockoutPrediction(BaseModel):
+    risk_level: str
+    score: int
+    reason: str
+
+class DemandTrend(BaseModel):
+    yoy_growth: float
+    mom_growth: float
+    direction: str
+
+class DemandForecastData(BaseModel):
+    trend: DemandTrend
+    seasonality_peaks: List[str]
+    stockout_risk: StockoutPrediction
+    catalysts: List[str]
+
+class DemandForecastOutput(BaseModel):
+    """Output of the standalone Demand Forecast endpoint"""
+    market_readiness_score: float = Field(..., description="0-100 market hunger score")
+    best_profit_month: str = Field(..., description="Optimal entry timing")
+    forecast: DemandForecastData
+    explainability: List[str] = Field(default_factory=list)
+
 # ── Cultural & Negotiation Engine v2 (Playbook) ──────────────────────────
 
 class PlaybookRequest(BaseModel):
