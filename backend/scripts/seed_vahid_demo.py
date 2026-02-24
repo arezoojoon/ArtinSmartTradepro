@@ -8,7 +8,7 @@ from sqlalchemy.future import select
 # اضافه کردن مسیر پروژه
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.db.session import async_session_maker
+from app.db.session import AsyncSessionLocal
 from app.models.tenant import Tenant
 from app.models.user import User, TenantMembership
 from app.models.crm import Lead
@@ -16,7 +16,7 @@ from app.core.security import get_password_hash
 from app.core.rbac import RoleEnum
 
 async def seed_vahid_demo():
-    async with async_session_maker() as session:
+    async with AsyncSessionLocal() as session:
         # 1. ساخت Tenant اختصاصی برای شرکت وحید آقا
         print("Creating Fard Foodstuff Tenant...")
         tenant = Tenant(
