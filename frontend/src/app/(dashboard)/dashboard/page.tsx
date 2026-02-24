@@ -71,7 +71,7 @@ export default function DashboardPage() {
                     <CardContent>
                         <div className="text-2xl font-bold text-white group-hover:text-emerald-400 transition-colors">$124,500</div>
                         <p className="text-[10px] text-slate-500 mt-1 uppercase">In 7 Days (DSO: 42d)</p>
-                        <Link href="/wallet" className="text-xs text-emerald-400 hover:text-white transition-colors mt-4 flex items-center gap-1 font-bold">
+                        <Link href="/settings/billing" className="text-xs text-emerald-400 hover:text-white transition-colors mt-4 flex items-center gap-1 font-bold">
                             View Wallet <ChevronRight className="h-3 w-3" />
                         </Link>
                     </CardContent>

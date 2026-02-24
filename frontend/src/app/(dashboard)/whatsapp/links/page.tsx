@@ -20,7 +20,7 @@ export default function DeepLinksPage() {
             try {
                 const userData = JSON.parse(localStorage.getItem("user") || "{}");
                 const tenantId = userData.tenant_id || "";
-                const res = await api.get(`/api/v1/waha/deeplinks?tenant_id=${tenantId}`);
+                const res = await api.get(`/waha/deeplinks?tenant_id=${tenantId}`);
                 const formattedLinks = (res.data || []).map((item: any) => ({
                     id: item.ref,
                     ref: item.ref,
@@ -41,7 +41,7 @@ export default function DeepLinksPage() {
         try {
             const userData = JSON.parse(localStorage.getItem("user") || "{}");
             const tenantId = userData.tenant_id || "";
-            const res = await api.post(`/api/v1/waha/deeplink?ref=${encodeURIComponent(newRef)}&tenant_id=${tenantId}`);
+            const res = await api.post(`/waha/deeplink?ref=${encodeURIComponent(newRef)}&tenant_id=${tenantId}`);
             const newLink = {
                 id: Date.now(),
                 ref: res.data.ref,

@@ -24,7 +24,7 @@ export default function RFQPage() {
 
     const fetchRfqs = async () => {
         try {
-            const res = await api.get("/api/v1/sourcing/rfqs");
+            const res = await api.get("/sourcing/rfqs");
             setRfqs(res.data);
         } catch (e) {
             console.error(e);
@@ -39,7 +39,7 @@ export default function RFQPage() {
 
     const createRFQ = async () => {
         try {
-            await api.post("/api/v1/sourcing/rfqs", {
+            await api.post("/sourcing/rfqs", {
                 ...newRFQ,
                 target_qty: parseFloat(newRFQ.target_qty)
             });

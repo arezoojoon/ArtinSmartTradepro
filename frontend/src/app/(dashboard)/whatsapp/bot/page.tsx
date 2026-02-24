@@ -16,7 +16,7 @@ export default function BotSessionsPage() {
         try {
             const userData = JSON.parse(localStorage.getItem("user") || "{}");
             const tenantId = userData.tenant_id || "";
-            const res = await api.get(`/api/v1/waha/sessions?tenant_id=${tenantId}`);
+            const res = await api.get(`/waha/sessions?tenant_id=${tenantId}`);
             setSessions(res.data || []);
         } catch (e) {
             console.error("Failed to load sessions:", e);
@@ -29,7 +29,7 @@ export default function BotSessionsPage() {
     const toggleLock = async (sessionId: string, isLocked: boolean) => {
         try {
             const action = isLocked ? "unlock" : "lock";
-            await api.post(`/api/v1/waha/sessions/${sessionId}/${action}`);
+            await api.post(`/waha/sessions/${sessionId}/${action}`);
             fetchSessions();
         } catch (e) {
             console.error("Failed to toggle lock:", e);
