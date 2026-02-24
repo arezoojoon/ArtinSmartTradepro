@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
     Plus, Search, Filter, MoreHorizontal, Building2, MapPin,
     Globe, Linkedin, Tag, TrendingUp, AlertTriangle, ShieldCheck,
-    ExternalLink, ArrowUpRight
+    ExternalLink, ArrowUpRight, Target
 } from "lucide-react";
 import { BASE_URL } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -31,7 +31,7 @@ export default function CompaniesPage() {
     const fetchCompanies = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const query = search ? `?search=${search}` : "";
             const res = await fetch(`${BASE_URL}/crm/companies${query}`, {
                 headers: { "Authorization": `Bearer ${token}` }
@@ -211,7 +211,6 @@ export default function CompaniesPage() {
                                             <Progress
                                                 value={company.risk_score || 20}
                                                 className="h-1.5"
-                                                indicatorClassName={getRiskColor(company.risk_score || 20)}
                                             />
                                         </div>
                                     </TableCell>
@@ -261,7 +260,3 @@ export default function CompaniesPage() {
     );
 }
 
-function TargetIcon(props: any) {
-    return <Target className={props.className} />
-}
-import { Target } from "lucide-react"

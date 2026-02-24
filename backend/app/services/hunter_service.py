@@ -8,30 +8,13 @@ import logging
 from app.models.hunter import HunterRun, HunterResult, TradeSignal
 from app.models.ai_job import AIJob
 from app.models.crm import CRMContact, CRMCompany
-from app.services.scraper.base import ScraperFactory
-from app.integrations.uncomtrade import UNComtradeClient
-from app.integrations.trademap import TradeMapClient
-from app.integrations.freight import FreightClient
-from app.integrations.fx import FXClient
-from app.integrations.weather import WeatherClient
-from app.integrations.political import PoliticalRiskClient
 
 logger = logging.getLogger(__name__)
 
 class HunterService:
     """
-    Orchestrates data collection from Scrapers (Leads) and Official APIs (Signals).
+    Orchestrates lead discovery via Gemini AI and imports results to CRM.
     """
-
-    @staticmethod
-    def _get_integration_client(source: str):
-        if source == "un_comtrade": return UNComtradeClient()
-        if source == "trademap": return TradeMapClient()
-        if source == "freight": return FreightClient()
-        if source == "fx": return FXClient()
-        if source == "weather": return WeatherClient()
-        if source == "political": return PoliticalRiskClient()
-        return None
 
     @staticmethod
     async def run_hunter_job(
@@ -47,7 +30,7 @@ class HunterService:
         """
         Async worker function to execute a Hunter Job.
         """
-        from app.db.session import async_session_maker
+        from app.db.session import AsyncSessionLocal as async_session_maker
         from app.services.hunter_search import HunterSearchService
         
         async with async_session_maker() as db:
@@ -245,9 +228,32 @@ class HunterService:
         )
         db.add(task)
 
-        # 5. Optional: Link to a default follow-up sequence if needed
-        # (This would depend on tenant's automation settings)
+        # 5. Auto Follow-Up: Send WhatsApp with nationality detection + Gemini language
+        try:
+            from app.services.lead_auto_followup import auto_followup_on_import
+            await db.commit()
+            await db.refresh(contact)
+            
+            # Get the keyword from the hunter run for context
+            run_res = await db.execute(select(HunterResult).where(HunterResult.id == result_id))
+            result_obj = run_res.scalar_one_or_none()
+            product_keyword = ""
+            if result_obj and result_obj.raw_data:
+                product_keyword = result_obj.raw_data.get("market_hs_code", "") or ""
+            
+            await auto_followup_on_import(
+                db=db,
+                contact=contact,
+                tenant_id=tenant_id,
+                product_keyword=product_keyword,
+            )
+        except Exception as followup_err:
+            logger.warning(f"Auto follow-up after import failed (non-blocking): {followup_err}")
+            # Non-blocking: contact is already created, followup failure shouldn't break import
+            try:
+                await db.commit()
+            except Exception:
+                pass
 
-        await db.commit()
         await db.refresh(contact)
         return contact

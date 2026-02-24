@@ -20,7 +20,7 @@ class CompetitorService:
         """
         Executes a scrape job for a competitor using a separate AsyncSession.
         """
-        from app.db.session import async_session_maker
+        from app.db.session import AsyncSessionLocal as async_session_maker
         async with async_session_maker() as db:
             try:
                 res = await db.execute(select(Competitor).where(Competitor.id == competitor_id))

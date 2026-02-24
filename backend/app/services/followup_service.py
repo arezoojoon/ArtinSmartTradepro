@@ -80,7 +80,7 @@ class FollowUpService:
         Check for pending follow-ups that are due.
         This runs in a background loop/scheduler.
         """
-        from app.db.session import async_session_maker
+        from app.db.session import AsyncSessionLocal as async_session_maker
         async with async_session_maker() as db:
             try:
                 now = datetime.utcnow()

@@ -6,6 +6,8 @@ import enum
 from datetime import datetime
 
 class TenantPlan(str, enum.Enum):
+    FREE = "free"
+    STARTER = "starter"
     PROFESSIONAL = "professional"
     ENTERPRISE = "enterprise"
     WHITELABEL = "whitelabel"

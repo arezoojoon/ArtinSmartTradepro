@@ -92,14 +92,10 @@ export default function HunterTerminalPage() {
                 min_volume_usd: minVolume ? parseFloat(minVolume) : undefined
             });
             setJobId(response.data.job_id);
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             setStatus("error");
-            // در صورت قطع بودن بکاند، سیستم شبیهساز را اجرا میکند تا UI متوقف نشود
-            setTimeout(() => {
-                setStatus("analyzing");
-                setTimeout(simulateAdvancedData, 2000);
-            }, 1500);
+            toast({ title: "Hunter Failed", description: error?.data?.detail || "Could not start hunter job. Please try again.", variant: "destructive" });
         }
     };
 
@@ -127,14 +123,12 @@ export default function HunterTerminalPage() {
     const fetchFinalIntelligence = async (id: string) => {
         try {
             const { data } = await api.get(`/hunter/results/${id}`);
-            if (!data || data.length === 0) {
-                simulateAdvancedData();
-            } else {
-                setResults(data);
-                setStatus("completed");
-            }
+            setResults(data || []);
+            setStatus("completed");
         } catch (error) {
-            simulateAdvancedData();
+            console.error("Failed to fetch results", error);
+            setResults([]);
+            setStatus("completed");
         }
     };
 
@@ -156,37 +150,6 @@ export default function HunterTerminalPage() {
         }
     };
 
-    const simulateAdvancedData = () => {
-        setMarketAnalysis({
-            climate_impact: activeMode === "sourcing" ? "Drought warnings in origin may increase FOB prices by 8%." : "Summer peak season approaching. Urgent stocking required.",
-            cultural_playbook: activeMode === "sourcing" ? "Highly relational market. Recommend WhatsApp voice notes over email." : "Strict corporate buyers. Ensure ISO certifications are attached in first pitch.",
-        });
-
-        setResults([
-            {
-                id: "sim-1",
-                type: "buyer",
-                source: sources.linkedin_posts ? "LinkedIn Post" : "B2B Directory",
-                company: activeMode === "sourcing" ? "Anatolian Pasta & Mills" : "Lulu Hypermarkets HQ",
-                country: activeMode === "sourcing" ? "Turkey (Mersin)" : "UAE (Dubai)",
-                email: "procurement@lulugroup.com",
-                phone: "+971 4 123 4567",
-                confidence_score: 0.99,
-                is_imported: false
-            },
-            {
-                id: "sim-2",
-                type: "buyer",
-                source: sources.trade_forums ? "Active on FoodTrade Forum" : "Customs Data",
-                company: activeMode === "sourcing" ? "ItalMacaroni Export SpA" : "Carrefour Regional Dist.",
-                country: activeMode === "sourcing" ? "Italy (Genoa)" : "Saudi Arabia (Riyadh)",
-                email: "category.manager@carrefour.sa",
-                confidence_score: 0.95,
-                is_imported: false
-            }
-        ]);
-        setStatus("completed");
-    };
 
     return (
         <div className="min-h-screen bg-[#050A15] text-slate-300 p-4 md:p-8 pt-6 selection:bg-[#D4AF37] selection:text-black space-y-8">
