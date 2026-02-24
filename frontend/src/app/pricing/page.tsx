@@ -5,28 +5,50 @@ import PublicFooter from "../components/public/PublicFooter";
 const TIERS = [
   {
     name: "Professional",
-    price: "$299/mo",
+    code: "professional",
+    price: 299,
+    period: "mo",
     highlight: false,
-    features: ["Hunter (Lead Scraper)", "WhatsApp Bot (Single-channel)", "Basic CRM"],
-    cta: { label: "Start Professional", href: "/register" },
+    features: [
+      "Hunter (Lead Scraper)",
+      "WhatsApp Bot (Single-channel)",
+      "Basic CRM",
+      "5 Users included",
+      "Email Support",
+    ],
+    cta: { label: "Start Free Trial", href: "/checkout?plan=professional" },
   },
   {
     name: "Enterprise",
-    price: "$999/mo",
+    code: "enterprise",
+    price: 999,
+    period: "mo",
     highlight: true,
     features: [
+      "Everything in Professional",
       "Full Trade Intelligence (Freight/FX/Risk)",
       "Omnichannel Bots (WhatsApp + Telegram)",
       "Broadcast Campaigns",
       "Competitor Tracking",
+      "AI Brain (Arbitrage & Risk)",
+      "Unlimited Users",
+      "Priority Support",
     ],
-    cta: { label: "Start Enterprise", href: "/register" },
+    cta: { label: "Start Free Trial", href: "/checkout?plan=enterprise" },
   },
   {
     name: "White Label",
-    price: "$2,999/mo + setup",
+    code: "whitelabel",
+    price: 2999,
+    period: "mo + setup",
     highlight: false,
-    features: ["Custom Domain & Branding", "Dedicated Infrastructure", "Enterprise Support"],
+    features: [
+      "Everything in Enterprise",
+      "Custom Domain & Branding",
+      "Dedicated Infrastructure",
+      "White-glove Onboarding",
+      "SLA & Enterprise Support",
+    ],
     cta: { label: "Contact Sales", href: "/#about" },
   },
 ];
@@ -37,19 +59,23 @@ export default function PricingPage() {
       <PublicHeader />
 
       <main className="mx-auto max-w-6xl px-4 py-14">
-        <h1 className="text-3xl font-bold md:text-4xl text-white">Pricing Plans</h1>
-        <p className="mt-2 max-w-2xl text-sm text-gray-400 md:text-base">
-          Choose a plan that matches your trade operation. Upgrade anytime to unlock advanced AI intelligence.
-        </p>
+        <div className="text-center">
+          <h1 className="text-3xl font-bold md:text-4xl text-white">
+            Simple, Transparent Pricing
+          </h1>
+          <p className="mt-3 max-w-2xl mx-auto text-sm text-gray-400 md:text-base">
+            Choose your plan and start with a <span className="text-[#f5a623] font-semibold">3-day free trial</span>. No credit card required to get started.
+          </p>
+        </div>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
+        <div className="mt-12 grid gap-6 md:grid-cols-3">
           {TIERS.map((tier) => (
             <div
               key={tier.name}
               className={[
                 "rounded-2xl border p-6 flex flex-col transition-all hover:scale-[1.02]",
                 tier.highlight
-                  ? "border-[#f5a623]/50 bg-[#0e1e33] shadow-[0_0_20px_rgba(245,166,35,0.1)]"
+                  ? "border-[#f5a623]/50 bg-[#0e1e33] shadow-[0_0_20px_rgba(245,166,35,0.1)] ring-1 ring-[#f5a623]/20"
                   : "border-[#1e3a5f] bg-[#0e1e33]/50",
               ].join(" ")}
             >
@@ -63,14 +89,20 @@ export default function PricingPage() {
               </div>
 
               <div className="mt-6 flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-white">{tier.price.split('/')[0]}</span>
-                <span className="text-gray-400 text-sm">/{tier.price.split('/')[1]}</span>
+                <span className="text-3xl font-bold text-white">${tier.price.toLocaleString()}</span>
+                <span className="text-gray-400 text-sm">/{tier.period}</span>
               </div>
+
+              {tier.code !== "whitelabel" && (
+                <p className="mt-2 text-xs text-[#f5a623]/80 font-medium">
+                  3 days free — then ${tier.price}/mo
+                </p>
+              )}
 
               <ul className="mt-8 space-y-3 flex-1">
                 {tier.features.map((f) => (
                   <li key={f} className="flex gap-3 text-sm text-gray-300">
-                    <span className="text-[#f5a623] font-bold">✓</span>
+                    <span className="text-[#f5a623] font-bold shrink-0">✓</span>
                     <span>{f}</span>
                   </li>
                 ))}
@@ -89,6 +121,19 @@ export default function PricingPage() {
               </Link>
             </div>
           ))}
+        </div>
+
+        {/* FAQ / Trust */}
+        <div className="mt-16 text-center">
+          <p className="text-sm text-gray-500">
+            All plans include SSL encryption, 99.9% uptime SLA, and GDPR compliance.
+          </p>
+          <p className="mt-2 text-sm text-gray-500">
+            Already have an account?{" "}
+            <Link href="/login" className="text-[#f5a623] hover:underline font-medium">
+              Sign in
+            </Link>
+          </p>
         </div>
       </main>
 

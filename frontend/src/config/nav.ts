@@ -39,7 +39,7 @@ export const navItems = {
         { label: "Trade Intelligence", href: "/trade", icon: Globe },
         { label: "Deal Flow (AI)", href: "/brain/opportunities", icon: Briefcase },
         { label: "Operations", href: "/operations/inventory", icon: Warehouse },
-        { label: "Billing", href: "/settings/billing", icon: Wallet },
+        { label: "Settings", href: "/settings", icon: Settings },
     ],
     seller: [
         { label: "Dashboard", href: "/seller", icon: LayoutDashboard },
@@ -48,7 +48,7 @@ export const navItems = {
         { label: "Campaigns", href: "/crm/campaigns", icon: Megaphone },
         { label: "Market Intel", href: "/hunter/competitors", icon: Crosshair },
         { label: "WhatsApp Sales", href: "/whatsapp", icon: MessageCircle },
-        { label: "Billing", href: "/settings/billing", icon: Wallet },
+        { label: "Settings", href: "/settings", icon: Settings },
     ],
     hybrid: [
         { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -57,7 +57,6 @@ export const navItems = {
         { label: "Sourcing", href: "/sourcing/rfqs", icon: Package },
         { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle },
         { label: "AI Brain", href: "/brain", icon: Brain },
-        { label: "Billing", href: "/settings/billing", icon: Wallet },
         { label: "Settings", href: "/settings", icon: Settings },
     ]
 };

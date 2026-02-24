@@ -43,7 +43,7 @@ export default function HomePage() {
               Login
             </Link>
             <Link
-              href="/register"
+              href="/pricing"
               className="rounded-full bg-[#f5a623] px-4 py-2 text-sm font-semibold text-[#071022] transition-colors hover:bg-[#B5952F]"
             >
               Get Started
@@ -73,7 +73,7 @@ export default function HomePage() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/register"
+                href="/pricing"
                 className="rounded-2xl bg-[#f5a623] px-6 py-3 text-center text-sm font-semibold text-[#0B1B3A]"
               >
                 Get Started

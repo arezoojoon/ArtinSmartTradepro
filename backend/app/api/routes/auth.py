@@ -81,6 +81,11 @@ async def register(
     await db.commit()
     await db.refresh(user)
     
+    # Determine selected plan (from checkout flow)
+    selected_plan = user_data.plan or "professional"
+    if selected_plan not in ("professional", "enterprise", "whitelabel"):
+        selected_plan = "professional"
+    
     # Create tenant if company name is provided
     if user_data.company_name:
         slug = user_data.company_name.lower().replace(" ", "-")
@@ -94,7 +99,8 @@ async def register(
         tenant = Tenant(
             name=user_data.company_name,
             slug=slug,
-            plan="starter", # Default plan
+            mode=user_data.tenant_mode or "hybrid",
+            plan=selected_plan,
             is_active=True
         )
         db.add(tenant)
@@ -111,6 +117,51 @@ async def register(
         
         # Set as current tenant
         user.current_tenant_id = tenant.id
+        
+        # Create wallet for tenant
+        try:
+            from ...models.billing import Wallet
+            wallet = Wallet(
+                tenant_id=tenant.id,
+                balance=0.0
+            )
+            db.add(wallet)
+        except Exception as e:
+            print(f"Failed to create wallet: {e}")
+        
+        # Create subscription with 3-day free trial
+        try:
+            from ...models.subscription import Subscription, Plan
+            trial_end = datetime.utcnow() + timedelta(days=3)
+            # Find or create the plan record
+            plan_result = await db.execute(
+                select(Plan).where(Plan.name == selected_plan)
+            )
+            plan_record = plan_result.scalar_one_or_none()
+            if not plan_record:
+                # Create plan record if it doesn't exist
+                plan_prices = {"professional": 299, "enterprise": 999, "whitelabel": 2999}
+                plan_record = Plan(
+                    name=selected_plan,
+                    display_name=selected_plan.capitalize(),
+                    price_monthly=plan_prices.get(selected_plan, 299),
+                    currency="USD",
+                    is_active=True
+                )
+                db.add(plan_record)
+                await db.commit()
+                await db.refresh(plan_record)
+            
+            subscription = Subscription(
+                tenant_id=tenant.id,
+                plan_id=plan_record.id,
+                status="trialing",
+                current_period_start=datetime.utcnow(),
+                current_period_end=trial_end,
+            )
+            db.add(subscription)
+        except Exception as e:
+            print(f"Failed to create trial subscription: {e}")
         
         # Seed default tenant data (roles, permissions)
         from ...services.tenant_seeder import seed_new_tenant

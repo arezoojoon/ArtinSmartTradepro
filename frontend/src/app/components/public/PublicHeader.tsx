@@ -45,7 +45,7 @@ export default function PublicHeader() {
                         Login
                     </Link>
                     <Link
-                        href="/register"
+                        href="/pricing"
                         className="rounded-xl bg-[#f5a623] px-4 py-2 text-sm font-medium text-[#0B1B3A] hover:opacity-95"
                     >
                         Get Started
@@ -85,7 +85,7 @@ export default function PublicHeader() {
                                     Login
                                 </Link>
                                 <Link
-                                    href="/register"
+                                    href="/pricing"
                                     className="rounded-xl bg-[#f5a623] px-3 py-2 text-center text-sm font-medium text-[#0B1B3A]"
                                     onClick={() => setOpen(false)}
                                 >
