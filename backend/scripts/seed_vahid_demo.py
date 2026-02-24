@@ -10,10 +10,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.db.session import AsyncSessionLocal
 from app.models.tenant import Tenant
-from app.models.user import User, TenantMembership
+from app.models.user import User
+from app.models.tenant import TenantMembership
 from app.models.crm import Lead
 from app.core.security import get_password_hash
-from app.core.rbac import RoleEnum
+from app.models.tenant import TenantRole
 
 async def seed_vahid_demo():
     async with AsyncSessionLocal() as session:
@@ -46,7 +47,7 @@ async def seed_vahid_demo():
         membership = TenantMembership(
             user_id=vahid.id,
             tenant_id=tenant.id,
-            role=RoleEnum.OWNER
+            role=TenantRole.OWNER
         )
         session.add(membership)
 
