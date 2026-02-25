@@ -46,10 +46,32 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
         
+    # Ensure current_tenant_id is set on user object
+    if tenant_id and not user.current_tenant_id:
+        user.current_tenant_id = tenant_id
+    
+    # Fallback: if still no tenant, resolve from memberships
+    if not user.current_tenant_id:
+        from ..models.tenant import TenantMembership
+        mem_result = await db.execute(
+            select(TenantMembership.tenant_id)
+            .where(TenantMembership.user_id == user.id)
+            .limit(1)
+        )
+        first_tenant = mem_result.scalar_one_or_none()
+        if first_tenant:
+            user.current_tenant_id = first_tenant
+            tenant_id = str(first_tenant)
+            await db.commit()
+
     # Inject tenant context for RLS (if present in token)
     if tenant_id:
         from ..middleware.tenant import set_tenant_context
         set_tenant_context(tenant_id)
+    elif user.current_tenant_id:
+        from ..middleware.tenant import set_tenant_context
+        set_tenant_context(str(user.current_tenant_id))
+        tenant_id = str(user.current_tenant_id)
         
     # Save token roles to user instance and request state
     user._jwt_roles = roles
