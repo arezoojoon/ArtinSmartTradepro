@@ -134,13 +134,13 @@ async def get_main_dashboard(
                 .where(
                     BrainEngineRun.tenant_id == tenant_id,
                     BrainEngineRun.engine_type == "risk",
-                    BrainEngineRun.status == "success",
+                    BrainEngineRun.run_status == "completed",
                 )
-                .order_by(BrainEngineRun.created_at.desc())
+                .order_by(BrainEngineRun.started_at.desc())
                 .limit(20)
             )
             for run in result.scalars().all():
-                payload = getattr(run, "output_payload", None) or getattr(run, "result_json", None) or {}
+                payload = run.results or {}
                 risk_level = payload.get("overall_risk_level", payload.get("risk_level", "low"))
                 risk_heatmap.append({
                     "country": payload.get("country", "Unknown"),
@@ -211,18 +211,18 @@ async def get_mobile_dashboard(
                 select(BrainEngineRun).where(
                     BrainEngineRun.tenant_id == tenant_id,
                     BrainEngineRun.engine_type == "arbitrage",
-                    BrainEngineRun.status == "success",
-                    BrainEngineRun.created_at >= now - datetime.timedelta(days=1),
-                ).order_by(BrainEngineRun.created_at.desc()).limit(3)
+                    BrainEngineRun.run_status == "completed",
+                    BrainEngineRun.started_at >= now - datetime.timedelta(days=1),
+                ).order_by(BrainEngineRun.started_at.desc()).limit(3)
             )
             for run in result.scalars().all():
-                opp = (run.output_payload or {}).get("opportunity_card", {})
+                opp = (run.results or {}).get("opportunity_card", {})
                 opportunities.append({
                     "id": str(run.id),
                     "title": f"{opp.get('product', 'Unknown')} Arbitrage",
                     "description": f"Buy: {opp.get('buy_market')} @ ${opp.get('buy_price', 0)}, Sell: {opp.get('sell_market')} @ ${opp.get('sell_price', 0)}",
                     "source": "Brain Arbitrage Engine",
-                    "timestamp": run.created_at.isoformat(),
+                    "timestamp": run.started_at.isoformat(),
                     "confidence": opp.get("confidence", 0.8),
                     "isInsufficientData": False,
                 })
@@ -337,11 +337,11 @@ async def get_web_dashboard(
                 select(BrainEngineRun).where(
                     BrainEngineRun.tenant_id == tenant_id,
                     BrainEngineRun.engine_type == "risk",
-                    BrainEngineRun.status == "success",
-                ).order_by(BrainEngineRun.created_at.desc()).limit(10)
+                    BrainEngineRun.run_status == "completed",
+                ).order_by(BrainEngineRun.started_at.desc()).limit(10)
             )
             for run in result.scalars().all():
-                r = getattr(run, "result_json", None) or getattr(run, "output_payload", None) or {}
+                r = run.results or {}
                 risk_heatmap.append({
                     "country": r.get("country", "Unknown"),
                     "category": r.get("primary_risk", "General"),

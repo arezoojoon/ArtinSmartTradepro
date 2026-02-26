@@ -9,6 +9,9 @@ from pydantic import BaseModel
 from typing import Optional, List
 from uuid import UUID
 import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 from app.db.session import get_db
 from app.models.user import User
@@ -233,7 +236,7 @@ async def delete_contact(
 @router.get("/companies", dependencies=[Depends(require_permissions(["crm.read"]))])
 async def list_companies(
     skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
+    limit: int = Query(50, ge=1, le=500),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -821,20 +824,25 @@ async def bulk_import_contacts(
       note       — creates a CRMNote on each imported contact
     """
     fname = (file.filename or "").lower()
+    ctype = (file.content_type or "").lower()
     raw = await file.read()
+    logger.info(f"bulk-import: filename={file.filename!r}, content_type={ctype!r}, size={len(raw)}")
 
-    if fname.endswith(".xlsx"):
+    is_xlsx = fname.endswith(".xlsx") or "spreadsheet" in ctype or "xlsx" in ctype
+    is_csv = fname.endswith(".csv") or "csv" in ctype or "text/" in ctype
+
+    if is_xlsx:
         try:
             rows = _parse_xlsx_rows(raw)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Failed to parse XLSX: {e}")
-    elif fname.endswith(".csv"):
+    elif is_csv:
         try:
             rows = _parse_csv_rows(raw)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Failed to parse CSV: {e}")
     else:
-        raise HTTPException(status_code=400, detail="Unsupported file type. Upload .csv or .xlsx")
+        raise HTTPException(status_code=400, detail=f"Unsupported file type '{fname}'. Upload .csv or .xlsx")
 
     if not rows:
         raise HTTPException(status_code=400, detail="File contains no data rows")
