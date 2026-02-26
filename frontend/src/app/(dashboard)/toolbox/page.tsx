@@ -1,12 +1,66 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { BarChart3, Globe, Ship, DollarSign, Download, ArrowRight, TrendingUp, AlertCircle, Activity, LayoutGrid, ChevronRight, Zap } from "lucide-react"
+import { BarChart3, Globe, Ship, DollarSign, Download, ArrowRight, TrendingUp, AlertCircle, Activity, LayoutGrid, ChevronRight, Zap, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
+import api from "@/lib/api"
 
 export default function ToolboxPage() {
+    const [shocks, setShocks] = useState<any[]>([])
+    const [shocksLoading, setShocksLoading] = useState(true)
+    const [exporting, setExporting] = useState<string | null>(null)
+
+    useEffect(() => {
+        const fetchShocks = async () => {
+            try {
+                const res = await api.get("/toolbox/shocks")
+                const data = res.data
+                setShocks(Array.isArray(data) ? data : data.alerts || data.shocks || [])
+            } catch {
+                setShocks([])
+            } finally {
+                setShocksLoading(false)
+            }
+        }
+        fetchShocks()
+    }, [])
+
+    const handleExport = async (type: string) => {
+        setExporting(type)
+        try {
+            let data: any[] = []
+            let filename = ""
+            if (type === "trade") {
+                const res = await api.get("/toolbox/trade-data")
+                data = Array.isArray(res.data) ? res.data : []
+                filename = "global_trade_map.csv"
+            } else if (type === "fx") {
+                const res = await api.get("/toolbox/fx/history?base=USD&quote=EUR&days=30")
+                data = Array.isArray(res.data) ? res.data : []
+                filename = "fx_volatility_history.csv"
+            } else if (type === "freight") {
+                const res = await api.get("/toolbox/freight?origin=CHN&dest=USA&equipment=20GP")
+                data = res.data ? [res.data] : []
+                filename = "freight_index.csv"
+            }
+            if (data.length === 0) { setExporting(null); return }
+            const headers = Object.keys(data[0])
+            const csv = [headers.join(","), ...data.map(row => headers.map(h => JSON.stringify(row[h] ?? "")).join(","))].join("\n")
+            const blob = new Blob([csv], { type: "text/csv" })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement("a")
+            a.href = url; a.download = filename; a.click()
+            URL.revokeObjectURL(url)
+        } catch (e) {
+            console.error("Export failed", e)
+        } finally {
+            setExporting(null)
+        }
+    }
+
     const tools = [
         {
             title: "Global Trade Data",
@@ -94,44 +148,38 @@ export default function ToolboxPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-cyan-500/30 transition-all">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-xl">
-                                    <Ship className="h-6 w-6" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-bold text-white group-hover:text-cyan-400 transition-colors">Shanghai &rarr; Jebel Ali (Freight Index)</p>
-                                    <p className="text-[11px] text-slate-500 uppercase font-medium mt-0.5">Rates spiked +4.2% in last 48h (Congestion Alert)</p>
-                                </div>
+                        {shocksLoading ? (
+                            <div className="flex items-center justify-center py-8 text-slate-500">
+                                <Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading signals...
                             </div>
-                            <TrendingUp className="h-5 w-5 text-red-500 animate-pulse" />
-                        </div>
-
-                        <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-emerald-500/30 transition-all">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
-                                    <DollarSign className="h-6 w-6" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">EUR/USD Volatility Pulse</p>
-                                    <p className="text-[11px] text-slate-500 uppercase font-medium mt-0.5">ECB announcement caused 0.8% liquidity drop</p>
-                                </div>
+                        ) : shocks.length === 0 ? (
+                            <div className="text-center py-8 text-slate-500 text-sm">
+                                No active market signals. All clear.
                             </div>
-                            <AlertCircle className="h-5 w-5 text-orange-500" />
-                        </div>
-
-                        <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-blue-500/30 transition-all">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl">
-                                    <Globe className="h-6 w-6" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">HS Code 0901.11 (Regulatory Update)</p>
-                                    <p className="text-[11px] text-slate-500 uppercase font-medium mt-0.5">New EU Green-Deal import sanctions published</p>
-                                </div>
-                            </div>
-                            <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] font-bold">INFO</Badge>
-                        </div>
+                        ) : (
+                            shocks.slice(0, 5).map((shock: any, idx: number) => {
+                                const severity = shock.severity || shock.level || "info"
+                                const colors = severity === "high" ? { border: "hover:border-red-500/30", icon: "bg-red-500/10 border-red-500/20 text-red-400", text: "group-hover:text-red-400" }
+                                    : severity === "medium" ? { border: "hover:border-amber-500/30", icon: "bg-amber-500/10 border-amber-500/20 text-amber-400", text: "group-hover:text-amber-400" }
+                                    : { border: "hover:border-cyan-500/30", icon: "bg-cyan-500/10 border-cyan-500/20 text-cyan-400", text: "group-hover:text-cyan-400" }
+                                return (
+                                    <div key={idx} className={`flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 group ${colors.border} transition-all`}>
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-3 border rounded-xl ${colors.icon}`}>
+                                                {severity === "high" ? <AlertCircle className="h-6 w-6" /> : <TrendingUp className="h-6 w-6" />}
+                                            </div>
+                                            <div>
+                                                <p className={`text-sm font-bold text-white ${colors.text} transition-colors`}>{shock.title || shock.pair || "Signal"}</p>
+                                                <p className="text-[11px] text-slate-500 uppercase font-medium mt-0.5">{shock.message || shock.description || ""}</p>
+                                            </div>
+                                        </div>
+                                        <Badge className={`${severity === "high" ? "bg-red-500/20 text-red-400 border-red-500/30" : severity === "medium" ? "bg-amber-500/20 text-amber-400 border-amber-500/30" : "bg-blue-500/20 text-blue-400 border-blue-500/30"} text-[10px] font-bold`}>
+                                            {severity.toUpperCase()}
+                                        </Badge>
+                                    </div>
+                                )
+                            })
+                        )}
                     </CardContent>
                 </Card>
 
@@ -146,17 +194,17 @@ export default function ToolboxPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <Button variant="outline" className="w-full justify-between h-14 border-[#1e3a5f] bg-[#0e1e33]/40 text-slate-300 hover:border-[#f5a623] hover:text-[#f5a623] transition-all px-6">
+                        <Button variant="outline" className="w-full justify-between h-14 border-[#1e3a5f] bg-[#0e1e33]/40 text-slate-300 hover:border-[#f5a623] hover:text-[#f5a623] transition-all px-6" onClick={() => handleExport("trade")} disabled={exporting === "trade"}>
                             <span className="flex items-center font-bold text-xs uppercase tracking-widest"><Globe className="mr-3 h-4 w-4" /> Global Trade Map</span>
-                            <Download className="h-4 w-4" />
+                            {exporting === "trade" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                         </Button>
-                        <Button variant="outline" className="w-full justify-between h-14 border-[#1e3a5f] bg-[#0e1e33]/40 text-slate-300 hover:border-[#f5a623] hover:text-[#f5a623] transition-all px-6">
+                        <Button variant="outline" className="w-full justify-between h-14 border-[#1e3a5f] bg-[#0e1e33]/40 text-slate-300 hover:border-[#f5a623] hover:text-[#f5a623] transition-all px-6" onClick={() => handleExport("fx")} disabled={exporting === "fx"}>
                             <span className="flex items-center font-bold text-xs uppercase tracking-widest"><DollarSign className="mr-3 h-4 w-4" /> FX Volatility History</span>
-                            <Download className="h-4 w-4" />
+                            {exporting === "fx" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                         </Button>
-                        <Button variant="outline" className="w-full justify-between h-14 border-[#1e3a5f] bg-[#0e1e33]/40 text-slate-300 hover:border-[#f5a623] hover:text-[#f5a623] transition-all px-6">
+                        <Button variant="outline" className="w-full justify-between h-14 border-[#1e3a5f] bg-[#0e1e33]/40 text-slate-300 hover:border-[#f5a623] hover:text-[#f5a623] transition-all px-6" onClick={() => handleExport("freight")} disabled={exporting === "freight"}>
                             <span className="flex items-center font-bold text-xs uppercase tracking-widest"><Ship className="mr-3 h-4 w-4" /> Scafi Freight Index</span>
-                            <Download className="h-4 w-4" />
+                            {exporting === "freight" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                         </Button>
 
                         <div className="pt-4 text-center">

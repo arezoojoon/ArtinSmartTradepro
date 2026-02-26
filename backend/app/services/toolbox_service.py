@@ -79,15 +79,51 @@ class ToolboxService:
         raw = await client.get_rates(origin, dest, equipment)
         
         # Map to frontend expected shape
+        rate_amount = raw["price_usd"]
+
+        # Generate route-aware port risks based on origin/destination
+        port_risks = [
+            {
+                "port": f"Origin ({origin})",
+                "level": "Moderate" if raw["transit_time_days"] > 25 else "Low",
+                "issue": "Port congestion may add 2-3 day delays" if raw["transit_time_days"] > 25 else "Normal operations"
+            },
+            {
+                "port": f"Destination ({dest})",
+                "level": "Low",
+                "issue": "Normal operations"
+            },
+        ]
+        if raw["transit_time_days"] > 30:
+            port_risks.append({
+                "port": "Transit (Long Route)",
+                "level": "High",
+                "issue": "Extended transit — vessel rerouting or weather delays expected"
+            })
+
+        # Estimate hidden costs proportional to rate
+        thc = round(rate_amount * 0.08)
+        customs = round(rate_amount * 0.05)
+        baf = round(rate_amount * 0.10)
+        hidden_costs = [
+            {"item": "Terminal Handling Charges (THC)", "est": thc, "type": "Origin"},
+            {"item": "Customs Clearance Fees", "est": customs, "type": "Destination"},
+            {"item": "Bunker Adjustment Factor (BAF)", "est": baf, "type": "Freight"},
+        ]
+        if raw.get("trend") == "increasing":
+            hidden_costs.append({"item": "Peak Season Surcharge (PSS)", "est": round(rate_amount * 0.12), "type": "Freight"})
+
         return {
             "origin_country": raw["origin"],
             "destination_country": raw["destination"],
             "equipment_type": raw["container"],
-            "rate_amount": raw["price_usd"],
+            "rate_amount": rate_amount,
             "currency": "USD",
             "transit_days_estimate": raw["transit_time_days"],
             "provider": raw["provider"],
-            "incoterm": "CIF" # Default for now
+            "incoterm": "CIF",
+            "port_risks": port_risks,
+            "hidden_costs": hidden_costs,
         }
 
     @staticmethod
@@ -107,6 +143,44 @@ class ToolboxService:
             "timestamp": datetime.datetime.now(), # generic
             "provider": raw["source"]
         }
+
+    @staticmethod
+    async def get_fx_history(base: str, quote: str, days: int = 30):
+        """
+        Generate server-side historical FX data using deterministic seeding.
+        Uses the currency pair as seed so the same pair always produces consistent data.
+        """
+        import hashlib
+
+        # Seed based on pair for deterministic results within the same day
+        today = datetime.datetime.utcnow().date()
+        seed_str = f"{base}{quote}{today.isoformat()}"
+        seed = int(hashlib.md5(seed_str.encode()).hexdigest()[:8], 16)
+        rng = random.Random(seed)
+
+        # Base rates (same as FXClient)
+        rates_map = {
+            "USD": 1.0, "EUR": 0.92, "GBP": 0.79, "AED": 3.67,
+            "CNY": 7.15, "INR": 83.5, "JPY": 149.5, "SAR": 3.75,
+        }
+        base_val = rates_map.get(base, 1.0)
+        quote_val = rates_map.get(quote, 1.0)
+        current_rate = quote_val / base_val
+
+        data = []
+        rate = current_rate * rng.uniform(0.97, 1.0)
+        for i in range(days, -1, -1):
+            d = today - datetime.timedelta(days=i)
+            change = (rng.random() - 0.5) * (rate * 0.012)
+            rate += change
+            data.append({
+                "date": d.strftime("%b %d"),
+                "rate": round(rate, 4),
+                "upper": round(rate * 1.02, 4),
+                "lower": round(rate * 0.98, 4),
+            })
+
+        return data
 
     @staticmethod
     def seed_all_data(db: Session, current_user=None):

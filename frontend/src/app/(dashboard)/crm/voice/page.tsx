@@ -120,6 +120,22 @@ export default function VoiceIntelligencePage() {
         return <StickyNote className="h-4 w-4 text-yellow-400" />;
     };
 
+    const [actionDone, setActionDone] = useState<Record<number, boolean>>({});
+
+    const handleAction = async (action: any, idx: number) => {
+        try {
+            const token = localStorage.getItem("token");
+            if (action.type === "followup" || action.type === "task") {
+                await fetch(`${BASE_URL}/crm/tasks`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ title: action.label, priority: action.type === "followup" ? "high" : "medium" })
+                });
+            }
+            setActionDone(prev => ({ ...prev, [idx]: true }));
+        } catch (err) { console.error("Action failed", err); }
+    };
+
     return (
         <div className="p-6 max-w-7xl mx-auto">
             {/* Header */}
@@ -280,8 +296,12 @@ export default function VoiceIntelligencePage() {
                                                     {getActionIcon(action.type)}
                                                     <span className="text-sm text-navy-300">{action.label}</span>
                                                 </div>
-                                                <button className="px-3 py-1 text-xs bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors">
-                                                    {action.type === "followup" ? "Schedule" : action.type === "task" ? "Create" : "Add"}
+                                                <button
+                                                    onClick={() => handleAction(action, i)}
+                                                    disabled={actionDone[i]}
+                                                    className={`px-3 py-1 text-xs rounded-lg transition-colors ${actionDone[i] ? "bg-emerald-500/20 text-emerald-400" : "bg-purple-500/20 text-purple-400 hover:bg-purple-500/30"}`}
+                                                >
+                                                    {actionDone[i] ? "Done" : action.type === "followup" ? "Schedule" : action.type === "task" ? "Create" : "Add"}
                                                 </button>
                                             </li>
                                         ))}

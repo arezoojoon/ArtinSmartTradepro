@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Search, TrendingUp, Globe, Package, Ship, Brain, Camera, Loader2, AlertTriangle, Sparkles } from "lucide-react";
 import { BASE_URL } from "@/lib/api";
 
@@ -16,6 +17,7 @@ const analysisTools = [
 ];
 
 export default function TradePage() {
+    const router = useRouter();
     const [active, setActive] = useState<AnalysisType>("seasonal");
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<any>(null);
@@ -111,7 +113,7 @@ export default function TradePage() {
                 {analysisTools.map((tool) => (
                     <button
                         key={tool.type}
-                        onClick={() => { setActive(tool.type); setResult(null); setError(null); }}
+                        onClick={() => { if (tool.type === "card-scan") { router.push("/crm/vision"); return; } setActive(tool.type); setResult(null); setError(null); }}
                         className={`p-4 rounded-xl border transition-all text-left ${active === tool.type
                             ? "bg-navy-800 border-gold-400/50 shadow-lg shadow-gold-400/5"
                             : "bg-[#0e1e33]/50 border-navy-700/30 hover:border-navy-600"

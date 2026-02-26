@@ -52,6 +52,18 @@ async def get_fx_rate(
         raise HTTPException(status_code=404, detail="No rate found for pair")
     return rate
 
+@router.get("/fx/history")
+@require_feature(Feature.AI_BRAIN)
+async def get_fx_history(
+    base: str = "USD",
+    quote: str = "EUR",
+    days: int = 30,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get historical FX data for volatility chart."""
+    return await ToolboxService.get_fx_history(base, quote, days)
+
 @router.get("/analytics")
 @require_feature(Feature.REPORTS)
 async def get_bi_kpis(
@@ -60,6 +72,15 @@ async def get_bi_kpis(
 ):
     """Get BI KPIs (DSO, Conversion, etc)."""
     return AnalyticsService.get_kpis(db, current_user.tenant_id)
+
+@router.get("/analytics/monthly")
+@require_feature(Feature.REPORTS)
+async def get_monthly_performance(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get monthly revenue vs target data for KPI Builder chart."""
+    return AnalyticsService.get_monthly_performance(db, current_user.tenant_id)
 
 @router.get("/shocks")
 @require_feature(Feature.AI_BRAIN)

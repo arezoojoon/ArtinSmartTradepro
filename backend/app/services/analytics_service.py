@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, extract
 from app.models.crm import CRMInvoice, CRMDeal, CRMPipeline
 import datetime
+from collections import defaultdict
 
 class AnalyticsService:
     """
@@ -87,3 +88,51 @@ class AnalyticsService:
             return 0.0
             
         return round((won / total) * 100, 1)
+
+    @staticmethod
+    def get_monthly_performance(db: Session, tenant_id):
+        """
+        Monthly revenue vs target derived from real CRM deal data.
+        Returns last 6 months of data.
+        """
+        months = []
+        now = datetime.datetime.utcnow()
+        month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+        for i in range(5, -1, -1):
+            d = now - datetime.timedelta(days=i * 30)
+            month_idx = d.month
+            year = d.year
+
+            # Sum deal values closed (won) in this month
+            revenue = db.query(func.coalesce(func.sum(CRMDeal.value), 0)).filter(
+                CRMDeal.tenant_id == tenant_id,
+                CRMDeal.status == "won",
+                extract("month", CRMDeal.updated_at) == month_idx,
+                extract("year", CRMDeal.updated_at) == year,
+            ).scalar()
+
+            # Sum paid invoices in this month
+            invoice_rev = db.query(func.coalesce(func.sum(CRMInvoice.total_amount), 0)).filter(
+                CRMInvoice.tenant_id == tenant_id,
+                CRMInvoice.status == "paid",
+                extract("month", CRMInvoice.paid_date) == month_idx,
+                extract("year", CRMInvoice.paid_date) == year,
+            ).scalar()
+
+            total_revenue = float(revenue or 0) + float(invoice_rev or 0)
+
+            # Target = simple growth model based on total pipeline
+            total_pipeline = db.query(func.coalesce(func.sum(CRMDeal.value), 0)).filter(
+                CRMDeal.tenant_id == tenant_id,
+            ).scalar()
+            target = float(total_pipeline or 0) / 6  # evenly spread
+
+            months.append({
+                "month": month_names[month_idx - 1],
+                "revenue": round(total_revenue),
+                "target": round(target),
+            })
+
+        return months

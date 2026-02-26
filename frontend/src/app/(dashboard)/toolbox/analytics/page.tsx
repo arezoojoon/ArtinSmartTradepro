@@ -11,29 +11,30 @@ import api from "@/lib/api"
 export default function AnalyticsPage() {
     const [kpis, setKpis] = useState<any>(null)
     const [loading, setLoading] = useState(true)
-
-    // Mock data for the Custom KPI Builder chart
-    const monthlyPerformance = [
-        { month: 'Jan', revenue: 45000, target: 40000 },
-        { month: 'Feb', revenue: 52000, target: 42000 },
-        { month: 'Mar', revenue: 48000, target: 45000 },
-        { month: 'Apr', revenue: 61000, target: 48000 },
-        { month: 'May', revenue: 59000, target: 50000 },
-        { month: 'Jun', revenue: 72000, target: 55000 },
-    ]
+    const [monthlyPerformance, setMonthlyPerformance] = useState<any[]>([])
+    const [showSchedule, setShowSchedule] = useState(false)
+    const [scheduleForm, setScheduleForm] = useState({ email: "", frequency: "weekly" })
+    const [scheduleSaved, setScheduleSaved] = useState(false)
+    const [showAddMetric, setShowAddMetric] = useState(false)
+    const [customMetrics, setCustomMetrics] = useState<string[]>(["Total Revenue", "Target Revenue"])
+    const [newMetricName, setNewMetricName] = useState("")
 
     useEffect(() => {
-        const fetchKpis = async () => {
+        const fetchData = async () => {
             try {
-                const res = await api.get("/toolbox/analytics")
-                setKpis(res.data)
+                const [kpiRes, monthlyRes] = await Promise.allSettled([
+                    api.get("/toolbox/analytics"),
+                    api.get("/toolbox/analytics/monthly"),
+                ])
+                if (kpiRes.status === "fulfilled") setKpis(kpiRes.value.data)
+                if (monthlyRes.status === "fulfilled") setMonthlyPerformance(monthlyRes.value.data)
             } catch (error) {
                 console.error("KPI fetch failed", error)
             } finally {
                 setLoading(false)
             }
         }
-        fetchKpis()
+        fetchData()
     }, [])
 
     if (loading) return (
@@ -52,7 +53,7 @@ export default function AnalyticsPage() {
                     <p className="text-muted-foreground mt-1">Custom KPI Builder & Automated Reporting</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button variant="outline" className="shadow-sm border-slate-200">
+                    <Button variant="outline" className="shadow-sm border-slate-200" onClick={() => { setShowSchedule(true); setScheduleSaved(false); }}>
                         <PieChart className="mr-2 h-4 w-4 text-indigo-500" />
                         Schedule Reports
                     </Button>
@@ -130,7 +131,7 @@ export default function AnalyticsPage() {
                             Build, combine, and visualize multiple distinct data points across regions.
                         </CardDescription>
                     </div>
-                    <Button variant="outline" size="sm" className="h-8">
+                    <Button variant="outline" size="sm" className="h-8" onClick={() => { setShowAddMetric(true); setNewMetricName(""); }}>
                         <Plus className="h-4 w-4 mr-1" /> Add Metric
                     </Button>
                 </CardHeader>
@@ -187,6 +188,68 @@ export default function AnalyticsPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Schedule Reports Modal */}
+            {showSchedule && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowSchedule(false)}>
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold text-slate-800">Schedule Reports</h3>
+                            <button onClick={() => setShowSchedule(false)} className="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+                        </div>
+                        {scheduleSaved ? (
+                            <div className="text-center py-6">
+                                <div className="h-12 w-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3"><PieChart className="h-6 w-6" /></div>
+                                <p className="font-semibold text-slate-800">Report Scheduled!</p>
+                                <p className="text-sm text-slate-500 mt-1">You'll receive {scheduleForm.frequency} reports at {scheduleForm.email || "your email"}</p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs text-slate-500 mb-1">Email Address</label>
+                                        <input value={scheduleForm.email} onChange={e => setScheduleForm(f => ({ ...f, email: e.target.value }))} placeholder="you@company.com" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-indigo-500 focus:outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-slate-500 mb-1">Frequency</label>
+                                        <select value={scheduleForm.frequency} onChange={e => setScheduleForm(f => ({ ...f, frequency: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-indigo-500 focus:outline-none">
+                                            <option value="daily">Daily</option>
+                                            <option value="weekly">Weekly</option>
+                                            <option value="monthly">Monthly</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button onClick={() => setScheduleSaved(true)} disabled={!scheduleForm.email.trim()} className="mt-5 w-full py-2.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all disabled:opacity-50">
+                                    Schedule Report
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Add Metric Modal */}
+            {showAddMetric && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowAddMetric(false)}>
+                    <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold text-slate-800">Add Metric</h3>
+                            <button onClick={() => setShowAddMetric(false)} className="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+                        </div>
+                        <div className="mb-3">
+                            <label className="block text-xs text-slate-500 mb-1">Metric Name</label>
+                            <input value={newMetricName} onChange={e => setNewMetricName(e.target.value)} placeholder="e.g. Gross Margin, Lead Volume" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-indigo-500 focus:outline-none" />
+                        </div>
+                        <div className="mb-4">
+                            <p className="text-xs text-slate-400">Active metrics:</p>
+                            <div className="flex flex-wrap gap-1 mt-1">{customMetrics.map((m, i) => <span key={i} className="px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-600">{m}</span>)}</div>
+                        </div>
+                        <button onClick={() => { if (newMetricName.trim()) { setCustomMetrics(prev => [...prev, newMetricName.trim()]); setShowAddMetric(false); } }} disabled={!newMetricName.trim()} className="w-full py-2.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all disabled:opacity-50">
+                            Add Metric
+                        </button>
+                    </div>
+                </div>
+            )}
 
         </div>
     )

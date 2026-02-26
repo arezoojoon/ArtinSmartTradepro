@@ -24,24 +24,7 @@ export default function FreightPage() {
         try {
             const params = new URLSearchParams({ origin, dest, equipment })
             const res = await api.get(`/toolbox/freight?${params.toString()}`)
-
-            // Add mock risk and hidden costs data to the response payload to satisfy the UI architecture requirements
-            const enhancedResult = {
-                ...res.data,
-                port_risks: [
-                    { port: "Origin (Shanghai)", level: "Moderate", issue: "Port congestion delays 2-3 days" },
-                    { port: "Destination (Long Beach)", level: "Low", issue: "Normal operations" },
-                    { port: "Transit (Red Sea)", level: "High", issue: "Vessel rerouting expected" }
-                ],
-                hidden_costs: [
-                    { item: "Terminal Handling Charges (THC)", est: 250, type: "Origin" },
-                    { item: "Customs Clearance Fees", est: 150, type: "Destination" },
-                    { item: "Bunker Adjustment Factor (BAF)", est: 300, type: "Freight" },
-                    { item: "Peak Season Surcharge (PSS)", est: 500, type: "Freight" }
-                ]
-            };
-
-            setResult(enhancedResult)
+            setResult(res.data)
         } catch (error) {
             console.error("Freight quote failed", error)
         } finally {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
@@ -9,35 +9,12 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 import { Badge } from "@/components/ui/badge"
 import api from "@/lib/api"
 
-// Mock historical data generator for the volatility band
-const generateHistoricalData = (baseRate: number, days: number = 30) => {
-    const data = [];
-    let currentRate = baseRate;
-    const now = new Date();
-
-    for (let i = days; i >= 0; i--) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - i);
-
-        // Random walk
-        const change = (Math.random() - 0.5) * (baseRate * 0.015);
-        currentRate += change;
-
-        data.push({
-            date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            rate: Number(currentRate.toFixed(4)),
-            upper: Number((currentRate * 1.02).toFixed(4)), // +2% band
-            lower: Number((currentRate * 0.98).toFixed(4))  // -2% band
-        });
-    }
-    return data;
-};
-
 export default function FXPage() {
     const [base, setBase] = useState("USD")
     const [quote, setQuote] = useState("EUR")
     const [rate, setRate] = useState<any>(null)
     const [loading, setLoading] = useState(false)
+    const [historicalData, setHistoricalData] = useState<any[]>([])
 
     // Scenario Planning State
     const [contractAmount, setContractAmount] = useState<number>(100000)
@@ -46,8 +23,12 @@ export default function FXPage() {
     const fetchRate = async () => {
         setLoading(true)
         try {
-            const res = await api.get(`/toolbox/fx?base=${base}&quote=${quote}`)
-            setRate(res.data)
+            const [rateRes, histRes] = await Promise.allSettled([
+                api.get(`/toolbox/fx?base=${base}&quote=${quote}`),
+                api.get(`/toolbox/fx/history?base=${base}&quote=${quote}&days=30`),
+            ])
+            if (rateRes.status === "fulfilled") setRate(rateRes.value.data)
+            if (histRes.status === "fulfilled") setHistoricalData(histRes.value.data)
         } catch (error) {
             console.error(error)
         } finally {
@@ -58,11 +39,6 @@ export default function FXPage() {
     useEffect(() => {
         fetchRate()
     }, [base, quote])
-
-    const historicalData = useMemo(() => {
-        if (!rate) return [];
-        return generateHistoricalData(rate.rate);
-    }, [rate]);
 
     // Derived Scenario Metrics
     const currentCostQuote = contractAmount * (rate?.rate || 1);

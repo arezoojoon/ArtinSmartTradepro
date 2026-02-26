@@ -12,6 +12,7 @@ export default function WhatsAppInbox() {
     const [loadingConvs, setLoadingConvs] = useState(true);
     const [loadingMsgs, setLoadingMsgs] = useState(false);
     const [search, setSearch] = useState("");
+    const [togglingBot, setTogglingBot] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -71,8 +72,11 @@ export default function WhatsAppInbox() {
         }
     };
 
+    const [sendError, setSendError] = useState<string | null>(null);
+
     const sendMessage = async () => {
         if (!replyText.trim() || !activeConv) return;
+        setSendError(null);
 
         try {
             const token = localStorage.getItem("token");
@@ -93,11 +97,33 @@ export default function WhatsAppInbox() {
                 setReplyText("");
                 fetchMessages(activeConv.id);
             } else {
-                alert("Failed to send message. Ensure you have balance and permissions.");
+                const err = await res.json().catch(() => null);
+                setSendError(err?.detail || "Failed to send. Check your balance and permissions.");
+                setTimeout(() => setSendError(null), 5000);
             }
         } catch (err) {
-            console.error(err);
+            setSendError("Connection error. Please try again.");
+            setTimeout(() => setSendError(null), 5000);
         }
+    };
+
+    const toggleBotMode = async () => {
+        if (!activeConv || togglingBot) return;
+        setTogglingBot(true);
+        try {
+            const token = localStorage.getItem("token");
+            const newStatus = activeConv.status === 'bot_handled' ? 'needs_human' : 'bot_handled';
+            const res = await fetch(`${BASE_URL}/whatsapp/conversations/${activeConv.id}/status`, {
+                method: "PATCH",
+                headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ status: newStatus })
+            });
+            if (res.ok) {
+                setActiveConv({ ...activeConv, status: newStatus });
+                fetchConversations();
+            }
+        } catch (err) { console.error(err); }
+        finally { setTogglingBot(false); }
     };
 
     const filteredConvs = conversations.filter(c =>
@@ -195,8 +221,8 @@ export default function WhatsAppInbox() {
                                     </p>
                                 </div>
                             </div>
-                            <button className="px-3 py-1.5 bg-navy-800 hover:bg-navy-700 border border-navy-700 rounded-lg text-xs font-semibold text-navy-300 transition-colors">
-                                Override Bot Mode
+                            <button onClick={toggleBotMode} disabled={togglingBot} className={`px-3 py-1.5 border rounded-lg text-xs font-semibold transition-colors ${activeConv.status === 'bot_handled' ? 'bg-red-500/20 hover:bg-red-500/30 border-red-500/30 text-red-400' : 'bg-green-500/20 hover:bg-green-500/30 border-green-500/30 text-green-400'}`}>
+                                {togglingBot ? "Switching..." : activeConv.status === 'bot_handled' ? "Take Over (Human Mode)" : "Resume Bot Mode"}
                             </button>
                         </div>
 
@@ -231,6 +257,12 @@ export default function WhatsAppInbox() {
 
                         {/* Input Area */}
                         <div className="relative z-10 p-4 bg-navy-950 border-t border-[#1e3a5f]">
+                            {sendError && (
+                                <div className="mb-3 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center justify-between">
+                                    <span className="text-red-400 text-sm">{sendError}</span>
+                                    <button onClick={() => setSendError(null)} className="text-red-400 hover:text-red-300 ml-2">&times;</button>
+                                </div>
+                            )}
                             <form
                                 onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
                                 className="flex gap-3 max-w-4xl mx-auto"

@@ -1,8 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bell, MessageCircle, Mail, AlertTriangle, TrendingUp, Users } from "lucide-react";
+import { Bell, MessageCircle, Mail, AlertTriangle, TrendingUp, Users, CheckCircle2 } from "lucide-react";
 
 const NOTIFICATION_CHANNELS = [
     { id: "push", label: "Push Notifications (PWA)", icon: Bell, enabled: true },
@@ -20,6 +21,21 @@ const ALERT_RULES = [
     { id: "market_shock", label: "Market Shock Signals", severity: "medium", enabled: true },
 ];
 
+const STORAGE_KEY = "artin_notification_settings";
+
+function loadSettings(): Record<string, boolean> {
+    if (typeof window === "undefined") return {};
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+    } catch {}
+    // Defaults
+    const defaults: Record<string, boolean> = {};
+    NOTIFICATION_CHANNELS.forEach(c => { defaults[c.id] = c.enabled; });
+    ALERT_RULES.forEach(r => { defaults[r.id] = r.enabled; });
+    return defaults;
+}
+
 function severityBadge(severity: string) {
     switch (severity) {
         case "high":
@@ -34,13 +50,42 @@ function severityBadge(severity: string) {
 }
 
 export default function NotificationsPage() {
+    const [settings, setSettings] = useState<Record<string, boolean>>({});
+    const [dirty, setDirty] = useState(false);
+    const [saved, setSaved] = useState(false);
+
+    useEffect(() => {
+        setSettings(loadSettings());
+    }, []);
+
+    const toggle = (id: string) => {
+        setSettings(prev => ({ ...prev, [id]: !prev[id] }));
+        setDirty(true);
+        setSaved(false);
+    };
+
+    const saveSettings = () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        setDirty(false);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+    };
+
     return (
         <div className="p-4 md:p-8 space-y-8 max-w-4xl text-white">
-            <div>
-                <h1 className="text-2xl font-bold flex items-center gap-2">
-                    <Bell className="h-6 w-6 text-[#f5a623]" /> Notification Settings
-                </h1>
-                <p className="text-white/60">Configure how and when you receive alerts.</p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold flex items-center gap-2">
+                        <Bell className="h-6 w-6 text-[#f5a623]" /> Notification Settings
+                    </h1>
+                    <p className="text-white/60">Configure how and when you receive alerts.</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    {saved && <span className="text-emerald-400 text-sm flex items-center gap-1"><CheckCircle2 className="h-4 w-4" /> Saved</span>}
+                    <button onClick={saveSettings} disabled={!dirty} className="px-5 py-2 bg-[#f5a623] text-navy-950 rounded-lg font-semibold hover:bg-gold-300 transition-all disabled:opacity-40 text-sm">
+                        Save Changes
+                    </button>
+                </div>
             </div>
 
             {/* Channels */}
@@ -56,7 +101,7 @@ export default function NotificationsPage() {
                                 <span className="font-medium text-white">{ch.label}</span>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" defaultChecked={ch.enabled} className="sr-only peer" />
+                                <input type="checkbox" checked={settings[ch.id] ?? ch.enabled} onChange={() => toggle(ch.id)} className="sr-only peer" />
                                 <div className="w-11 h-6 bg-navy-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-500"></div>
                             </label>
                         </div>
@@ -79,7 +124,7 @@ export default function NotificationsPage() {
                                 {severityBadge(rule.severity)}
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" defaultChecked={rule.enabled} className="sr-only peer" />
+                                <input type="checkbox" checked={settings[rule.id] ?? rule.enabled} onChange={() => toggle(rule.id)} className="sr-only peer" />
                                 <div className="w-11 h-6 bg-navy-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-500"></div>
                             </label>
                         </div>
