@@ -832,12 +832,25 @@ async def bulk_import_contacts(
     is_xlsx = fname.endswith(".xlsx") or "spreadsheet" in ctype or "xlsx" in ctype
     is_csv = fname.endswith(".csv") or "csv" in ctype or "text/" in ctype
 
-    if is_xlsx:
+    # Real XLSX/ZIP files start with PK\x03\x04; if not, the file is likely CSV
+    # despite having an .xlsx extension (common with Excel "AutoRecovered" files).
+    looks_like_zip = raw[:4] == b'PK\x03\x04'
+
+    rows = None
+    if is_xlsx and looks_like_zip:
         try:
             rows = _parse_xlsx_rows(raw)
         except Exception as e:
             logger.exception(f"bulk-import XLSX parse error (size={len(raw)}): {e}")
             raise HTTPException(status_code=400, detail=f"Failed to parse XLSX: {e}")
+    elif is_xlsx and not looks_like_zip:
+        # File claims to be XLSX but content is not a ZIP — try CSV fallback
+        logger.warning(f"bulk-import: file has .xlsx extension but is not a ZIP; attempting CSV fallback")
+        try:
+            rows = _parse_csv_rows(raw)
+        except Exception as e:
+            logger.exception(f"bulk-import CSV fallback parse error (size={len(raw)}): {e}")
+            raise HTTPException(status_code=400, detail=f"File '{file.filename}' is not a valid XLSX and could not be parsed as CSV: {e}")
     elif is_csv:
         try:
             rows = _parse_csv_rows(raw)
