@@ -97,3 +97,9 @@ from .support_ticket import (
 # Email Outbox
 from .email import EmailOutbox
 
+# Logistics models
+from .logistics import (
+    Shipment, ShipmentPackage, ShipmentEvent, Carrier,
+    ShipmentStatus, ShipmentEventType,
+)
+

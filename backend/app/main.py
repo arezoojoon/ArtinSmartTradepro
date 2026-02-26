@@ -84,6 +84,9 @@ app.include_router(toolbox.router, prefix="/api/v1/toolbox", tags=["toolbox"])
 app.include_router(trade.router, prefix="/api/v1/trade", tags=["trade"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 
+from .routers import logistics
+app.include_router(logistics.router, prefix="/api/v1/logistics", tags=["logistics"])
+
 # --- Phase 6: Super Admin + Plans + Prompt Ops ---
 from .routers.sys import sys_router
 from .routers.tenant_billing import router as tenant_billing_router
