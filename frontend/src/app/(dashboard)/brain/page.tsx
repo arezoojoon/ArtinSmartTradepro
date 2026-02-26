@@ -166,7 +166,7 @@ export default function BrainDashboard() {
         setLoading(true);
         setError(null);
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const res = await fetch(`${BASE_URL}/brain/decide`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },

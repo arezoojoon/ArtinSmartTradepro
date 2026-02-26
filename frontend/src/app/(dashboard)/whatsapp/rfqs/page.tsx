@@ -16,8 +16,8 @@ export default function WhatsAppRFQsPage() {
             <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                 <CardContent className="py-16 text-center">
                     <MessageSquare className="h-16 w-16 mx-auto mb-4 text-gray-700" />
-                    <p className="text-gray-500">WhatsApp RFQs — Coming Soon</p>
-                    <p className="text-xs text-gray-600 mt-2">Send automated RFQ messages to suppliers via WhatsApp.</p>
+                    <p className="text-amber-400/80 font-medium">WhatsApp RFQs — Under Development</p>
+                    <p className="text-xs text-gray-600 mt-2">Send automated RFQ messages to suppliers via WhatsApp. This feature is being built.</p>
                 </CardContent>
             </Card>
         </div>

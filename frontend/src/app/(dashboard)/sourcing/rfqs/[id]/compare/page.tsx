@@ -16,8 +16,8 @@ export default function CompareRFQPage() {
             <Card className="bg-navy-900 border-navy-800">
                 <CardContent className="py-16 text-center">
                     <BarChart3 className="h-16 w-16 mx-auto mb-4 text-gray-700" />
-                    <p className="text-gray-500">Quote Comparison — Coming Soon</p>
-                    <p className="text-xs text-gray-600 mt-2">Compare pricing, terms, and delivery timelines across suppliers.</p>
+                    <p className="text-amber-400/80 font-medium">Quote Comparison — Under Development</p>
+                    <p className="text-xs text-gray-600 mt-2">Compare pricing, terms, and delivery timelines across suppliers. This feature is being built.</p>
                 </CardContent>
             </Card>
         </div>

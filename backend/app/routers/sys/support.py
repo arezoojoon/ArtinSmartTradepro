@@ -569,9 +569,12 @@ def get_ticket_metrics(
     avg_first_response_hours = sum(first_response_times) / len(first_response_times) if first_response_times else 0
     avg_resolution_hours = sum(resolution_times) / len(resolution_times) if resolution_times else 0
     
-    # Calculate SLA compliance (simplified)
-    sla_first_response_compliance = 85.0  # Mock value
-    sla_resolution_compliance = 78.0  # Mock value
+    # Calculate SLA compliance from real ticket data
+    # SLA targets: first response within 4 hours, resolution within 48 hours
+    sla_first_response_met = sum(1 for t in first_response_times if t <= 4.0)
+    sla_first_response_compliance = (sla_first_response_met / len(first_response_times) * 100) if first_response_times else 0
+    sla_resolution_met = sum(1 for t in resolution_times if t <= 48.0)
+    sla_resolution_compliance = (sla_resolution_met / len(resolution_times) * 100) if resolution_times else 0
     
     # Log audit
     write_sys_audit(

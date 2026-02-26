@@ -1,16 +1,49 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-    Activity, AlertTriangle, BrainCircuit, CloudLightning, 
+    Activity, AlertTriangle, BrainCircuit,
     Globe, Landmark, Radar, Scale, Send, ShoppingCart, 
-    Target, TrendingUp, ArrowRight, Zap
+    Target, TrendingUp, ArrowRight, Zap, Loader2
 } from "lucide-react";
 import Link from "next/link";
+import api from "@/lib/api";
+
+function formatCurrency(val: number): string {
+    if (val >= 1_000_000) return `$${(val / 1_000_000).toFixed(1)}M`;
+    if (val >= 1_000) return `$${(val / 1_000).toFixed(0)}K`;
+    return `$${val.toFixed(0)}`;
+}
 
 export default function GlobalCommandCenter() {
+    const [data, setData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchDashboard = async () => {
+            try {
+                const res = await api.get("/dashboard/main");
+                setData(res.data);
+            } catch (e) {
+                console.error("Dashboard fetch failed:", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDashboard();
+    }, []);
+
+    const kpi = data?.kpi_summary || {};
+    const pipelineValue = kpi.total_pipeline_value || 0;
+    const marginOpps = data?.margin_overview?.length || 0;
+    const riskCount = kpi.high_risk_countries || 0;
+    const cashHealth = kpi.cash_flow_health || "unknown";
+    const riskItems = data?.risk_heatmap || [];
+    const margins = data?.margin_overview || [];
+
     return (
         <div className="min-h-screen bg-[#050A15] text-slate-300 p-4 md:p-8 pt-6 selection:bg-[#D4AF37] selection:text-black space-y-8">
             
@@ -25,7 +58,7 @@ export default function GlobalCommandCenter() {
                     </div>
                     <p className="text-[#94A3B8] text-sm flex items-center gap-2">
                         <Activity className="w-4 h-4 text-emerald-400" />
-                        System Status: Optimal. AI Engines monitoring 4 active global markets.
+                        {loading ? "Loading live data..." : `System Status: ${cashHealth === "positive" ? "Healthy" : "Attention Needed"}. Live data from CRM & Billing.`}
                     </p>
                 </div>
                 
@@ -38,42 +71,53 @@ export default function GlobalCommandCenter() {
                 </div>
             </div>
 
-            {/* 2. Executive KPIs */}
+            {loading ? (
+                <div className="flex items-center justify-center py-20">
+                    <Loader2 className="h-8 w-8 animate-spin text-[#D4AF37]" />
+                    <span className="ml-3 text-slate-400">Loading dashboard data...</span>
+                </div>
+            ) : (
+            <>
+            {/* 2. Executive KPIs — Real Data */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Card className="bg-[#0F172A] border-[#1E293B] hover:border-[#D4AF37]/30 transition-colors">
                     <CardContent className="p-5">
                         <div className="text-[10px] text-[#94A3B8] uppercase tracking-widest mb-1 flex items-center justify-between">
                             Active Pipeline <TrendingUp className="w-3 h-3 text-[#D4AF37]"/>
                         </div>
-                        <div className="text-3xl font-bold text-white">$4.2M</div>
-                        <div className="text-xs text-emerald-400 mt-2 font-medium">+12% vs Last Month</div>
+                        <div className="text-3xl font-bold text-white">{formatCurrency(pipelineValue)}</div>
+                        <div className="text-xs text-[#94A3B8] mt-2 font-medium">From CRM Deals</div>
                     </CardContent>
                 </Card>
                 <Card className="bg-[#0F172A] border-[#1E293B] hover:border-[#D4AF37]/30 transition-colors">
                     <CardContent className="p-5">
                         <div className="text-[10px] text-[#94A3B8] uppercase tracking-widest mb-1 flex items-center justify-between">
-                            Pending RFQs <ShoppingCart className="w-3 h-3 text-blue-400"/>
+                            Active Leads <ShoppingCart className="w-3 h-3 text-blue-400"/>
                         </div>
-                        <div className="text-3xl font-bold text-white">8</div>
-                        <div className="text-xs text-[#94A3B8] mt-2 font-medium">3 Awaiting Supplier Response</div>
+                        <div className="text-3xl font-bold text-white">{kpi.active_leads ?? 0}</div>
+                        <div className="text-xs text-[#94A3B8] mt-2 font-medium">From Hunter</div>
                     </CardContent>
                 </Card>
                 <Card className="bg-[#0F172A] border-[#1E293B] shadow-[inset_0_-2px_0_rgba(212,175,55,1)]">
                     <CardContent className="p-5">
                         <div className="text-[10px] text-[#94A3B8] uppercase tracking-widest mb-1 flex items-center justify-between">
-                            AI Arbitrage Opps <Scale className="w-3 h-3 text-[#D4AF37]"/>
+                            Margin Opportunities <Scale className="w-3 h-3 text-[#D4AF37]"/>
                         </div>
-                        <div className="text-3xl font-bold text-[#D4AF37]">14</div>
-                        <div className="text-xs text-[#D4AF37]/80 mt-2 font-medium">High Margin Spread Detected</div>
+                        <div className="text-3xl font-bold text-[#D4AF37]">{marginOpps}</div>
+                        <div className="text-xs text-[#D4AF37]/80 mt-2 font-medium">
+                            {kpi.weighted_margin ? `Avg ${kpi.weighted_margin.toFixed(1)}% Margin` : "No data yet"}
+                        </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-[#450a0a]/20 border-red-900/30">
+                <Card className={`${riskCount > 0 ? "bg-[#450a0a]/20 border-red-900/30" : "bg-[#0F172A] border-[#1E293B]"}`}>
                     <CardContent className="p-5">
-                        <div className="text-[10px] text-red-400 uppercase tracking-widest mb-1 flex items-center justify-between">
-                            Critical Risks <AlertTriangle className="w-3 h-3 text-red-500"/>
+                        <div className={`text-[10px] ${riskCount > 0 ? "text-red-400" : "text-emerald-400"} uppercase tracking-widest mb-1 flex items-center justify-between`}>
+                            Risk Alerts <AlertTriangle className={`w-3 h-3 ${riskCount > 0 ? "text-red-500" : "text-emerald-500"}`}/>
                         </div>
-                        <div className="text-3xl font-bold text-red-500">2</div>
-                        <div className="text-xs text-red-400/80 mt-2 font-medium">Logistics & Sanctions Alerts</div>
+                        <div className={`text-3xl font-bold ${riskCount > 0 ? "text-red-500" : "text-emerald-400"}`}>{riskCount}</div>
+                        <div className={`text-xs ${riskCount > 0 ? "text-red-400/80" : "text-emerald-400/80"} mt-2 font-medium`}>
+                            {riskCount > 0 ? "High-Risk Countries" : "All Clear"}
+                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -81,81 +125,78 @@ export default function GlobalCommandCenter() {
             {/* 3. Main Dashboard Body */}
             <div className="grid lg:grid-cols-12 gap-8">
                 
-                {/* LEFT: Strategic Intelligence Feed (The "Brain" Output) */}
+                {/* LEFT: Intelligence Feed — from real data */}
                 <div className="lg:col-span-8 space-y-4">
                     <div className="flex items-center justify-between mb-2">
                         <h3 className="text-lg font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                            <BrainCircuit className="h-5 w-5 text-[#D4AF37]" /> Live Intelligence Feed
+                            <BrainCircuit className="h-5 w-5 text-[#D4AF37]" /> Intelligence Feed
                         </h3>
-                        <Badge className="bg-[#D4AF37]/10 text-[#D4AF37] border-none font-mono text-[10px] uppercase">Auto-Refreshing</Badge>
+                        <Badge className="bg-[#D4AF37]/10 text-[#D4AF37] border-none font-mono text-[10px] uppercase">Live Data</Badge>
                     </div>
 
-                    {/* Alert 1: Demand Engine (Stockout) */}
-                    <Card className="bg-[#0F172A] border-[#1E293B] border-l-4 border-l-emerald-500 overflow-hidden">
-                        <CardContent className="p-5 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-                            <div className="flex gap-4">
+                    {/* Margin Opportunities from real arbitrage data */}
+                    {margins.length > 0 ? margins.slice(0, 3).map((m: any, i: number) => (
+                        <Card key={i} className="bg-[#0F172A] border-[#1E293B] border-l-4 border-l-[#D4AF37] overflow-hidden">
+                            <CardContent className="p-5 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+                                <div className="flex gap-4">
+                                    <div className="p-3 bg-[#D4AF37]/10 rounded-lg h-fit">
+                                        <Scale className="w-6 h-6 text-[#D4AF37]" />
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] text-[#94A3B8] uppercase tracking-widest mb-1">Arbitrage Opportunity</div>
+                                        <h4 className="text-white font-bold text-lg leading-tight">{m.product_key}: {m.buy_market} → {m.sell_market}</h4>
+                                        <p className="text-sm text-slate-400 mt-1">
+                                            Estimated margin: <strong className="text-[#D4AF37]">{m.estimated_margin_pct?.toFixed(1)}%</strong>
+                                            {m.realized_margin_pct != null && <span> · Realized: {m.realized_margin_pct.toFixed(1)}%</span>}
+                                            {" · Status: "}{m.status}
+                                        </p>
+                                    </div>
+                                </div>
+                                <Link href="/brain">
+                                    <Button className="w-full md:w-auto bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37] hover:text-[#050A15] font-bold text-xs uppercase tracking-widest h-10">
+                                        Analyze <ArrowRight className="w-4 h-4 ml-2" />
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+                    )) : (
+                        <Card className="bg-[#0F172A] border-[#1E293B] border-l-4 border-l-emerald-500 overflow-hidden">
+                            <CardContent className="p-5 flex gap-4 items-center">
                                 <div className="p-3 bg-emerald-500/10 rounded-lg h-fit">
                                     <TrendingUp className="w-6 h-6 text-emerald-400" />
                                 </div>
                                 <div>
-                                    <div className="text-[10px] text-[#94A3B8] uppercase tracking-widest mb-1 flex items-center gap-1">
-                                        <Zap className="w-3 h-3 text-emerald-400"/> Demand Engine Predicts Stockout
-                                    </div>
-                                    <h4 className="text-white font-bold text-lg leading-tight">Pre-Ramadan FMCG Demand Spike (GCC)</h4>
-                                    <p className="text-sm text-slate-400 mt-1">Historical patterns indicate buyers in UAE & KSA will begin urgent restocking of dry foods in 14 days.</p>
+                                    <h4 className="text-white font-bold text-lg leading-tight">No arbitrage opportunities yet</h4>
+                                    <p className="text-sm text-slate-400 mt-1">Use the Brain engine to analyze trade routes and discover margin opportunities.</p>
                                 </div>
-                            </div>
-                            <Link href="/crm/campaigns">
-                                <Button className="w-full md:w-auto bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37] hover:text-[#050A15] font-bold text-xs uppercase tracking-widest h-10">
-                                    Launch WAHA Campaign <Send className="w-4 h-4 ml-2" />
-                                </Button>
-                            </Link>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
+                    )}
 
-                    {/* Alert 2: Arbitrage Engine (High Margin) */}
-                    <Card className="bg-[#0F172A] border-[#1E293B] border-l-4 border-l-[#D4AF37] overflow-hidden">
-                        <CardContent className="p-5 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-                            <div className="flex gap-4">
-                                <div className="p-3 bg-[#D4AF37]/10 rounded-lg h-fit">
-                                    <Scale className="w-6 h-6 text-[#D4AF37]" />
-                                </div>
-                                <div>
-                                    <div className="text-[10px] text-[#94A3B8] uppercase tracking-widest mb-1">Arbitrage Opportunity Detected</div>
-                                    <h4 className="text-white font-bold text-lg leading-tight">Copper Cathodes: TR → AE Spread</h4>
-                                    <p className="text-sm text-slate-400 mt-1">FOB prices dropped in Mersin. Estimated Risk-Adjusted Margin is now <strong className="text-[#D4AF37]">22.4%</strong> (after freight & tariffs).</p>
-                                </div>
-                            </div>
-                            <Link href="/sourcing/rfqs">
-                                <Button className="w-full md:w-auto bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37] hover:text-[#050A15] font-bold text-xs uppercase tracking-widest h-10">
-                                    Draft Supplier RFQ <ArrowRight className="w-4 h-4 ml-2" />
-                                </Button>
-                            </Link>
-                        </CardContent>
-                    </Card>
-
-                    {/* Alert 3: Cultural/Risk Engine */}
-                    <Card className="bg-[#0F172A] border-[#1E293B] border-l-4 border-l-red-500 overflow-hidden">
-                        <CardContent className="p-5 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-                            <div className="flex gap-4">
-                                <div className="p-3 bg-red-500/10 rounded-lg h-fit">
-                                    <AlertTriangle className="w-6 h-6 text-red-500" />
-                                </div>
-                                <div>
-                                    <div className="text-[10px] text-red-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                        <Landmark className="w-3 h-3 text-red-400"/> Risk & Cultural Engine Warning
+                    {/* Risk Alerts from real data */}
+                    {riskItems.filter((r: any) => r.risk_level === "high").slice(0, 2).map((risk: any, i: number) => (
+                        <Card key={`risk-${i}`} className="bg-[#0F172A] border-[#1E293B] border-l-4 border-l-red-500 overflow-hidden">
+                            <CardContent className="p-5 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+                                <div className="flex gap-4">
+                                    <div className="p-3 bg-red-500/10 rounded-lg h-fit">
+                                        <AlertTriangle className="w-6 h-6 text-red-500" />
                                     </div>
-                                    <h4 className="text-white font-bold text-lg leading-tight">Liquidity Risk in Target Market (EG)</h4>
-                                    <p className="text-sm text-slate-400 mt-1">Severe USD shortage flagged. Cultural playbook advises strict adherence to TT Advance. Do not offer OA terms.</p>
+                                    <div>
+                                        <div className="text-[10px] text-red-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                            <Landmark className="w-3 h-3 text-red-400"/> {risk.risk_type} Risk
+                                        </div>
+                                        <h4 className="text-white font-bold text-lg leading-tight">{risk.country} — {risk.risk_level.toUpperCase()}</h4>
+                                        <p className="text-sm text-slate-400 mt-1">{risk.description} (Score: {risk.risk_score})</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <Link href="/crm">
-                                <Button variant="outline" className="w-full md:w-auto border-red-900/50 text-red-400 hover:bg-red-900/30 font-bold text-xs uppercase tracking-widest h-10">
-                                    Update CRM Deal <ArrowRight className="w-4 h-4 ml-2" />
-                                </Button>
-                            </Link>
-                        </CardContent>
-                    </Card>
+                                <Link href="/crm">
+                                    <Button variant="outline" className="w-full md:w-auto border-red-900/50 text-red-400 hover:bg-red-900/30 font-bold text-xs uppercase tracking-widest h-10">
+                                        Review <ArrowRight className="w-4 h-4 ml-2" />
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+                    ))}
                 </div>
 
                 {/* RIGHT: Quick Execution Panel */}
@@ -180,7 +221,7 @@ export default function GlobalCommandCenter() {
                                 </div>
                             </Link>
                             
-                            <Link href="/crm/campaigns" className="block">
+                            <Link href="/whatsapp" className="block">
                                 <div className="p-4 bg-[#050A15] border border-[#1E293B] rounded-lg cursor-pointer hover:border-[#D4AF37]/50 transition-colors group">
                                     <div className="flex items-center gap-3 mb-2">
                                         <div className="p-1.5 bg-emerald-500/10 text-emerald-400 rounded">
@@ -208,6 +249,8 @@ export default function GlobalCommandCenter() {
                 </div>
 
             </div>
+            </>
+            )}
         </div>
     );
 }

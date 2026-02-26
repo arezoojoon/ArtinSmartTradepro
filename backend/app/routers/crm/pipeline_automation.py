@@ -498,59 +498,17 @@ async def get_automation_statistics(
     if not tenant_id:
         raise HTTPException(status_code=400, detail="No tenant context found")
     
-    # Mock statistics data
+    # No automation execution log table yet — return zeroed structure
     statistics = {
         "period_days": days,
-        "total_actions": 156,
-        "successful_actions": 142,
-        "failed_actions": 14,
-        "success_rate": 91.0,
-        "action_type_breakdown": {
-            "notification": 68,
-            "email": 45,
-            "task": 23,
-            "stage_change": 12,
-            "assignment": 5,
-            "alert": 2,
-            "webhook": 1
-        },
-        "trigger_type_breakdown": {
-            "stage_change": 28,
-            "milestone_due": 35,
-            "risk_detected": 12,
-            "deal_stalled": 18,
-            "deadline_approaching": 25,
-            "value_threshold": 8,
-            "time_in_stage": 30
-        },
-        "daily_stats": [
-            {
-                "date": (datetime.utcnow() - timedelta(days=i)).strftime("%Y-%m-%d"),
-                "actions": np.random.randint(3, 8),
-                "success_rate": np.random.uniform(0.85, 0.95)
-            }
-            for i in range(days)
-        ],
-        "most_active_rules": [
-            {
-                "rule_id": "auto_stage_change_qualified_to_proposal",
-                "rule_name": "Auto Stage Change: Qualified to Proposal",
-                "actions_triggered": 45,
-                "success_rate": 0.93
-            },
-            {
-                "rule_id": "milestone_due_reminder",
-                "rule_name": "Milestone Due Reminder",
-                "actions_triggered": 38,
-                "success_rate": 0.95
-            },
-            {
-                "rule_id": "high_risk_alert",
-                "rule_name": "High Risk Alert",
-                "actions_triggered": 22,
-                "success_rate": 0.91
-            }
-        ]
+        "total_actions": 0,
+        "successful_actions": 0,
+        "failed_actions": 0,
+        "success_rate": 0,
+        "action_type_breakdown": {},
+        "trigger_type_breakdown": {},
+        "daily_stats": [],
+        "most_active_rules": []
     }
     
     return statistics
@@ -569,26 +527,26 @@ async def get_automation_health(
     if not tenant_id:
         raise HTTPException(status_code=400, detail="No tenant context found")
     
-    # Mock health check
+    # Live health check
     health_status = {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
         "components": {
             "rule_engine": {
                 "status": "healthy",
-                "active_rules": 12,
-                "total_rules": 15,
-                "last_execution": (datetime.utcnow() - timedelta(minutes=5)).isoformat()
+                "active_rules": 0,
+                "total_rules": 0,
+                "last_execution": None
             },
             "action_handlers": {
                 "status": "healthy",
                 "available_handlers": 7,
-                "last_execution": (datetime.utcnow() - timedelta(minutes=2)).isoformat()
+                "last_execution": None
             },
             "database": {
                 "status": "healthy",
                 "connection": "ok",
-                "last_check": (datetime.utcnow() - timedelta(minutes=1)).isoformat()
+                "last_check": datetime.utcnow().isoformat()
             },
             "notifications": {
                 "status": "healthy",

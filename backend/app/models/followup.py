@@ -38,6 +38,8 @@ class CRMFollowUpExecution(Base):
     
     attempt = Column(Integer, default=1)
     status = Column(String, default="scheduled") # scheduled, sent, cancelled, failed
+
+    message_text = Column(Text, nullable=True)
     
     scheduled_at = Column(DateTime, nullable=False, index=True)
     sent_at = Column(DateTime, nullable=True)

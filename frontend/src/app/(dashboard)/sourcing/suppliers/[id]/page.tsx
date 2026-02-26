@@ -16,8 +16,8 @@ export default function SupplierDetailPage() {
             <Card className="bg-navy-900 border-navy-800">
                 <CardContent className="py-16 text-center">
                     <Building2 className="h-16 w-16 mx-auto mb-4 text-gray-700" />
-                    <p className="text-gray-500">Supplier Profile — Coming Soon</p>
-                    <p className="text-xs text-gray-600 mt-2">On-time rate, quality variance, MOQ honesty, and trade records.</p>
+                    <p className="text-amber-400/80 font-medium">Supplier Profile — Under Development</p>
+                    <p className="text-xs text-gray-600 mt-2">On-time rate, quality variance, MOQ honesty, and trade records. This feature is being built.</p>
                 </CardContent>
             </Card>
         </div>

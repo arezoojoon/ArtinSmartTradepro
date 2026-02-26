@@ -312,72 +312,14 @@ async def get_processing_history(
     if not tenant_id:
         raise HTTPException(status_code=400, detail="No tenant context found")
     
-    # Mock processing history data
-    # In production, this would query a processing history table
-    processing_history = [
-        {
-            "id": "1",
-            "type": "document",
-            "document_type": "business_card",
-            "file_name": "john_smith_card.jpg",
-            "confidence": 0.92,
-            "processing_time": 2.3,
-            "created_at": (datetime.utcnow() - timedelta(hours=2)).isoformat(),
-            "crm_action": "created_contact",
-            "crm_record_id": "contact_123"
-        },
-        {
-            "id": "2",
-            "type": "audio",
-            "document_type": "voice_note",
-            "file_name": "followup_call.mp3",
-            "confidence": 0.87,
-            "processing_time": 5.1,
-            "created_at": (datetime.utcnow() - timedelta(hours=5)).isoformat(),
-            "crm_action": "follow_up_created",
-            "crm_record_id": "task_456"
-        },
-        {
-            "id": "3",
-            "type": "document",
-            "document_type": "invoice",
-            "file_name": "invoice_789.pdf",
-            "confidence": 0.95,
-            "processing_time": 3.7,
-            "created_at": (datetime.utcnow() - timedelta(days=1)).isoformat(),
-            "crm_action": "invoice_processed",
-            "crm_record_id": None
-        },
-        {
-            "id": "4",
-            "type": "document",
-            "document_type": "business_card",
-            "file_name": "jane_doe_card.png",
-            "confidence": 0.89,
-            "processing_time": 1.8,
-            "created_at": (datetime.utcnow() - timedelta(days=2)).isoformat(),
-            "crm_action": "updated_contact",
-            "crm_record_id": "contact_789"
-        }
-    ]
-    
-    # Filter by document type if specified
-    if document_type:
-        processing_history = [
-            item for item in processing_history 
-            if item["document_type"] == document_type
-        ]
-    
-    # Apply pagination
-    total = len(processing_history)
-    paginated_history = processing_history[offset:offset + limit]
-    
+    # DISABLED: Mock data removed. No processing history table exists yet.
     return {
-        "history": paginated_history,
-        "total_count": total,
+        "history": [],
+        "total_count": 0,
         "limit": limit,
         "offset": offset,
-        "document_types": list(set(item["document_type"] for item in processing_history))
+        "document_types": [],
+        "_notice": "This endpoint is deprecated. Use /api/v1/vision (ai_vision.py) for real document processing."
     }
 
 
@@ -395,40 +337,21 @@ async def get_processing_stats(
     if not tenant_id:
         raise HTTPException(status_code=400, detail="No tenant context found")
     
-    # Mock statistics data
-    # In production, this would calculate from actual processing history
-    stats = {
+    # DISABLED: Mock statistics removed. No processing stats table exists yet.
+    return {
         "period_days": days,
-        "total_processed": 45,
-        "document_processed": 32,
-        "audio_processed": 13,
-        "avg_confidence": 0.91,
-        "avg_processing_time": 3.2,
-        "crm_records_created": 28,
-        "success_rate": 0.93,
-        "document_type_breakdown": {
-            "business_card": 18,
-            "invoice": 8,
-            "contract": 4,
-            "receipt": 2
-        },
-        "daily_stats": [
-            {
-                "date": (datetime.utcnow() - timedelta(days=i)).strftime("%Y-%m-%d"),
-                "processed": np.random.randint(0, 5),
-                "avg_confidence": np.random.uniform(0.85, 0.95)
-            }
-            for i in range(days)
-        ],
-        "language_distribution": {
-            "en": 38,
-            "es": 4,
-            "fr": 2,
-            "de": 1
-        }
+        "total_processed": 0,
+        "document_processed": 0,
+        "audio_processed": 0,
+        "avg_confidence": 0.0,
+        "avg_processing_time": 0.0,
+        "crm_records_created": 0,
+        "success_rate": 0.0,
+        "document_type_breakdown": {},
+        "daily_stats": [],
+        "language_distribution": {},
+        "_notice": "This endpoint is deprecated. Use /api/v1/vision (ai_vision.py) for real document processing."
     }
-    
-    return stats
 
 
 @router.get("/supported-languages", summary="Get Supported Languages")

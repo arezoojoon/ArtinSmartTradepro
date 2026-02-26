@@ -24,7 +24,7 @@ export default function PipelineBoardPage() {
     const fetchPipelineData = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
 
             // 1. Fetch Pipelines to find this specific one (since we don't have a GET /pipelines/id endpoint yet)
             const pipeRes = await fetch(`${BASE_URL}/crm/pipelines`, {

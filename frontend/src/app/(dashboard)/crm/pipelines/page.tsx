@@ -16,7 +16,7 @@ export default function PipelinesPage() {
     const fetchPipelines = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const res = await fetch(`${BASE_URL}/crm/pipelines`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });

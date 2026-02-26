@@ -42,6 +42,9 @@ export default function VisionIntelligencePage() {
     const [created, setCreated] = useState(false);
     const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
+    const [eventName, setEventName] = useState("");
+    const [note, setNote] = useState("");
+
     // Editable contact fields
     const [editName, setEditName] = useState("");
     const [editCompany, setEditCompany] = useState("");
@@ -57,7 +60,7 @@ export default function VisionIntelligencePage() {
 
     const fetchCards = async () => {
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const res = await fetch(`${BASE_URL}/crm/ai/vision/cards`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -68,7 +71,7 @@ export default function VisionIntelligencePage() {
     const pollStatus = (jobId: string) => {
         pollingRef.current = setInterval(async () => {
             try {
-                const token = localStorage.getItem("access_token");
+                const token = localStorage.getItem("token");
                 const res = await fetch(`${BASE_URL}/crm/ai/vision/status/${jobId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -107,7 +110,7 @@ export default function VisionIntelligencePage() {
         setCreated(false);
 
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const formData = new FormData();
             formData.append("file", file);
 
@@ -142,7 +145,7 @@ export default function VisionIntelligencePage() {
         setCreating(true);
 
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const nameParts = editName.split(" ");
             const firstName = nameParts[0] || "Unknown";
             const lastName = nameParts.slice(1).join(" ") || undefined;
@@ -161,6 +164,8 @@ export default function VisionIntelligencePage() {
                     phone: editPhone || undefined,
                     email: editEmail || undefined,
                     linkedin_url: editLinkedin || undefined,
+                    event_name: eventName || undefined,
+                    note: note || undefined,
                 })
             });
 
@@ -233,7 +238,7 @@ export default function VisionIntelligencePage() {
                         className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${dragOver ? 'border-emerald-400 bg-emerald-400/5' : 'border-navy-700 hover:border-navy-500 bg-[#0e1e33]/50'}`}
                         onClick={() => document.getElementById("image-input")?.click()}
                     >
-                        <input id="image-input" type="file" accept="image/*" className="hidden"
+                        <input id="image-input" type="file" accept="image/*" capture="environment" className="hidden"
                             onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])} />
 
                         {preview ? (
@@ -333,6 +338,22 @@ export default function VisionIntelligencePage() {
                             <div className="bg-[#0e1e33] border border-[#1e3a5f] rounded-xl p-5 space-y-4">
                                 <h4 className="text-white font-semibold mb-1">Extracted Contact — Review & Edit</h4>
                                 <p className="text-navy-500 text-xs mb-3">Edit any field before creating the contact.</p>
+
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <CreditCard className="h-4 w-4 text-navy-400 shrink-0" />
+                                        <input value={eventName} onChange={(e) => setEventName(e.target.value)}
+                                            placeholder="Event name (e.g. Gulfood 2026)"
+                                            className="flex-1 bg-navy-950 border border-navy-700 rounded-lg px-3 py-2 text-white text-sm focus:border-emerald-500 outline-none" />
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        <MapPin className="h-4 w-4 text-navy-400 shrink-0" />
+                                        <input value={note} onChange={(e) => setNote(e.target.value)}
+                                            placeholder="Your note about this contact"
+                                            className="flex-1 bg-navy-950 border border-navy-700 rounded-lg px-3 py-2 text-white text-sm focus:border-emerald-500 outline-none" />
+                                    </div>
+                                </div>
 
                                 <div className="space-y-3">
                                     {/* Name */}

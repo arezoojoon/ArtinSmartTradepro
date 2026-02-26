@@ -2,7 +2,7 @@
 CRM Router — CRUD for Contacts, Companies, Pipelines, Deals, Notes, Tags.
 Phase 1 Architecture: Uses Async DB, RLS injection, RBAC guards, and Audit Logging.
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, File, UploadFile, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete, or_
 from pydantic import BaseModel
@@ -756,3 +756,163 @@ async def update_invoice(
     )
     await db.commit()
     return invoice
+
+
+# ─── Bulk Import Contacts (CSV / XLSX) ───────────────────────────────
+
+import csv
+import io
+import uuid as _uuid
+
+BULK_REQUIRED_COLUMNS = {"first_name"}
+BULK_ALLOWED_COLUMNS = {
+    "first_name", "last_name", "email", "phone",
+    "position", "linkedin_url", "preferred_language",
+}
+
+def _parse_csv_rows(raw_bytes: bytes) -> List[dict]:
+    """Parse CSV bytes into list of dicts. Tries utf-8 then latin-1."""
+    for enc in ("utf-8-sig", "utf-8", "latin-1"):
+        try:
+            text = raw_bytes.decode(enc)
+            break
+        except UnicodeDecodeError:
+            continue
+    else:
+        raise ValueError("Could not decode CSV file")
+    reader = csv.DictReader(io.StringIO(text))
+    return [dict(row) for row in reader]
+
+
+def _parse_xlsx_rows(raw_bytes: bytes) -> List[dict]:
+    """Parse XLSX bytes into list of dicts using openpyxl."""
+    from openpyxl import load_workbook
+    wb = load_workbook(filename=io.BytesIO(raw_bytes), read_only=True, data_only=True)
+    ws = wb.active
+    rows_iter = ws.iter_rows(values_only=True)
+    headers = [str(h).strip().lower().replace(" ", "_") if h else f"col_{i}" for i, h in enumerate(next(rows_iter, []))]
+    results = []
+    for row in rows_iter:
+        d = {}
+        for i, val in enumerate(row):
+            if i < len(headers):
+                d[headers[i]] = str(val).strip() if val is not None else ""
+        results.append(d)
+    wb.close()
+    return results
+
+
+@router.post("/contacts/bulk-import", dependencies=[Depends(require_permissions(["crm.write"]))])
+async def bulk_import_contacts(
+    file: UploadFile = File(...),
+    event_name: Optional[str] = Form(None),
+    note: Optional[str] = Form(None),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Bulk import contacts from CSV or XLSX.
+
+    Expected columns (header row required):
+      first_name (required), last_name, email, phone, position, linkedin_url, preferred_language
+
+    Optional form fields:
+      event_name — creates an 'event:<name>' tag on each imported contact
+      note       — creates a CRMNote on each imported contact
+    """
+    fname = (file.filename or "").lower()
+    raw = await file.read()
+
+    if fname.endswith(".xlsx"):
+        try:
+            rows = _parse_xlsx_rows(raw)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to parse XLSX: {e}")
+    elif fname.endswith(".csv"):
+        try:
+            rows = _parse_csv_rows(raw)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to parse CSV: {e}")
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported file type. Upload .csv or .xlsx")
+
+    if not rows:
+        raise HTTPException(status_code=400, detail="File contains no data rows")
+
+    # Normalize column names
+    normalized = []
+    for row in rows:
+        norm = {k.strip().lower().replace(" ", "_"): (v.strip() if isinstance(v, str) else v) for k, v in row.items()}
+        normalized.append(norm)
+
+    # Validate required columns exist
+    sample_keys = set(normalized[0].keys())
+    missing = BULK_REQUIRED_COLUMNS - sample_keys
+    if missing:
+        raise HTTPException(status_code=400, detail=f"Missing required columns: {', '.join(missing)}")
+
+    tenant_id = current_user.current_tenant_id
+    created = 0
+    skipped = 0
+    errors = []
+
+    for idx, row in enumerate(normalized, start=2):  # row 2 = first data row (1=header)
+        first_name = (row.get("first_name") or "").strip()
+        if not first_name:
+            skipped += 1
+            errors.append({"row": idx, "error": "Missing first_name"})
+            continue
+
+        # Build contact
+        contact = CRMContact(
+            tenant_id=tenant_id,
+            first_name=first_name,
+            last_name=(row.get("last_name") or "").strip() or None,
+            email=(row.get("email") or "").strip() or None,
+            phone=(row.get("phone") or "").strip() or None,
+            position=(row.get("position") or "").strip() or None,
+            linkedin_url=(row.get("linkedin_url") or "").strip() or None,
+            preferred_language=(row.get("preferred_language") or "").strip() or None,
+        )
+        db.add(contact)
+        await db.flush()  # get contact.id
+
+        # Event tag
+        if event_name and event_name.strip():
+            tag = CRMTag(
+                tenant_id=tenant_id,
+                name=f"event:{event_name.strip()}",
+                color="#D4AF37",
+                entity_type="contact",
+                entity_id=contact.id,
+            )
+            db.add(tag)
+
+        # Note
+        if note and note.strip():
+            n = CRMNote(
+                tenant_id=tenant_id,
+                author_id=current_user.id,
+                contact_id=contact.id,
+                content=note.strip(),
+            )
+            db.add(n)
+
+        created += 1
+
+    await db.commit()
+
+    await log_audit_async(
+        db, tenant_id=tenant_id, actor_user_id=current_user.id,
+        action="crm_contacts_bulk_imported", resource_type="crm_contact",
+        resource_id="bulk",
+        details={"created": created, "skipped": skipped, "event_name": event_name}
+    )
+    await db.commit()
+
+    return {
+        "created": created,
+        "skipped": skipped,
+        "total_rows": len(normalized),
+        "errors": errors[:20],  # limit error detail
+    }

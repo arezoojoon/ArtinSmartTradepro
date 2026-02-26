@@ -16,8 +16,8 @@ export default function ImportLeadsPage() {
             <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                 <CardContent className="py-16 text-center">
                     <Upload className="h-16 w-16 mx-auto mb-4 text-gray-700" />
-                    <p className="text-gray-500">Lead Import — Coming Soon</p>
-                    <p className="text-xs text-gray-600 mt-2">Upload CSV or Excel files to import leads into your CRM.</p>
+                    <p className="text-amber-400/80 font-medium">Lead Import — Under Development</p>
+                    <p className="text-xs text-gray-600 mt-2">Upload CSV or Excel files to import leads into your CRM. This feature is being built.</p>
                 </CardContent>
             </Card>
         </div>

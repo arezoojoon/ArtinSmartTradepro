@@ -16,8 +16,8 @@ export default function FinanceSimulatorPage() {
             <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                 <CardContent className="py-16 text-center">
                     <Calculator className="h-16 w-16 mx-auto mb-4 text-gray-700" />
-                    <p className="text-gray-500">Finance Simulator — Coming Soon</p>
-                    <p className="text-xs text-gray-600 mt-2">Cash flow forecasting, DSO trends, and margin analysis.</p>
+                    <p className="text-amber-400/80 font-medium">Finance Simulator — Under Development</p>
+                    <p className="text-xs text-gray-600 mt-2">Cash flow forecasting, DSO trends, and margin analysis. This feature is being built.</p>
                 </CardContent>
             </Card>
         </div>

@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Users, UserPlus, Shield, Mail } from "lucide-react";
+import { Users, UserPlus, Shield, Mail, Loader2 } from "lucide-react";
+import api from "@/lib/api";
 
 const ROLES = [
     { value: "owner", label: "Owner", desc: "Full access + Billing" },
@@ -21,6 +22,26 @@ const ROLES = [
 export default function TeamSettingsPage() {
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteRole, setInviteRole] = useState("viewer");
+    const [sending, setSending] = useState(false);
+    const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+    const handleSendInvitation = async () => {
+        if (!inviteEmail) return;
+        setSending(true);
+        setStatusMsg(null);
+        try {
+            const meRes = await api.get("/auth/me");
+            const tenantId = meRes.data?.current_tenant_id || meRes.data?.tenant_id;
+            if (!tenantId) throw new Error("No tenant context");
+            await api.post(`/tenants/${tenantId}/invite?email=${encodeURIComponent(inviteEmail)}&role=${inviteRole}`);
+            setStatusMsg({ type: "success", text: `Invitation sent to ${inviteEmail}` });
+            setInviteEmail("");
+        } catch (e: any) {
+            setStatusMsg({ type: "error", text: e?.response?.data?.detail || "Failed to send invitation" });
+        } finally {
+            setSending(false);
+        }
+    };
 
     return (
         <div className="p-4 md:p-8 space-y-8 max-w-4xl text-white">
@@ -63,9 +84,19 @@ export default function TeamSettingsPage() {
                             </select>
                         </div>
                     </div>
-                    <Button className="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold">
-                        <Mail className="h-4 w-4 mr-2" /> Send Invitation
+                    <Button
+                        className="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold"
+                        onClick={handleSendInvitation}
+                        disabled={sending || !inviteEmail}
+                    >
+                        {sending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+                        {sending ? "Sending..." : "Send Invitation"}
                     </Button>
+                    {statusMsg && (
+                        <p className={`text-sm ${statusMsg.type === "success" ? "text-emerald-400" : "text-red-400"}`}>
+                            {statusMsg.text}
+                        </p>
+                    )}
                 </CardContent>
             </Card>
 

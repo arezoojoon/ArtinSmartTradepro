@@ -111,7 +111,7 @@ function CheckoutContent() {
 
             // 3. Store tokens
             if (typeof window !== "undefined") {
-                localStorage.setItem("access_token", access_token);
+                localStorage.setItem("token", access_token);
                 if (refresh_token) {
                     localStorage.setItem("refresh_token", refresh_token);
                 }

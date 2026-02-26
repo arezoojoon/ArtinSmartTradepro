@@ -2,6 +2,8 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.models.user import User
+from app.middleware.auth import get_current_active_user
 from app.models.inventory import Warehouse, InventoryItem
 from app.models.climate import ClimateRisk
 from app.services.inventory_service import InventoryService
@@ -36,10 +38,16 @@ def get_warehouses(db: Session = Depends(get_db)):
     return db.query(Warehouse).all()
 
 @router.post("/inventory/warehouses")
-def create_warehouse(w: WarehouseCreate, db: Session = Depends(get_db)):
-    # Mock Tenant
+def create_warehouse(
+    w: WarehouseCreate,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    tenant_id = getattr(current_user, "current_tenant_id", getattr(current_user, "tenant_id", None))
+    if not tenant_id:
+        raise HTTPException(status_code=400, detail="No tenant context")
     new_w = Warehouse(
-        tenant_id=uuid.UUID("00000000-0000-0000-0000-000000000000"), 
+        tenant_id=tenant_id, 
         name=w.name, 
         location_lat=w.lat, 
         location_lon=w.lon, 

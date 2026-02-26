@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
     Plus, Search, Filter, MoreHorizontal, User, Mail,
     Phone, MapPin, Building2, Linkedin, MessageSquare,
-    Clock, ShieldCheck, MailPlus, UserPlus, Info
+    Clock, ShieldCheck, MailPlus, UserPlus, Info, Upload
 } from "lucide-react";
 import { BASE_URL } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -23,6 +25,7 @@ import {
 } from "@/components/ui/tooltip";
 
 export default function ContactsPage() {
+    const router = useRouter();
     const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -34,7 +37,7 @@ export default function ContactsPage() {
     const fetchContacts = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const query = search ? `?search=${search}` : "";
             const res = await fetch(`${BASE_URL}/crm/contacts${query}`, {
                 headers: { "Authorization": `Bearer ${token}` }
@@ -59,10 +62,12 @@ export default function ContactsPage() {
                     <p className="text-muted-foreground mt-1">Manage individual trade relationships and key stakeholders.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button variant="outline" className="hidden sm:flex border-slate-200">
-                        <MailPlus className="h-4 w-4 mr-2" />
-                        Bulk Invite
-                    </Button>
+                    <Link href="/crm/contacts/import">
+                        <Button variant="outline" className="hidden sm:flex border-slate-200">
+                            <Upload className="h-4 w-4 mr-2" />
+                            Bulk Import
+                        </Button>
+                    </Link>
                     <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-sm">
                         <UserPlus className="h-4 w-4 mr-2" />
                         Add Contact
@@ -219,6 +224,9 @@ export default function ContactsPage() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem className="font-medium">View Intelligence</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => router.push(`/crm/contacts/${contact.id}/followup`)}>
+                                                        Smart Follow-up
+                                                    </DropdownMenuItem>
                                                     <DropdownMenuItem>Assign to Sequence</DropdownMenuItem>
                                                     <DropdownMenuItem>Log Manual Activity</DropdownMenuItem>
                                                     <DropdownMenuItem className="text-rose-600">Archive Contact</DropdownMenuItem>

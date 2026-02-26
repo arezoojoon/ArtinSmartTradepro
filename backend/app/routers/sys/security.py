@@ -391,16 +391,8 @@ def get_blocked_ips(
     """
     # This would typically query a firewall rules database or API
     
-    # Mock data for demonstration
-    blocked_ips = [
-        {
-            "ip_address": "192.168.1.100",
-            "blocked_at": (datetime.utcnow() - timedelta(hours=2)).isoformat(),
-            "blocked_until": (datetime.utcnow() + timedelta(hours=22)).isoformat(),
-            "reason": "Brute force attack detected",
-            "blocked_by": "system"
-        }
-    ]
+    # No IP blocking table implemented yet — return empty list
+    blocked_ips = []
     
     # Log audit
     write_sys_audit(

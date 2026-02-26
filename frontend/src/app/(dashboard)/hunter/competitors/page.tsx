@@ -16,8 +16,8 @@ export default function CompetitorsPage() {
             <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                 <CardContent className="py-16 text-center">
                     <Users className="h-16 w-16 mx-auto mb-4 text-gray-700" />
-                    <p className="text-gray-500">Competitor Analysis — Coming Soon</p>
-                    <p className="text-xs text-gray-600 mt-2">Compare competitor density, pricing, and market share.</p>
+                    <p className="text-amber-400/80 font-medium">Competitor Analysis — Under Development</p>
+                    <p className="text-xs text-gray-600 mt-2">Compare competitor density, pricing, and market share. This feature is being built.</p>
                 </CardContent>
             </Card>
         </div>

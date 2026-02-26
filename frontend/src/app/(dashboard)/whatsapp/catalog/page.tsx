@@ -17,7 +17,7 @@ export default function CatalogPage() {
             <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                 <CardContent className="py-16 text-center">
                     <ShoppingBag className="h-16 w-16 mx-auto mb-4 text-gray-700" />
-                    <p className="text-gray-500">Product Catalog — Coming Soon</p>
+                    <p className="text-amber-400/80 font-medium">Product Catalog — Under Development</p>
                     <p className="text-xs text-gray-600 mt-2">
                         Share your product catalog directly through WhatsApp conversations.
                     </p>

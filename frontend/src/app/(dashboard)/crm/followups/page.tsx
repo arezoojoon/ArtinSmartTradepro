@@ -17,7 +17,7 @@ export default function FollowUpRulesPage() {
 
     const fetchRules = async () => {
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const res = await fetch(`${BASE_URL}/crm/followups/rules`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -34,7 +34,7 @@ export default function FollowUpRulesPage() {
 
     const toggleRule = async (id: string) => {
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const res = await fetch(`${BASE_URL}/crm/followups/rules/${id}/toggle`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }

@@ -18,7 +18,7 @@ export default function NewFollowUpRulePage() {
         setLoading(true);
 
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const payload = {
                 name,
                 template_body: template,
@@ -76,7 +76,7 @@ export default function NewFollowUpRulePage() {
                             className="p-4 rounded-lg border bg-navy-950 border-[#1e3a5f] text-navy-600 cursor-not-allowed opacity-50"
                         >
                             <div className="font-bold mb-1">Deal Stage Change</div>
-                            <div className="text-xs opacity-70">Coming soon</div>
+                            <div className="text-xs opacity-70">Under development</div>
                         </button>
                     </div>
                 </div>

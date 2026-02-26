@@ -307,10 +307,10 @@ def get_brain_feed(
         "signals": signals
     }
 
-# Mock Service Logic (should be in services/brain_service.py)
+# Seed / Simulation Logic (generates sample data for demo tenants)
 def run_proactive_scan(tenant_id: uuid.UUID, db: Session):
     """
-    Simulates the AI finding new arbitrage or risk signals.
+    Generates sample arbitrage and risk signal entries for a tenant.
     """
     # 1. Simulate finding an Arbitrage Opportunity
     opp = TradeOpportunity(

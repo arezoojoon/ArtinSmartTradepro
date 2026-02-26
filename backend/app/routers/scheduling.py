@@ -2,6 +2,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.models.user import User
+from app.middleware.auth import get_current_active_user
 from app.models.scheduling import Appointment, AvailabilitySlot
 from app.services.scheduling_service import SchedulingService
 from pydantic import BaseModel
@@ -35,12 +37,18 @@ def get_availability(user_id: str, db: Session = Depends(get_db)):
     return SchedulingService.get_user_availability(db, uuid.UUID(user_id))
 
 @router.post("/availability")
-def set_availability(data: AvailabilityCreate, db: Session = Depends(get_db)):
+def set_availability(
+    data: AvailabilityCreate,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
     start = datetime.time.fromisoformat(data.start_time)
     end = datetime.time.fromisoformat(data.end_time)
-    mock_tenant = uuid.UUID("00000000-0000-0000-0000-000000000000")
+    tenant_id = getattr(current_user, "current_tenant_id", getattr(current_user, "tenant_id", None))
+    if not tenant_id:
+        raise HTTPException(status_code=400, detail="No tenant context")
     return SchedulingService.set_availability(
-        db, mock_tenant, uuid.UUID(data.user_id),
+        db, tenant_id, uuid.UUID(data.user_id),
         data.day_of_week, start, end
     )
 
@@ -72,11 +80,17 @@ def get_appointments(user_id: str, db: Session = Depends(get_db)):
     return SchedulingService.get_upcoming_appointments(db, uuid.UUID(user_id))
 
 @router.post("/appointments")
-def book_appointment(data: AppointmentCreate, db: Session = Depends(get_db)):
-    mock_tenant = uuid.UUID("00000000-0000-0000-0000-000000000000")
+def book_appointment(
+    data: AppointmentCreate,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    tenant_id = getattr(current_user, "current_tenant_id", getattr(current_user, "tenant_id", None))
+    if not tenant_id:
+        raise HTTPException(status_code=400, detail="No tenant context")
     try:
         appt = SchedulingService.book_appointment(
-            db, mock_tenant,
+            db, tenant_id,
             host_id=uuid.UUID(data.host_id),
             guest_name=data.guest_name,
             guest_email=data.guest_email,

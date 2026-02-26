@@ -16,8 +16,8 @@ export default function OpportunitiesPage() {
             <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                 <CardContent className="py-16 text-center">
                     <TrendingUp className="h-16 w-16 mx-auto mb-4 text-gray-700" />
-                    <p className="text-gray-500">Arbitrage Engine — Coming Soon</p>
-                    <p className="text-xs text-gray-600 mt-2">Discover buy/sell opportunities across markets with confidence scores.</p>
+                    <p className="text-amber-400/80 font-medium">Arbitrage Engine — Under Development</p>
+                    <p className="text-xs text-gray-600 mt-2">Discover buy/sell opportunities across markets with confidence scores. This feature is being built.</p>
                 </CardContent>
             </Card>
         </div>

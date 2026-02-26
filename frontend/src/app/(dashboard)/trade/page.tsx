@@ -37,7 +37,7 @@ export default function TradePage() {
         setError(null);
         setResult(null);
 
-        const token = localStorage.getItem("access_token");
+        const token = localStorage.getItem("token");
         const headers: Record<string, string> = {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,

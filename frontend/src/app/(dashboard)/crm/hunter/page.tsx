@@ -31,7 +31,7 @@ export default function HunterDashboard() {
         if (!keyword || !location) return;
         setLoading(true);
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const res = await fetch(`${BASE_URL}/hunter/start`, {
                 method: "POST",
                 headers: {
@@ -58,7 +58,7 @@ export default function HunterDashboard() {
     const fetchJobStatus = async () => {
         if (!activeJobId) return;
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const res = await fetch(`${BASE_URL}/hunter/status/${activeJobId}`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -74,7 +74,7 @@ export default function HunterDashboard() {
     const fetchResults = async () => {
         if (!activeJobId) return;
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const res = await fetch(`${BASE_URL}/hunter/results/${activeJobId}`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -89,7 +89,7 @@ export default function HunterDashboard() {
 
     const importToCRM = async (resultId: string) => {
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const res = await fetch(`${BASE_URL}/hunter/import-to-crm`, {
                 method: "POST",
                 headers: {

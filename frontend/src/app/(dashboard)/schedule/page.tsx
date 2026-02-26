@@ -16,8 +16,8 @@ export default function SchedulePage() {
             <Card className="bg-[#0e1e33] border-[#1e3a5f]">
                 <CardContent className="py-16 text-center">
                     <Calendar className="h-16 w-16 mx-auto mb-4 text-gray-700" />
-                    <p className="text-gray-500">Scheduler — Coming Soon</p>
-                    <p className="text-xs text-gray-600 mt-2">Calendar view with tasks, reminders, and meeting scheduling.</p>
+                    <p className="text-amber-400/80 font-medium">Scheduler — Under Development</p>
+                    <p className="text-xs text-gray-600 mt-2">Calendar view with tasks, reminders, and meeting scheduling. This feature is being built.</p>
                 </CardContent>
             </Card>
         </div>

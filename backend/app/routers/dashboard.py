@@ -10,8 +10,12 @@ from app.models.tenant import Tenant
 from app.middleware.auth import get_current_active_user
 from app.schemas.dashboard import DashboardMobileResponse
 
-from app.models.billing import Wallet
+from app.models.billing import Wallet, WalletTransaction
 from app.models.crm import CRMInvoice, CRMCompany
+from sqlalchemy import func as sqla_func
+
+import logging
+logger = logging.getLogger(__name__)
 # Try to import BrainEngineRun, but handle gracefully if it doesn't exist
 try:
     from app.models.brain import BrainEngineRun
@@ -23,15 +27,13 @@ router = APIRouter()
 
 @router.get("/mobile", response_model=DashboardMobileResponse)
 def get_mobile_dashboard(
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ) -> Any:
     """
     Data-driven Mobile Control Tower aggregation endpoint.
     Retrieves strict structs with Source, Timestamp, and Confidence for the 5 widgets.
     """
-    class MockUser:
-        tenant_id = "00000000-0000-0000-0000-000000000000"
-    current_user = MockUser()
     tenant_id = getattr(current_user, "current_tenant_id", getattr(current_user, "tenant_id", None))
     
     if not tenant_id:
@@ -128,39 +130,8 @@ def get_mobile_dashboard(
     except Exception as e:
         logger.error(f"Error fetching risks: {e}")
     
-    # 3. Market Shocks (mock data - would integrate with external APIs)
-    try:
-        shocks = [
-            {
-                "id": "fx-shock-1",
-                "asset": "EUR/USD",
-                "change": "+2.3%",
-                "trend": "up",
-                "source": "FX Market Data",
-                "timestamp": datetime.datetime.utcnow().isoformat(),
-                "confidence": 0.98
-            },
-            {
-                "id": "oil-shock-1",
-                "asset": "Crude Oil",
-                "change": "-1.8%",
-                "trend": "down",
-                "source": "Commodity Markets",
-                "timestamp": datetime.datetime.utcnow().isoformat(),
-                "confidence": 0.95
-            },
-            {
-                "id": "freight-shock-1",
-                "asset": "Asia-EU Freight",
-                "change": "+5.2%",
-                "trend": "up",
-                "source": "Freight Index",
-                "timestamp": datetime.datetime.utcnow().isoformat(),
-                "confidence": 0.92
-            }
-        ]
-    except Exception as e:
-        logger.error(f"Error fetching shocks: {e}")
+    # 3. Market Shocks — empty until external market data API is integrated
+    shocks = []
     
     # 4. New Leads from Hunter
     try:
@@ -190,10 +161,30 @@ def get_mobile_dashboard(
         wallet = db.query(Wallet).filter(Wallet.tenant_id == tenant_id).first()
         
         if wallet:
-            # Mock calculation - would integrate with actual billing data
-            liquidity["pending_in"] = 124500
-            liquidity["pending_out"] = 82300
-            liquidity["dso"] = 42  # Days Sales Outstanding
+            # Pending In: sum of open invoices (money owed to us)
+            pending_in = db.query(sqla_func.coalesce(sqla_func.sum(CRMInvoice.amount), 0)).filter(
+                CRMInvoice.tenant_id == tenant_id,
+                CRMInvoice.status == "open"
+            ).scalar() or 0
+            liquidity["pending_in"] = float(pending_in)
+
+            # Pending Out: sum of overdue invoices
+            pending_out = db.query(sqla_func.coalesce(sqla_func.sum(CRMInvoice.amount), 0)).filter(
+                CRMInvoice.tenant_id == tenant_id,
+                CRMInvoice.status == "overdue"
+            ).scalar() or 0
+            liquidity["pending_out"] = float(pending_out)
+
+            # DSO: average days between issued and paid
+            paid_invoices = db.query(CRMInvoice).filter(
+                CRMInvoice.tenant_id == tenant_id,
+                CRMInvoice.paid_date != None
+            ).order_by(CRMInvoice.paid_date.desc()).limit(50).all()
+            if paid_invoices:
+                total_days = sum((inv.paid_date - inv.issued_date).days for inv in paid_invoices if inv.issued_date)
+                liquidity["dso"] = round(total_days / len(paid_invoices), 1)
+            else:
+                liquidity["dso"] = 0
     except Exception as e:
         logger.error(f"Error fetching liquidity: {e}")
     
@@ -207,6 +198,11 @@ def get_mobile_dashboard(
 
 from app.schemas.dashboard import DashboardWebResponse
 from app.models.crm import CRMPipeline, CRMDeal
+
+try:
+    from app.models.phase5 import AssetArbitrageHistory
+except ImportError:
+    AssetArbitrageHistory = None
 
 @router.get("/web", response_model=DashboardWebResponse)
 def get_web_dashboard(
@@ -254,41 +250,68 @@ def get_web_dashboard(
             {"name": "Closed Won", "count": 0, "value": 0.0}
         ]
 
-    # 2. Margin Overview Matrix
-    # Using dummy data as TradeOpportunity model is deprecated in V3
-    margin_matrix = [
-        {
-            "product": "Industrial Solvents",
-            "origin": "DE",
-            "destination": "AE",
-            "net_margin": 12.5,
-            "roi": 85.0
-        },
-        {
-            "product": "Machinery Parts",
-            "origin": "CN",
-            "destination": "US",
-            "net_margin": 18.2,
-            "roi": 90.0
-        }
-    ]
+    # 2. Margin Overview Matrix from real arbitrage history
+    margin_matrix = []
+    if AssetArbitrageHistory:
+        arb_records = db.query(AssetArbitrageHistory).filter(
+            AssetArbitrageHistory.tenant_id == tenant_id,
+            AssetArbitrageHistory.created_at >= now - datetime.timedelta(days=30)
+        ).order_by(AssetArbitrageHistory.created_at.desc()).limit(10).all()
+        for rec in arb_records:
+            margin_matrix.append({
+                "product": rec.product_key or "Unknown",
+                "origin": rec.buy_market or "N/A",
+                "destination": rec.sell_market or "N/A",
+                "net_margin": float(rec.estimated_margin_pct) if rec.estimated_margin_pct else 0,
+                "roi": float(rec.realized_margin_pct) if rec.realized_margin_pct else 0
+            })
 
-    # 3. Cash Flow & DSO Trends Graph
+    # 3. Cash Flow & DSO Trends from real wallet transactions
     cash_flow = []
+    wallet = db.query(Wallet).filter(Wallet.tenant_id == tenant_id).first()
     for i in range(5, -1, -1):
-        month = now - datetime.timedelta(days=30*i)
+        period_start = now - datetime.timedelta(days=30*i)
+        period_end = period_start + datetime.timedelta(days=30)
+        cash_in_val = 0.0
+        cash_out_val = 0.0
+        if wallet:
+            credits = db.query(sqla_func.coalesce(sqla_func.sum(WalletTransaction.amount), 0)).filter(
+                WalletTransaction.wallet_id == wallet.id,
+                WalletTransaction.type == "credit",
+                WalletTransaction.status == "completed",
+                WalletTransaction.created_at >= period_start,
+                WalletTransaction.created_at < period_end
+            ).scalar() or 0
+            debits = db.query(sqla_func.coalesce(sqla_func.sum(WalletTransaction.amount), 0)).filter(
+                WalletTransaction.wallet_id == wallet.id,
+                WalletTransaction.type == "debit",
+                WalletTransaction.status == "completed",
+                WalletTransaction.created_at >= period_start,
+                WalletTransaction.created_at < period_end
+            ).scalar() or 0
+            cash_in_val = float(credits)
+            cash_out_val = float(abs(debits))
         cash_flow.append({
-            "period": month.strftime("%b"),
-            "cash_in": 0.0,
-            "cash_out": 0.0
+            "period": period_start.strftime("%b"),
+            "cash_in": cash_in_val,
+            "cash_out": cash_out_val
         })
 
-    # 4. Risk Heatmap
-    # Using dummy data as RiskAssessment model is deprecated in V3
-    risk_heatmap = [
-        {"country": "US", "category": "General", "score": 25},
-        {"country": "CN", "category": "Tariffs", "score": 60}
-    ]
+    # 4. Risk Heatmap from Brain Engine risk runs
+    risk_heatmap = []
+    if BrainEngineRun:
+        risk_runs = db.query(BrainEngineRun).filter(
+            BrainEngineRun.tenant_id == tenant_id,
+            BrainEngineRun.engine_type == "risk",
+            BrainEngineRun.status == "success"
+        ).order_by(BrainEngineRun.created_at.desc()).limit(10).all()
+        for run in risk_runs:
+            result = run.result_json or {}
+            risk_heatmap.append({
+                "country": result.get("country", "Unknown"),
+                "category": result.get("primary_risk", "General"),
+                "score": int(result.get("risk_score", 50))
+            })
 
     # 5. Supplier/Buyer Performance Snapshots
     db_companies = db.query(CRMCompany).filter(

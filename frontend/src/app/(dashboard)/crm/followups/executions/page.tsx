@@ -19,7 +19,7 @@ export default function ExecutionsPage() {
 
     const fetchExecutions = async () => {
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const res = await fetch(`${BASE_URL}/crm/followups/executions`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });

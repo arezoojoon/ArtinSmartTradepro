@@ -203,19 +203,11 @@ class VisionVoiceService:
     
     async def _extract_text_from_image(self, image_base64: str) -> str:
         """Extract text from image using Gemini Vision API"""
-        # Mock implementation - in production, this would call Gemini Vision API
-        mock_text = """
-        John Smith
-        Senior Sales Manager
-        ABC Trading Corporation
-        123 Business Ave, Suite 100
-        New York, NY 10001
-        Email: john.smith@abctrading.com
-        Phone: (212) 555-0123
-        Website: www.abctrading.com
-        """
-        
-        return mock_text.strip()
+        # DISABLED: Mock implementation removed. Use ai_vision.py + Gemini Vision for real OCR.
+        raise NotImplementedError(
+            "VisionVoiceService._extract_text_from_image is deprecated. "
+            "Use the /api/v1/vision (ai_vision.py) endpoint with Gemini Vision API instead."
+        )
     
     async def _detect_document_type(self, text: str, hint: Optional[str]) -> str:
         """Detect document type from text content"""
@@ -414,27 +406,27 @@ class VisionVoiceService:
     
     async def _transcribe_audio(self, audio_base64: str, language: str) -> str:
         """Transcribe audio using speech-to-text API"""
-        # Mock implementation - in production, this would call OpenAI Whisper or similar
-        mock_transcript = """
-        Hi, this is John from ABC Trading Corporation. I'm calling to follow up on our proposal 
-        for the soybean export deal we discussed last week. I wanted to confirm if you've had 
-        a chance to review the terms and if you have any questions about the pricing structure. 
-        We're offering competitive rates and can deliver within 2 weeks. Please let me know if 
-        you'd like to proceed or if you need any additional information. I can be reached at 
-        (212) 555-0123. Thank you and have a great day.
-        """
-        
-        return mock_transcript.strip()
+        # DISABLED: Mock implementation removed.
+        raise NotImplementedError(
+            "VisionVoiceService._transcribe_audio is deprecated. "
+            "Integrate a real STT provider (e.g. OpenAI Whisper) before using this path."
+        )
     
     async def _detect_language(self, text: str) -> str:
         """Detect language of transcribed text"""
-        # Mock implementation - in production, this would use language detection
-        return "en"  # Default to English
+        # DISABLED: Mock implementation removed.
+        raise NotImplementedError(
+            "VisionVoiceService._detect_language is deprecated. "
+            "Integrate a real language detection provider before using this path."
+        )
     
     async def _detect_speakers(self, transcript: str) -> int:
         """Detect number of speakers in transcript"""
-        # Mock implementation - in production, this would use speaker diarization
-        return 1  # Default to single speaker
+        # DISABLED: Mock implementation removed.
+        raise NotImplementedError(
+            "VisionVoiceService._detect_speakers is deprecated. "
+            "Integrate a real speaker diarization provider before using this path."
+        )
     
     def _calculate_confidence(self, text: str, entities: List[Dict[str, Any]]) -> float:
         """Calculate confidence score for document processing"""

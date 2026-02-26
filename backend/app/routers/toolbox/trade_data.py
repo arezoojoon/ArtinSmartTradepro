@@ -256,7 +256,7 @@ async def get_popular_routes(
     if not tenant_id:
         raise HTTPException(status_code=400, detail="No tenant context found")
     
-    # Mock popular routes data
+    # Static reference data — popular trade routes
     popular_routes = [
         {
             "route": "China -> USA",
@@ -321,7 +321,7 @@ async def get_product_categories(
     if not tenant_id:
         raise HTTPException(status_code=400, detail="No tenant context found")
     
-    # Mock HS Code categories
+    # Static reference data — HS Code categories
     categories = [
         {
             "code": "01",
@@ -406,7 +406,7 @@ async def get_country_codes(
     if not tenant_id:
         raise HTTPException(status_code=400, detail="No tenant context found")
     
-    # Mock country codes
+    # Static reference data — country codes
     countries = [
         {"code": "842", "name": "United States", "alpha2": "US", "alpha3": "USA"},
         {"code": "156", "name": "China", "alpha2": "CN", "alpha3": "CHN"},

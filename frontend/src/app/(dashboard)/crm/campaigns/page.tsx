@@ -12,28 +12,26 @@ export default function CampaignsPage() {
     const [campaigns, setCampaigns] = useState<any[]>([])
     const [searchTerm, setSearchTerm] = useState("")
 
+    const [loading, setLoading] = useState(true)
+
     useEffect(() => {
-        // Dummy data for now
-        setCampaigns([
-            {
-                id: 1,
-                name: "Spring Collection Launch",
-                status: "active",
-                type: "email",
-                leads: 1250,
-                conversion: 3.2,
-                date: "2024-03-15"
-            },
-            {
-                id: 2,
-                name: "VIP Customer Follow-up",
-                status: "draft",
-                type: "sms",
-                leads: 450,
-                conversion: 0,
-                date: "2024-03-20"
+        const fetchCampaigns = async () => {
+            try {
+                const token = localStorage.getItem("token")
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"}/campaigns/`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+                if (res.ok) {
+                    const data = await res.json()
+                    setCampaigns(Array.isArray(data) ? data : data.items || [])
+                }
+            } catch (e) {
+                console.error("Failed to fetch campaigns:", e)
+            } finally {
+                setLoading(false)
             }
-        ])
+        }
+        fetchCampaigns()
     }, [])
 
     const filteredCampaigns = campaigns.filter(campaign =>
@@ -79,26 +77,25 @@ export default function CampaignsPage() {
                             </div>
                             <CardDescription className="flex items-center gap-2">
                                 <Mail className="h-4 w-4" />
-                                {campaign.type.toUpperCase()} • {campaign.date}
+                                {(campaign.channel || "whatsapp").toUpperCase()} • {campaign.created_at ? new Date(campaign.created_at).toLocaleDateString() : ""}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-2">
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Leads</span>
-                                    <span className="font-medium">{campaign.leads.toLocaleString()}</span>
+                                    <span className="text-muted-foreground">Channel</span>
+                                    <span className="font-medium">{campaign.channel || "whatsapp"}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Conversion</span>
-                                    <span className="font-medium">{campaign.conversion}%</span>
+                                    <span className="text-muted-foreground">Status</span>
+                                    <span className="font-medium capitalize">{campaign.status}</span>
                                 </div>
                                 <div className="flex gap-2 pt-2">
-                                    <Button variant="outline" size="sm" className="flex-1">
-                                        View
-                                    </Button>
-                                    <Button size="sm" className="flex-1">
-                                        Edit
-                                    </Button>
+                                    <Link href={`/crm/campaigns/${campaign.id}`} className="flex-1">
+                                        <Button variant="outline" size="sm" className="w-full">
+                                            View
+                                        </Button>
+                                    </Link>
                                 </div>
                             </div>
                         </CardContent>

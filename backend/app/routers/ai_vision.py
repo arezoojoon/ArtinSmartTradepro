@@ -75,6 +75,8 @@ class ConfirmContactRequest(BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None
     linkedin_url: Optional[str] = None
+    event_name: Optional[str] = None
+    note: Optional[str] = None
 
 
 class ScannedCardRead(BaseModel):
@@ -361,6 +363,52 @@ def confirm_as_contact(
     )
     db.add(contact)
     db.flush()
+
+    # Optional: attach event as a tag and store user note
+    try:
+        from app.models.crm import CRMNote, CRMTag
+
+        if data.event_name:
+            tag_name = f"event:{data.event_name.strip()}"
+            existing_tag = db.execute(
+                select(CRMTag)
+                .where(CRMTag.tenant_id == current_user.tenant_id)
+                .where(CRMTag.entity_type == "contact")
+                .where(CRMTag.entity_id == contact.id)
+                .where(CRMTag.name == tag_name)
+            ).scalar_one_or_none()
+
+            if not existing_tag:
+                db.add(
+                    CRMTag(
+                        tenant_id=current_user.tenant_id,
+                        name=tag_name,
+                        color="#10B981",
+                        entity_type="contact",
+                        entity_id=contact.id,
+                    )
+                )
+
+        if data.note or data.event_name:
+            note_parts = []
+            if data.event_name:
+                note_parts.append(f"Event: {data.event_name.strip()}")
+            if data.note:
+                note_parts.append(data.note.strip())
+
+            content = "\n".join([p for p in note_parts if p])
+            if content:
+                db.add(
+                    CRMNote(
+                        tenant_id=current_user.tenant_id,
+                        author_id=getattr(current_user, "id", None),
+                        contact_id=contact.id,
+                        content=content,
+                    )
+                )
+    except Exception as _e:
+        # Do not fail contact creation if note/tag creation fails
+        pass
 
     # Audit: link card to created contact
     card.contact_created_id = contact.id

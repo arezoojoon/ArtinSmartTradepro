@@ -295,53 +295,11 @@ async def list_ab_tests(
     # Get campaign A/B service
     campaign_service = get_campaign_ab_service(db)
     
-    # Mock test list - in production, this would query database
-    mock_tests = [
-        {
-            "test_id": "ab_test_20240215_143022",
-            "campaign_name": "Welcome Email Subject Line Test",
-            "status": "completed",
-            "created_at": "2024-02-15T14:30:22Z",
-            "start_date": "2024-02-15T14:30:22Z",
-            "end_date": "2024-02-29T14:30:22Z",
-            "primary_metric": "open_rate",
-            "sample_size": 2000,
-            "winner": "ab_test_20240215_143022_B",
-            "improvement": 12.5
-        },
-        {
-            "test_id": "ab_test_20240210_091530",
-            "campaign_name": "Call-to-Action Button Color",
-            "status": "running",
-            "created_at": "2024-02-10T09:15:30Z",
-            "start_date": "2024-02-10T09:15:30Z",
-            "end_date": "2024-02-24T09:15:30Z",
-            "primary_metric": "click_rate",
-            "sample_size": 1500,
-            "winner": None,
-            "improvement": 0
-        },
-        {
-            "test_id": "ab_test_20240205_163045",
-            "campaign_name": "Email Sender Name Test",
-            "status": "created",
-            "created_at": "2024-02-05T16:30:45Z",
-            "start_date": None,
-            "end_date": None,
-            "primary_metric": "conversion_rate",
-            "sample_size": 0,
-            "winner": None,
-            "improvement": 0
-        }
-    ]
+    # No persistent A/B test table yet — return empty until implemented
+    tests = []
     
-    # Filter by status if specified
-    if status:
-        mock_tests = [test for test in mock_tests if test["status"] == status]
-    
-    # Apply pagination
-    total = len(mock_tests)
-    paginated_tests = mock_tests[offset:offset + limit]
+    total = len(tests)
+    paginated_tests = tests[offset:offset + limit]
     
     return {
         "tests": paginated_tests,
@@ -366,47 +324,18 @@ async def get_metrics_summary(
     if not tenant_id:
         raise HTTPException(status_code=400, detail="No tenant context found")
     
-    # Mock metrics summary
+    # No persistent A/B test table yet — return zeroed summary
     metrics_summary = {
-        "total_tests": 15,
-        "completed_tests": 12,
-        "running_tests": 2,
-        "created_tests": 1,
-        "average_sample_size": 1850,
-        "average_test_duration_days": 14,
-        "statistical_significance_rate": 0.75,
-        "average_improvement": 8.3,
-        "primary_metrics": {
-            "open_rate": {
-                "tests_count": 8,
-                "avg_improvement": 5.2,
-                "significance_rate": 0.62
-            },
-            "click_rate": {
-                "tests_count": 5,
-                "avg_improvement": 12.8,
-                "significance_rate": 0.80
-            },
-            "conversion_rate": {
-                "tests_count": 2,
-                "avg_improvement": 15.5,
-                "significance_rate": 0.50
-            }
-        },
-        "recent_performance": [
-            {
-                "test_id": "ab_test_20240215_143022",
-                "campaign_name": "Welcome Email Subject Line Test",
-                "improvement": 12.5,
-                "status": "completed"
-            },
-            {
-                "test_id": "ab_test_20240210_091530",
-                "campaign_name": "Call-to-Action Button Color",
-                "improvement": 0.0,
-                "status": "running"
-            }
-        ]
+        "total_tests": 0,
+        "completed_tests": 0,
+        "running_tests": 0,
+        "created_tests": 0,
+        "average_sample_size": 0,
+        "average_test_duration_days": 0,
+        "statistical_significance_rate": 0,
+        "average_improvement": 0,
+        "primary_metrics": {},
+        "recent_performance": []
     }
     
     # If specific test requested, include its metrics

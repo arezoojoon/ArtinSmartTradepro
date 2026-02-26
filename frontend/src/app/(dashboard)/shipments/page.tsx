@@ -20,9 +20,9 @@ export default function ShipmentsPage() {
                         Track shipments, port delays, and manage trade documents
                     </p>
                 </div>
-                <Button className="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold">
-                    <Plus className="h-4 w-4 mr-2" /> Add Shipment
-                </Button>
+                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs uppercase tracking-wider">
+                    Beta — Coming Soon
+                </Badge>
             </div>
 
             {/* Status Summary */}
@@ -56,14 +56,7 @@ export default function ShipmentsPage() {
                         Add a shipment to track container movements, port delays, and manage
                         your document vault (BL, Invoice, COO, Packing List).
                     </p>
-                    <div className="flex gap-3">
-                        <Button variant="outline" className="border-navy-700 text-white">
-                            <Search className="h-4 w-4 mr-2" /> Track by BL Number
-                        </Button>
-                        <Button className="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold">
-                            Add Shipment
-                        </Button>
-                    </div>
+                    <p className="text-xs text-amber-400/70">Shipment tracking is under development. Stay tuned!</p>
                 </CardContent>
             </Card>
 

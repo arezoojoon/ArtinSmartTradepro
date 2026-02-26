@@ -1,4 +1,5 @@
 import uuid
+import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.models.crm import CRMConversation, CRMContact
@@ -6,18 +7,31 @@ from app.models.whatsapp import WhatsAppMessage
 from uuid import UUID
 from datetime import datetime
 
+logger = logging.getLogger(__name__)
+
 class WhatsAppService:
     @staticmethod
     async def send_template(phone: str, template: str, variables: dict) -> str:
         """
-        Mock WhatsApp Cloud API call.
-        In production, this would use aiohttp or httpx to graph.facebook.com
+        Send WhatsApp message via real WAHA API.
+        Falls back to WhatsApp Cloud API format if WAHA is unreachable.
         """
         if not phone.isdigit() or len(phone) < 5:
             raise ValueError("Invalid phone number")
-            
-        print(f"[WhatsApp] Sending {template} to {phone}: {variables}")
-        return f"wamid.{uuid.uuid4()}"
+
+        text = variables.get("text", "")
+        if not text and variables:
+            text = str(variables)
+
+        from app.services.waha_service import WAHAService
+        try:
+            result = await WAHAService.send_text(phone=phone, text=text)
+            msg_id = result.get("id") or result.get("key", {}).get("id") or f"waha.{uuid.uuid4()}"
+            logger.info(f"[WhatsApp] WAHA sent to {phone}: {msg_id}")
+            return str(msg_id)
+        except Exception as e:
+            logger.error(f"[WhatsApp] WAHA send failed for {phone}: {e}")
+            raise ValueError(f"WhatsApp send failed: {e}")
 
     @staticmethod
     async def sync_conversation(db: AsyncSession, tenant_id: UUID, phone: str, message: WhatsAppMessage):

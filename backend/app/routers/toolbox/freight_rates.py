@@ -186,7 +186,7 @@ async def get_popular_routes(
     if not tenant_id:
         raise HTTPException(status_code=400, detail="No tenant context found")
     
-    # Mock popular routes
+    # Static reference data — popular shipping routes
     popular_routes = [
         {
             "route": "SHA-LAX",

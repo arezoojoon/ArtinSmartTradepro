@@ -328,6 +328,24 @@ async def get_data_sources(
     if not tenant_id:
         raise HTTPException(status_code=400, detail="No tenant context found")
     
+    # Real counts from DB
+    from app.models.crm import CRMDeal, CRMInvoice
+    from app.models.hunter_phase4 import HunterLead
+    from app.models.billing import Wallet
+    from sqlalchemy import func as sqla_func
+    try:
+        from app.models.phase5 import AssetSupplierReliability
+    except ImportError:
+        AssetSupplierReliability = None
+
+    deals_count = db.query(sqla_func.count(CRMDeal.id)).filter(CRMDeal.tenant_id == tenant_id).scalar() or 0
+    leads_count = db.query(sqla_func.count(HunterLead.id)).filter(HunterLead.tenant_id == tenant_id).scalar() or 0
+    wallet_count = db.query(sqla_func.count(Wallet.id)).filter(Wallet.tenant_id == tenant_id).scalar() or 0
+    invoices_count = db.query(sqla_func.count(CRMInvoice.id)).filter(CRMInvoice.tenant_id == tenant_id).scalar() or 0
+    supplier_count = 0
+    if AssetSupplierReliability:
+        supplier_count = db.query(sqla_func.count(AssetSupplierReliability.id)).filter(AssetSupplierReliability.tenant_id == tenant_id).scalar() or 0
+
     data_sources = [
         {
             "name": "deals",
@@ -335,7 +353,7 @@ async def get_data_sources(
             "description": "Deal management data including pipeline, values, and stages",
             "tables": ["deals"],
             "key_fields": ["total_value", "status", "created_at", "closed_at", "estimated_margin_pct"],
-            "record_count": 1000,  # Mock count
+            "record_count": deals_count,
             "last_updated": datetime.utcnow().isoformat()
         },
         {
@@ -344,7 +362,7 @@ async def get_data_sources(
             "description": "Lead generation and qualification data",
             "tables": ["hunter_leads"],
             "key_fields": ["status", "score_total", "created_at", "primary_name", "country"],
-            "record_count": 2500,  # Mock count
+            "record_count": leads_count,
             "last_updated": datetime.utcnow().isoformat()
         },
         {
@@ -353,7 +371,7 @@ async def get_data_sources(
             "description": "Financial wallet and balance information",
             "tables": ["wallets"],
             "key_fields": ["balance", "currency", "created_at", "updated_at"],
-            "record_count": 1,  # Mock count
+            "record_count": wallet_count,
             "last_updated": datetime.utcnow().isoformat()
         },
         {
@@ -362,7 +380,7 @@ async def get_data_sources(
             "description": "Billing and invoice data",
             "tables": ["invoices"],
             "key_fields": ["amount", "status", "due_date", "created_at", "paid_at"],
-            "record_count": 150,  # Mock count
+            "record_count": invoices_count,
             "last_updated": datetime.utcnow().isoformat()
         },
         {
@@ -371,7 +389,7 @@ async def get_data_sources(
             "description": "Supplier performance and reliability metrics",
             "tables": ["asset_supplier_reliability"],
             "key_fields": ["reliability_score", "on_time_rate", "defect_rate", "supplier_name"],
-            "record_count": 50,  # Mock count
+            "record_count": supplier_count,
             "last_updated": datetime.utcnow().isoformat()
         }
     ]
@@ -486,39 +504,40 @@ async def get_refresh_status(
     if not tenant_id:
         raise HTTPException(status_code=400, detail="No tenant context found")
     
-    # Mock refresh status data
+    # Live refresh status — data is always live from DB, no caching layer yet
+    now = datetime.utcnow()
     refresh_status = [
         {
             "data_source": "deals",
-            "last_refresh": datetime.utcnow().isoformat(),
-            "status": "success",
-            "records_processed": 1000,
-            "next_refresh": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
-            "refresh_frequency": "hourly"
+            "last_refresh": now.isoformat(),
+            "status": "live",
+            "records_processed": 0,
+            "next_refresh": now.isoformat(),
+            "refresh_frequency": "realtime"
         },
         {
             "data_source": "leads",
-            "last_refresh": (datetime.utcnow() - timedelta(minutes=30)).isoformat(),
-            "status": "success",
-            "records_processed": 2500,
-            "next_refresh": (datetime.utcnow() + timedelta(minutes=30)).isoformat(),
-            "refresh_frequency": "30_minutes"
+            "last_refresh": now.isoformat(),
+            "status": "live",
+            "records_processed": 0,
+            "next_refresh": now.isoformat(),
+            "refresh_frequency": "realtime"
         },
         {
             "data_source": "financial",
-            "last_refresh": (datetime.utcnow() - timedelta(hours=2)).isoformat(),
-            "status": "success",
-            "records_processed": 150,
-            "next_refresh": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
-            "refresh_frequency": "hourly"
+            "last_refresh": now.isoformat(),
+            "status": "live",
+            "records_processed": 0,
+            "next_refresh": now.isoformat(),
+            "refresh_frequency": "realtime"
         },
         {
             "data_source": "supplier_reliability",
-            "last_refresh": (datetime.utcnow() - timedelta(hours=6)).isoformat(),
-            "status": "success",
-            "records_processed": 50,
-            "next_refresh": (datetime.utcnow() + timedelta(hours=6)).isoformat(),
-            "refresh_frequency": "6_hours"
+            "last_refresh": now.isoformat(),
+            "status": "live",
+            "records_processed": 0,
+            "next_refresh": now.isoformat(),
+            "refresh_frequency": "realtime"
         }
     ]
     

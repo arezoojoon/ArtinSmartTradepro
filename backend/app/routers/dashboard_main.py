@@ -13,11 +13,14 @@ from app.database import get_db
 from app.models.user import User
 from app.models.tenant import Tenant
 from app.middleware.auth import get_current_active_user
-from app.models.billing import Wallet
-from app.models.crm import CRMInvoice, CRMCompany
+from app.models.billing import Wallet, WalletTransaction
+from app.models.crm import CRMInvoice, CRMCompany, CRMPipeline, CRMDeal
 from app.models.brain import BrainEngineRun
 from app.models.hunter_phase4 import HunterLead
 from app.models.phase5 import AssetArbitrageHistory, AssetSupplierReliability, AssetBuyerPaymentBehavior
+
+import logging
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -105,30 +108,41 @@ def get_main_dashboard(
     supplier_reliability = []
     buyer_payment_behavior = []
     
-    # 1. Pipeline Summary (Mock CRM data - would integrate with actual CRM)
+    # 1. Pipeline Summary from real CRM data
     try:
-        # Mock pipeline stages - in production this would come from CRM pipeline
-        pipeline_stages = [
-            {"name": "Lead", "count": 45, "value": 2250000},
-            {"name": "Qualified", "count": 23, "value": 1875000},
-            {"name": "Proposal", "count": 12, "value": 980000},
-            {"name": "Negotiation", "count": 8, "value": 650000},
-            {"name": "Closed Won", "count": 5, "value": 425000},
-            {"name": "Closed Lost", "count": 3, "value": 275000}
-        ]
-        
-        total_value = sum(stage["value"] for stage in pipeline_stages)
-        
-        for stage in pipeline_stages:
+        pipelines = db.query(CRMPipeline).filter(
+            CRMPipeline.tenant_id == tenant_id
+        ).all()
+
+        stage_map = {}  # stage_id -> {name, count, value}
+        for pipe in pipelines:
+            for stage_def in (pipe.stages or []):
+                sid = stage_def.get("id", stage_def.get("name", "unknown"))
+                stage_map[sid] = {"name": stage_def.get("name", sid), "count": 0, "value": 0}
+
+        if not stage_map:
+            for fallback in ["New", "Contacted", "Qualified", "Negotiation", "Won", "Lost"]:
+                stage_map[fallback.lower()] = {"name": fallback, "count": 0, "value": 0}
+
+        deals = db.query(CRMDeal).filter(CRMDeal.tenant_id == tenant_id).all()
+        for deal in deals:
+            sid = deal.stage_id
+            if sid in stage_map:
+                stage_map[sid]["count"] += 1
+                stage_map[sid]["value"] += float(deal.value or 0)
+            elif deal.status in stage_map:
+                stage_map[deal.status]["count"] += 1
+                stage_map[deal.status]["value"] += float(deal.value or 0)
+
+        total_value = sum(s["value"] for s in stage_map.values())
+        for sid, data in stage_map.items():
             pipeline_summary.append(PipelineStage(
-                name=stage["name"],
-                count=stage["count"],
-                value=stage["value"],
-                percentage=(stage["value"] / total_value * 100) if total_value > 0 else 0
+                name=data["name"],
+                count=data["count"],
+                value=data["value"],
+                percentage=(data["value"] / total_value * 100) if total_value > 0 else 0
             ))
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
         logger.error(f"Error fetching pipeline summary: {e}")
     
     # 2. Margin Overview from Arbitrage History
@@ -145,31 +159,59 @@ def get_main_dashboard(
                 sell_market=record.sell_market,
                 estimated_margin_pct=float(record.estimated_margin_pct) if record.estimated_margin_pct else 0,
                 realized_margin_pct=float(record.realized_margin_pct) if record.realized_margin_pct else None,
-                confidence=0.85,  # Mock confidence
+                confidence=float(record.estimated_margin_pct / 100) if record.estimated_margin_pct and record.estimated_margin_pct > 0 else 0.5,
                 status="active" if record.outcome is None else record.outcome
             ))
     except Exception as e:
         logger.error(f"Error fetching margin overview: {e}")
     
-    # 3. Cash Flow Trends (Mock data - would integrate with billing)
+    # 3. Cash Flow Trends from real wallet transactions
     try:
-        for i in range(6, -1, -1):
-            period_start = datetime.utcnow() - timedelta(days=30*i)
-            period_end = period_start + timedelta(days=30)
-            
-            # Mock cash flow data
-            cash_in = 125000 + (i * 15000)  # Increasing trend
-            cash_out = 98000 + (i * 8000)   # Increasing trend
-            net_flow = cash_in - cash_out
-            dso = 42 - (i * 2)  # Improving DSO
-            
-            cash_flow_trends.append(CashFlowTrend(
-                period=period_start.strftime("%b %Y"),
-                cash_in=cash_in,
-                cash_out=cash_out,
-                net_flow=net_flow,
-                dso=dso
-            ))
+        wallet = db.query(Wallet).filter(Wallet.tenant_id == tenant_id).first()
+        if wallet:
+            for i in range(6, -1, -1):
+                period_start = datetime.utcnow() - timedelta(days=30 * i)
+                period_end = period_start + timedelta(days=30)
+
+                credits = db.query(func.coalesce(func.sum(WalletTransaction.amount), 0)).filter(
+                    WalletTransaction.wallet_id == wallet.id,
+                    WalletTransaction.type == "credit",
+                    WalletTransaction.status == "completed",
+                    WalletTransaction.created_at >= period_start,
+                    WalletTransaction.created_at < period_end
+                ).scalar() or 0
+
+                debits = db.query(func.coalesce(func.sum(WalletTransaction.amount), 0)).filter(
+                    WalletTransaction.wallet_id == wallet.id,
+                    WalletTransaction.type == "debit",
+                    WalletTransaction.status == "completed",
+                    WalletTransaction.created_at >= period_start,
+                    WalletTransaction.created_at < period_end
+                ).scalar() or 0
+
+                cash_in_val = float(credits)
+                cash_out_val = float(abs(debits))
+
+                # DSO from CRM invoices
+                paid_invoices = db.query(CRMInvoice).filter(
+                    CRMInvoice.tenant_id == tenant_id,
+                    CRMInvoice.paid_date != None,
+                    CRMInvoice.paid_date >= period_start,
+                    CRMInvoice.paid_date < period_end
+                ).all()
+                if paid_invoices:
+                    total_days = sum((inv.paid_date - inv.issued_date).days for inv in paid_invoices if inv.issued_date)
+                    dso_val = total_days / len(paid_invoices)
+                else:
+                    dso_val = 0
+
+                cash_flow_trends.append(CashFlowTrend(
+                    period=period_start.strftime("%b %Y"),
+                    cash_in=cash_in_val,
+                    cash_out=cash_out_val,
+                    net_flow=cash_in_val - cash_out_val,
+                    dso=round(dso_val, 1)
+                ))
     except Exception as e:
         logger.error(f"Error fetching cash flow trends: {e}")
     
@@ -341,8 +383,12 @@ def get_kpi_summary(
     
     kpis = {}
     
-    # 1. Total Deals Value (Mock CRM data)
-    kpis["total_deals_value"] = 4250000
+    # 1. Total Deals Value from real CRM deals
+    total_deals = db.query(func.coalesce(func.sum(CRMDeal.value), 0)).filter(
+        CRMDeal.tenant_id == tenant_id,
+        CRMDeal.status.in_(["open", "won"])
+    ).scalar() or 0
+    kpis["total_deals_value"] = float(total_deals)
     
     # 2. Average Margin (from arbitrage history)
     avg_margin = db.query(func.avg(AssetArbitrageHistory.estimated_margin_pct)).filter(
@@ -376,7 +422,8 @@ def get_kpi_summary(
     
     kpis["avg_supplier_reliability"] = int(avg_reliability) if avg_reliability else 0
     
-    # 6. Cash Flow Status
-    kpis["cash_flow_status"] = "positive"  # Mock - would calculate from actual data
+    # 6. Cash Flow Status from wallet balance
+    wallet = db.query(Wallet).filter(Wallet.tenant_id == tenant_id).first()
+    kpis["cash_flow_status"] = "positive" if (wallet and float(wallet.balance) > 0) else "negative"
     
     return kpis

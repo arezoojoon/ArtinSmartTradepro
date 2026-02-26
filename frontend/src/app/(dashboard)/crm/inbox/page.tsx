@@ -38,7 +38,7 @@ export default function WhatsAppInbox() {
 
     const fetchConversations = async () => {
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const res = await fetch(`${BASE_URL}/whatsapp/conversations`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -58,7 +58,7 @@ export default function WhatsAppInbox() {
 
     const fetchMessages = async (convId: string) => {
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const res = await fetch(`${BASE_URL}/whatsapp/conversations/${convId}/messages`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -75,7 +75,7 @@ export default function WhatsAppInbox() {
         if (!replyText.trim() || !activeConv) return;
 
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const res = await fetch(`${BASE_URL}/whatsapp/send`, {
                 method: "POST",
                 headers: {

@@ -21,7 +21,7 @@ export default function VoiceIntelligencePage() {
 
     const fetchRecordings = async () => {
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const res = await fetch(`${BASE_URL}/crm/ai/voice/recordings`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -33,7 +33,7 @@ export default function VoiceIntelligencePage() {
         setJobId(jid);
         pollingRef.current = setInterval(async () => {
             try {
-                const token = localStorage.getItem("access_token");
+                const token = localStorage.getItem("token");
                 const res = await fetch(`${BASE_URL}/crm/ai/voice/status/${jid}`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
@@ -65,7 +65,7 @@ export default function VoiceIntelligencePage() {
         setError(null);
 
         try {
-            const token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("token");
             const formData = new FormData();
             formData.append("file", file);
 
