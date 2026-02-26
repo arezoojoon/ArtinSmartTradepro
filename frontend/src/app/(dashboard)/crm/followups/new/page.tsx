@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Clock, AlertTriangle } from "lucide-react";
-import { BASE_URL } from "@/lib/api";
+import api from "@/lib/api";
 
 export default function NewFollowUpRulePage() {
     const [name, setName] = useState("");
@@ -18,27 +18,14 @@ export default function NewFollowUpRulePage() {
         setLoading(true);
 
         try {
-            const token = localStorage.getItem("token");
-            const payload = {
+            await api.post("/crm/followups/rules", {
                 name,
                 template_body: template,
                 delay_minutes: delay * 60,
                 trigger_event: trigger,
-                max_attempts: 1 // Default to 1 for MVP
-            };
-
-            const res = await fetch(`${BASE_URL}/crm/followups/rules`, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(payload)
+                max_attempts: 1
             });
-
-            if (res.ok) {
-                router.push("/crm/followups");
-            }
+            router.push("/crm/followups");
         } catch (err) {
             console.error(err);
         } finally {

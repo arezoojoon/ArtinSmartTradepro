@@ -6,7 +6,7 @@ import {
     Globe, Linkedin, Tag, TrendingUp, AlertTriangle, ShieldCheck,
     ExternalLink, ArrowUpRight, Target
 } from "lucide-react";
-import { BASE_URL } from "@/lib/api";
+import api from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,15 +31,9 @@ export default function CompaniesPage() {
     const fetchCompanies = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("token");
             const query = search ? `?search=${search}` : "";
-            const res = await fetch(`${BASE_URL}/crm/companies${query}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setCompanies(data.companies || data); // Handle both flat list and wrapped object
-            }
+            const { data } = await api.get(`/crm/companies${query}`);
+            setCompanies(data.companies || data);
         } catch (err) {
             console.error(err);
         } finally {

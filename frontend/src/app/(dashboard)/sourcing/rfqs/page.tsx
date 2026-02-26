@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Package, Plus, ClipboardList, TrendingUp } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -47,7 +48,7 @@ export default function RFQPage() {
             setNewRFQ({ product_name: "", target_qty: "", hs_code: "" });
             fetchRfqs();
         } catch (e) {
-            alert("Failed to create RFQ");
+            toast({ title: "RFQ Error", description: "Failed to create RFQ", variant: "destructive" });
         }
     };
 

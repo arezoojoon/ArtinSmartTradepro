@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { api } from "@/lib/api";
 import { formatCurrency, cn } from "@/lib/utils";
 import { CreditCard, History, CheckCircle2, XCircle, Loader2, Sparkles, Zap, ShieldCheck } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 interface ProvisioningStatus {
     overall: "pending" | "running" | "ready" | "failed" | "partial";
@@ -119,11 +120,11 @@ function WalletContent() {
             if (data.checkout_url) {
                 window.location.href = data.checkout_url;
             } else {
-                alert("Failed to create checkout session");
+                toast({ title: "Checkout Error", description: "Failed to create checkout session", variant: "destructive" });
             }
         } catch (error) {
             console.error("Stripe checkout error:", error);
-            alert("Failed to initiate payment. Please try again.");
+            toast({ title: "Payment Error", description: "Failed to initiate payment. Please try again.", variant: "destructive" });
         }
     };
 

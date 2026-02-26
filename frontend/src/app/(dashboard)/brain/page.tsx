@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Brain, TrendingUp, Shield, Calendar, Globe2, Loader2, AlertTriangle, ChevronRight, DollarSign, Package, MapPin, Users, Zap, Info, Target, Check, Database } from "lucide-react";
 import { EvidenceBadge } from "@/components/ui/evidence-badge";
-import { BASE_URL } from "@/lib/api";
+import api from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -166,17 +166,7 @@ export default function BrainDashboard() {
         setLoading(true);
         setError(null);
         try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`${BASE_URL}/brain/decide`, {
-                method: "POST",
-                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-                body: JSON.stringify(form),
-            });
-            if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.detail || "Analysis failed");
-            }
-            const data = await res.json();
+            const { data } = await api.post("/brain/decide", form);
             setResult(data.result);
         } catch (err: any) {
             setError(err.message);

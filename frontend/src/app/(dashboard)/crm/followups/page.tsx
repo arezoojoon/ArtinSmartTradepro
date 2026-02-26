@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Zap, Clock, CheckCircle2, XCircle, PauseCircle, PlayCircle, History } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { BASE_URL } from "@/lib/api";
+import api from "@/lib/api";
 
 export default function FollowUpRulesPage() {
     const [rules, setRules] = useState([]);
@@ -17,14 +17,8 @@ export default function FollowUpRulesPage() {
 
     const fetchRules = async () => {
         try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`${BASE_URL}/crm/followups/rules`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setRules(data);
-            }
+            const { data } = await api.get("/crm/followups/rules");
+            setRules(data);
         } catch (err) {
             console.error(err);
         } finally {
@@ -34,14 +28,8 @@ export default function FollowUpRulesPage() {
 
     const toggleRule = async (id: string) => {
         try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`${BASE_URL}/crm/followups/rules/${id}/toggle`, {
-                method: "POST",
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (res.ok) {
-                fetchRules();
-            }
+            await api.post(`/crm/followups/rules/${id}/toggle`);
+            fetchRules();
         } catch (err) {
             console.error(err);
         }

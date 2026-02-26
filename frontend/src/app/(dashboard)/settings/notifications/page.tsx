@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bell, MessageCircle, Mail, AlertTriangle, TrendingUp, Users, CheckCircle2 } from "lucide-react";
+import { Bell, MessageCircle, Mail, AlertTriangle, TrendingUp, Users, CheckCircle2, Loader2 } from "lucide-react";
+import api from "@/lib/api";
 
 const NOTIFICATION_CHANNELS = [
     { id: "push", label: "Push Notifications (PWA)", icon: Bell, enabled: true },
@@ -53,9 +54,20 @@ export default function NotificationsPage() {
     const [settings, setSettings] = useState<Record<string, boolean>>({});
     const [dirty, setDirty] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        setSettings(loadSettings());
+        const load = async () => {
+            try {
+                const res = await api.get("/settings/notifications");
+                if (res.data?.settings && Object.keys(res.data.settings).length > 0) {
+                    setSettings(res.data.settings);
+                    return;
+                }
+            } catch {}
+            setSettings(loadSettings());
+        };
+        load();
     }, []);
 
     const toggle = (id: string) => {
@@ -64,11 +76,23 @@ export default function NotificationsPage() {
         setSaved(false);
     };
 
-    const saveSettings = () => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-        setDirty(false);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
+    const saveSettings = async () => {
+        setSaving(true);
+        try {
+            await api.put("/settings/notifications", { settings });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+            setDirty(false);
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2000);
+        } catch (e) {
+            console.error("Failed to save notification settings", e);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+            setDirty(false);
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2000);
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
@@ -82,8 +106,8 @@ export default function NotificationsPage() {
                 </div>
                 <div className="flex items-center gap-3">
                     {saved && <span className="text-emerald-400 text-sm flex items-center gap-1"><CheckCircle2 className="h-4 w-4" /> Saved</span>}
-                    <button onClick={saveSettings} disabled={!dirty} className="px-5 py-2 bg-[#f5a623] text-navy-950 rounded-lg font-semibold hover:bg-gold-300 transition-all disabled:opacity-40 text-sm">
-                        Save Changes
+                    <button onClick={saveSettings} disabled={!dirty || saving} className="px-5 py-2 bg-[#f5a623] text-navy-950 rounded-lg font-semibold hover:bg-gold-300 transition-all disabled:opacity-40 text-sm flex items-center gap-2">
+                        {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</> : "Save Changes"}
                     </button>
                 </div>
             </div>

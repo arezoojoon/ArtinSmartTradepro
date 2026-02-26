@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Upload, Eye, CreditCard, Building2, User, Phone, Mail, Globe, Linkedin, MapPin, CheckCircle, AlertTriangle, Zap, Shield, XCircle, TrendingUp } from "lucide-react";
-import { BASE_URL } from "@/lib/api";
+import api, { BASE_URL } from "@/lib/api";
 
 interface ScanResult {
     job_id: string;
@@ -60,23 +60,15 @@ export default function VisionIntelligencePage() {
 
     const fetchCards = async () => {
         try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`${BASE_URL}/crm/ai/vision/cards`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.ok) setCards(await res.json());
+            const { data } = await api.get("/crm/ai/vision/cards");
+            setCards(data);
         } catch (err) { console.error(err); }
     };
 
     const pollStatus = (jobId: string) => {
         pollingRef.current = setInterval(async () => {
             try {
-                const token = localStorage.getItem("token");
-                const res = await fetch(`${BASE_URL}/crm/ai/vision/status/${jobId}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                if (!res.ok) return;
-                const data: ScanResult = await res.json();
+                const { data }: { data: ScanResult } = await api.get(`/crm/ai/vision/status/${jobId}`);
 
                 if (data.status === "completed") {
                     clearInterval(pollingRef.current!);
@@ -110,10 +102,10 @@ export default function VisionIntelligencePage() {
         setCreated(false);
 
         try {
-            const token = localStorage.getItem("token");
             const formData = new FormData();
             formData.append("file", file);
 
+            const token = localStorage.getItem("token");
             const res = await fetch(`${BASE_URL}/crm/ai/vision/scan`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` },
@@ -145,37 +137,23 @@ export default function VisionIntelligencePage() {
         setCreating(true);
 
         try {
-            const token = localStorage.getItem("token");
             const nameParts = editName.split(" ");
             const firstName = nameParts[0] || "Unknown";
             const lastName = nameParts.slice(1).join(" ") || undefined;
 
-            const res = await fetch(`${BASE_URL}/crm/ai/vision/confirm/${result.card_id}`, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    first_name: firstName,
-                    last_name: lastName,
-                    company_name: editCompany || undefined,
-                    position: editPosition || undefined,
-                    phone: editPhone || undefined,
-                    email: editEmail || undefined,
-                    linkedin_url: editLinkedin || undefined,
-                    event_name: eventName || undefined,
-                    note: note || undefined,
-                })
+            await api.post(`/crm/ai/vision/confirm/${result.card_id}`, {
+                first_name: firstName,
+                last_name: lastName,
+                company_name: editCompany || undefined,
+                position: editPosition || undefined,
+                phone: editPhone || undefined,
+                email: editEmail || undefined,
+                linkedin_url: editLinkedin || undefined,
+                event_name: eventName || undefined,
+                note: note || undefined,
             });
-
-            if (res.ok) {
-                setCreated(true);
-                fetchCards();
-            } else {
-                const err = await res.json();
-                setError(err.detail || "Failed to create contact");
-            }
+            setCreated(true);
+            fetchCards();
         } catch (err) {
             console.error(err);
             setError("Failed to create contact");

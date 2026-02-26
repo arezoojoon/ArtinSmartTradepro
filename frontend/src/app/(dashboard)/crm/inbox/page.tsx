@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Search, Send, User, Bot, Check, CheckCheck, Phone, Filter, ShieldAlert } from "lucide-react";
-import { BASE_URL } from "@/lib/api";
+import api from "@/lib/api";
 
 export default function WhatsAppInbox() {
     const [conversations, setConversations] = useState<any[]>([]);
@@ -39,16 +39,10 @@ export default function WhatsAppInbox() {
 
     const fetchConversations = async () => {
         try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`${BASE_URL}/whatsapp/conversations`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setConversations(data);
-                if (data.length > 0 && !activeConv) {
-                    setActiveConv(data[0]);
-                }
+            const { data } = await api.get("/whatsapp/conversations");
+            setConversations(data);
+            if (data.length > 0 && !activeConv) {
+                setActiveConv(data[0]);
             }
         } catch (err) {
             console.error(err);
@@ -59,14 +53,8 @@ export default function WhatsAppInbox() {
 
     const fetchMessages = async (convId: string) => {
         try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`${BASE_URL}/whatsapp/conversations/${convId}/messages`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setMessages(data);
-            }
+            const { data } = await api.get(`/whatsapp/conversations/${convId}/messages`);
+            setMessages(data);
         } catch (err) {
             console.error(err);
         }
@@ -79,28 +67,14 @@ export default function WhatsAppInbox() {
         setSendError(null);
 
         try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`${BASE_URL}/whatsapp/send`, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    recipient_phone: activeConv.identifier,
-                    template_name: null,
-                    components: null,
-                    text_fallback: replyText
-                })
+            await api.post("/whatsapp/send", {
+                recipient_phone: activeConv.identifier,
+                template_name: null,
+                components: null,
+                text_fallback: replyText
             });
-            if (res.ok) {
-                setReplyText("");
-                fetchMessages(activeConv.id);
-            } else {
-                const err = await res.json().catch(() => null);
-                setSendError(err?.detail || "Failed to send. Check your balance and permissions.");
-                setTimeout(() => setSendError(null), 5000);
-            }
+            setReplyText("");
+            fetchMessages(activeConv.id);
         } catch (err) {
             setSendError("Connection error. Please try again.");
             setTimeout(() => setSendError(null), 5000);
@@ -111,17 +85,10 @@ export default function WhatsAppInbox() {
         if (!activeConv || togglingBot) return;
         setTogglingBot(true);
         try {
-            const token = localStorage.getItem("token");
             const newStatus = activeConv.status === 'bot_handled' ? 'needs_human' : 'bot_handled';
-            const res = await fetch(`${BASE_URL}/whatsapp/conversations/${activeConv.id}/status`, {
-                method: "PATCH",
-                headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ status: newStatus })
-            });
-            if (res.ok) {
-                setActiveConv({ ...activeConv, status: newStatus });
-                fetchConversations();
-            }
+            await api.patch(`/whatsapp/conversations/${activeConv.id}/status`, { status: newStatus });
+            setActiveConv({ ...activeConv, status: newStatus });
+            fetchConversations();
         } catch (err) { console.error(err); }
         finally { setTogglingBot(false); }
     };

@@ -11,9 +11,9 @@ from app.models.hunter import HunterRun, HunterResult
 from app.models.competitor import Competitor, CompetitorProduct, CompetitorPriceObservation, MarketShareSnapshot
 from app.services.hunter_service import HunterService
 from app.services.competitor_service import CompetitorService
+from app.workers.tasks import run_hunter_job, track_competitor_job
 from pydantic import BaseModel, Field
 import uuid
-import asyncio
 
 router = APIRouter()
 
@@ -47,18 +47,16 @@ async def start_hunt(
     await db.commit()
     await db.refresh(job)
 
-    # Detach from request context
-    asyncio.create_task(
-        HunterService.run_hunter_job(
-            job_id=job.id,
-            tenant_id=current_user.current_tenant_id,
-            keyword=request.keyword,
-            location=request.location,
-            sources=request.sources,
-            hs_code=request.hs_code,
-            min_volume_usd=request.min_volume_usd,
-            min_growth_pct=request.min_growth_pct
-        )
+    # Dispatch to Celery worker (survives server restarts)
+    run_hunter_job.delay(
+        job_id=str(job.id),
+        tenant_id=str(current_user.current_tenant_id),
+        keyword=request.keyword,
+        location=request.location,
+        sources=request.sources,
+        hs_code=request.hs_code,
+        min_volume_usd=request.min_volume_usd,
+        min_growth_pct=request.min_growth_pct,
     )
     
     return {
@@ -162,11 +160,10 @@ async def track_competitor(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    asyncio.create_task(
-        CompetitorService.track_competitor_job(
-            competitor_id=uuid.UUID(id),
-            tenant_id=current_user.current_tenant_id
-        )
+    # Dispatch to Celery worker
+    track_competitor_job.delay(
+        competitor_id=id,
+        tenant_id=str(current_user.current_tenant_id),
     )
     return {"status": "queued", "message": "Competitor tracking started."}
 

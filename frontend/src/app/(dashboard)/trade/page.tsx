@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, TrendingUp, Globe, Package, Ship, Brain, Camera, Loader2, AlertTriangle, Sparkles } from "lucide-react";
-import { BASE_URL } from "@/lib/api";
+import api, { ApiError } from "@/lib/api";
 
 type AnalysisType = "seasonal" | "market" | "brand" | "shipping" | "card-scan" | "insights";
 
@@ -39,12 +39,6 @@ export default function TradePage() {
         setError(null);
         setResult(null);
 
-        const token = localStorage.getItem("token");
-        const headers: Record<string, string> = {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-        };
-
         let endpoint = "";
         let body: any = {};
 
@@ -72,27 +66,14 @@ export default function TradePage() {
         }
 
         try {
-            const res = await fetch(`${BASE_URL}${endpoint}`, {
-                method: "POST",
-                headers,
-                body: JSON.stringify(body),
-            });
-
-            if (res.status === 403) {
-                setError("This feature requires an Enterprise plan. Upgrade to access Trade Intelligence.");
-                return;
-            }
-
-            if (!res.ok) {
-                const err = await res.json();
-                setError(err.detail || "Analysis failed");
-                return;
-            }
-
-            const data = await res.json();
+            const { data } = await api.post(endpoint, body);
             setResult(data.result);
-        } catch {
-            setError("Connection error. Please try again.");
+        } catch (err: any) {
+            if (err instanceof ApiError && err.status === 403) {
+                setError("This feature requires an Enterprise plan. Upgrade to access Trade Intelligence.");
+            } else {
+                setError(err?.message || "Connection error. Please try again.");
+            }
         } finally {
             setLoading(false);
         }

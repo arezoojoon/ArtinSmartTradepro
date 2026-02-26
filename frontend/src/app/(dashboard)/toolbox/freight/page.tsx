@@ -108,7 +108,7 @@ export default function FreightPage() {
                             <Card className="border-blue-100 shadow-md overflow-hidden">
                                 <div className="bg-blue-600 p-6 text-white flex justify-between items-end">
                                     <div>
-                                        <p className="text-blue-100 text-sm font-medium mb-1 uppercase tracking-wider">{result.provider} • Spot Rate</p>
+                                        <p className="text-blue-100 text-sm font-medium mb-1 uppercase tracking-wider">{result.provider} • Spot Rate <span className="ml-2 px-1.5 py-0.5 bg-white/20 rounded text-[10px]">Simulated</span></p>
                                         <h3 className="text-4xl font-bold tracking-tight">${result.rate_amount.toLocaleString()}</h3>
                                     </div>
                                     <div className="text-right">
@@ -145,6 +145,7 @@ export default function FreightPage() {
                                         <CardTitle className="text-base flex items-center gap-2">
                                             <ShieldAlert className="h-5 w-5 text-rose-500" />
                                             Route & Port Risks
+                                            <Badge variant="outline" className="text-[9px] ml-auto bg-amber-50 text-amber-600 border-amber-200">Estimated</Badge>
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="p-0">
@@ -175,6 +176,7 @@ export default function FreightPage() {
                                         <CardTitle className="text-base flex items-center gap-2">
                                             <Info className="h-5 w-5 text-indigo-500" />
                                             Hidden Costs Checklist
+                                            <Badge variant="outline" className="text-[9px] ml-auto bg-amber-50 text-amber-600 border-amber-200">Estimated</Badge>
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="p-0">

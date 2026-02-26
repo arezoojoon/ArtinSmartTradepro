@@ -86,17 +86,17 @@ export default function TradeDataPage() {
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
             <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Trade Data Hub 🌍</h2>
-                <Button variant="outline" onClick={() => window.print()}>
+                <h2 className="text-3xl font-bold tracking-tight text-white">Trade Data Hub</h2>
+                <Button variant="outline" className="border-[#1e3a5f] text-slate-300 hover:bg-[#1e3a5f]" onClick={() => window.print()}>
                     <Download className="mr-2 h-4 w-4" /> Export Report
                 </Button>
             </div>
 
             {/* Search Filters */}
-            <Card className="bg-white border-slate-200 shadow-sm">
+            <Card className="bg-[#12253f]/80 border-[#1e3a5f]">
                 <CardHeader className="pb-4">
-                    <CardTitle className="text-lg">HS Finder & Global Database</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-lg text-white">HS Finder & Global Database</CardTitle>
+                    <CardDescription className="text-slate-500">
                         Explore 50M+ records from UN Comtrade & TradeMap for robust market validation.
                     </CardDescription>
                 </CardHeader>
@@ -117,7 +117,7 @@ export default function TradeDataPage() {
                             onChange={(e) => setCountry(e.target.value.toUpperCase())}
                         />
                     </div>
-                    <Button onClick={handleSearch} disabled={loading} className="px-8 shadow-sm">
+                    <Button onClick={handleSearch} disabled={loading} className="px-8 shadow-sm bg-[#f5a623] text-navy-950 hover:bg-gold-500">
                         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Analyze Market"}
                     </Button>
                 </CardContent>
@@ -126,11 +126,11 @@ export default function TradeDataPage() {
             {results.length > 0 && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-500">
                     {/* Visual Analytics 1: Import/Export Trends */}
-                    <Card className="border-slate-200 shadow-sm overflow-hidden">
-                        <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
+                    <Card className="bg-[#12253f]/80 border-[#1e3a5f] overflow-hidden">
+                        <CardHeader className="border-b border-[#1e3a5f] pb-4">
                             <div className="flex items-center gap-2">
                                 <TrendingUp className="h-5 w-5 text-indigo-500" />
-                                <CardTitle className="text-md">Import/Export Trends</CardTitle>
+                                <CardTitle className="text-md text-white">Import/Export Trends</CardTitle>
                             </div>
                         </CardHeader>
                         <CardContent className="p-6">
@@ -147,7 +147,7 @@ export default function TradeDataPage() {
                                                 <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e3a5f" />
                                         <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
                                         <YAxis tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} tickFormatter={formatCurrency} />
                                         <RechartsTooltip
@@ -163,20 +163,20 @@ export default function TradeDataPage() {
                     </Card>
 
                     {/* Visual Analytics 2: Top Competitors (Exporters) */}
-                    <Card className="border-slate-200 shadow-sm overflow-hidden">
-                        <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
+                    <Card className="bg-[#12253f]/80 border-[#1e3a5f] overflow-hidden">
+                        <CardHeader className="border-b border-[#1e3a5f] pb-4">
                             <div className="flex items-center gap-2">
                                 <Globe2 className="h-5 w-5 text-blue-500" />
-                                <CardTitle className="text-md">Competitor Mapping (Top Exporters)</CardTitle>
+                                <CardTitle className="text-md text-white">Competitor Mapping (Top Exporters)</CardTitle>
                             </div>
                         </CardHeader>
                         <CardContent className="p-6">
                             <div className="h-64 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={competitorsData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} layout="vertical">
-                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#1e3a5f" />
                                         <XAxis type="number" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} tickFormatter={formatCurrency} />
-                                        <YAxis dataKey="name" type="category" tick={{ fontSize: 12, fill: '#334155', fontWeight: 500 }} axisLine={false} tickLine={false} width={80} />
+                                        <YAxis dataKey="name" type="category" tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 500 }} axisLine={false} tickLine={false} width={80} />
                                         <RechartsTooltip
                                             cursor={{ fill: '#f8fafc' }}
                                             contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
@@ -192,42 +192,42 @@ export default function TradeDataPage() {
             )}
 
             {/* Data Table */}
-            <Card className="border-slate-200 shadow-sm overflow-hidden">
-                <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
-                    <CardTitle className="text-md">Raw Data Feed</CardTitle>
+            <Card className="bg-[#12253f]/80 border-[#1e3a5f] overflow-hidden">
+                <CardHeader className="border-b border-[#1e3a5f] pb-4">
+                    <CardTitle className="text-md text-white">Raw Data Feed</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                     <Table>
-                        <TableHeader className="bg-slate-50">
-                            <TableRow>
-                                <TableHead className="font-semibold text-slate-600">Year</TableHead>
-                                <TableHead className="font-semibold text-slate-600">Reporter</TableHead>
-                                <TableHead className="font-semibold text-slate-600">Partner</TableHead>
-                                <TableHead className="font-semibold text-slate-600">Flow</TableHead>
-                                <TableHead className="font-semibold text-slate-600">HS Code</TableHead>
-                                <TableHead className="text-right font-semibold text-slate-600">Value (USD)</TableHead>
+                        <TableHeader className="bg-[#0e1e33]">
+                            <TableRow className="border-[#1e3a5f]">
+                                <TableHead className="font-semibold text-slate-400">Year</TableHead>
+                                <TableHead className="font-semibold text-slate-400">Reporter</TableHead>
+                                <TableHead className="font-semibold text-slate-400">Partner</TableHead>
+                                <TableHead className="font-semibold text-slate-400">Flow</TableHead>
+                                <TableHead className="font-semibold text-slate-400">HS Code</TableHead>
+                                <TableHead className="text-right font-semibold text-slate-400">Value (USD)</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {results.length === 0 && !loading ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-32 text-center text-slate-500">
+                                    <TableCell colSpan={6} className="h-32 text-center text-slate-500 border-[#1e3a5f]">
                                         No data currently loaded. Enter an HS code and click Analyze.
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 results.map((row, i) => (
-                                    <TableRow key={i} className="hover:bg-slate-50/50">
-                                        <TableCell className="text-slate-600">{row.year}</TableCell>
-                                        <TableCell className="font-medium text-slate-900">{row.reporter_country}</TableCell>
-                                        <TableCell className="text-slate-600">{row.partner_country || "World"}</TableCell>
+                                    <TableRow key={i} className="hover:bg-white/5 border-[#1e3a5f]">
+                                        <TableCell className="text-slate-400">{row.year}</TableCell>
+                                        <TableCell className="font-medium text-white">{row.reporter_country}</TableCell>
+                                        <TableCell className="text-slate-400">{row.partner_country || "World"}</TableCell>
                                         <TableCell>
-                                            <Badge variant="outline" className={row.trade_flow === "export" ? "border-emerald-200 text-emerald-700 bg-emerald-50" : "border-purple-200 text-purple-700 bg-purple-50"}>
+                                            <Badge variant="outline" className={row.trade_flow === "export" ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" : "border-purple-500/30 text-purple-400 bg-purple-500/10"}>
                                                 {row.trade_flow.toUpperCase()}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="font-mono text-sm text-slate-500">{row.hs_code}</TableCell>
-                                        <TableCell className="text-right font-medium text-slate-700">
+                                        <TableCell className="text-right font-medium text-slate-300">
                                             ${row.trade_value_usd.toLocaleString()}
                                         </TableCell>
                                     </TableRow>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Plus, MoreHorizontal, MoveRight, ArrowLeft } from "lucide-react";
-import { BASE_URL } from "@/lib/api";
+import api from "@/lib/api";
 import Link from "next/link";
 
 export default function PipelineBoardPage() {
@@ -24,26 +24,14 @@ export default function PipelineBoardPage() {
     const fetchPipelineData = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("token");
-
-            // 1. Fetch Pipelines to find this specific one (since we don't have a GET /pipelines/id endpoint yet)
-            const pipeRes = await fetch(`${BASE_URL}/crm/pipelines`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (pipeRes.ok) {
-                const pipeData = await pipeRes.json();
-                const matched = pipeData.pipelines?.find((p: any) => p.id === pipelineId);
-                setPipeline(matched);
-            }
+            // 1. Fetch Pipelines to find this specific one
+            const { data: pipeData } = await api.get("/crm/pipelines");
+            const matched = pipeData.pipelines?.find((p: any) => p.id === pipelineId);
+            setPipeline(matched);
 
             // 2. Fetch Deals for this pipeline
-            const dealsRes = await fetch(`${BASE_URL}/crm/deals?pipeline_id=${pipelineId}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (dealsRes.ok) {
-                const dealsData = await dealsRes.json();
-                setDeals(dealsData.deals || []);
-            }
+            const { data: dealsData } = await api.get(`/crm/deals?pipeline_id=${pipelineId}`);
+            setDeals(dealsData.deals || []);
         } catch (err) {
             console.error(err);
         } finally {

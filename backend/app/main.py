@@ -98,6 +98,9 @@ app.include_router(tenant_billing_router, prefix="/api/v1/billing", tags=["billi
 app.include_router(tenant_whitelabel_router, prefix="/api/v1", tags=["whitelabel"])
 app.include_router(tenant_prompts_router, prefix="/api/v1", tags=["prompts"])
 
+from .routers.tenant_settings import router as tenant_settings_router
+app.include_router(tenant_settings_router, prefix="/api/v1/settings", tags=["settings"])
+
 
 # --- Health Check ---
 @app.get("/health")

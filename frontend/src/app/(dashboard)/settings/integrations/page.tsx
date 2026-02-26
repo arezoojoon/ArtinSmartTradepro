@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plug, MessageCircle, Mail, Globe, Webhook, Key, X, CheckCircle2, AlertTriangle } from "lucide-react";
+import api from "@/lib/api";
 
 const INTEGRATIONS = [
     {
@@ -73,13 +74,20 @@ export default function IntegrationsPage() {
         setSaveStatus("idle");
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
+        if (!activeIntegration) return;
         setSaveStatus("saving");
-        // Simulate save — in production this would call a backend API
-        setTimeout(() => {
+        try {
+            await api.put("/settings/integrations", {
+                integration_name: activeIntegration.name,
+                config: configValues,
+            });
             setSaveStatus("saved");
             setTimeout(() => { setActiveIntegration(null); setSaveStatus("idle"); }, 1500);
-        }, 800);
+        } catch (e) {
+            console.error("Failed to save integration config", e);
+            setSaveStatus("idle");
+        }
     };
 
     return (

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, Calendar, Mail, Target, TrendingUp } from "lucide-react"
 import Link from "next/link"
+import api from "@/lib/api"
 
 export default function CampaignsPage() {
     const [campaigns, setCampaigns] = useState<any[]>([])
@@ -17,14 +18,8 @@ export default function CampaignsPage() {
     useEffect(() => {
         const fetchCampaigns = async () => {
             try {
-                const token = localStorage.getItem("token")
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"}/campaigns/`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-                if (res.ok) {
-                    const data = await res.json()
-                    setCampaigns(Array.isArray(data) ? data : data.items || [])
-                }
+                const { data } = await api.get("/campaigns/")
+                setCampaigns(Array.isArray(data) ? data : data.items || [])
             } catch (e) {
                 console.error("Failed to fetch campaigns:", e)
             } finally {

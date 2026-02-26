@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Search, Loader2, Play, Users, MapPin, Globe, CheckCircle, UploadCloud } from "lucide-react";
-import { BASE_URL } from "@/lib/api";
+import api from "@/lib/api";
+import { toast } from "@/components/ui/use-toast";
 
 export default function HunterDashboard() {
     const [keyword, setKeyword] = useState("");
@@ -31,23 +32,10 @@ export default function HunterDashboard() {
         if (!keyword || !location) return;
         setLoading(true);
         try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`${BASE_URL}/hunter/start`, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ keyword, location, sources })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setActiveJobId(data.job_id);
-                setJobStatus({ job_status: "pending", leads_found: 0 });
-                setResults([]);
-            } else {
-                alert("Failed to start hunter job");
-            }
+            const { data } = await api.post("/hunter/start", { keyword, location, sources });
+            setActiveJobId(data.job_id);
+            setJobStatus({ job_status: "pending", leads_found: 0 });
+            setResults([]);
         } catch (err) {
             console.error(err);
         } finally {
@@ -58,14 +46,8 @@ export default function HunterDashboard() {
     const fetchJobStatus = async () => {
         if (!activeJobId) return;
         try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`${BASE_URL}/hunter/status/${activeJobId}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setJobStatus(data);
-            }
+            const { data } = await api.get(`/hunter/status/${activeJobId}`);
+            setJobStatus(data);
         } catch (err) {
             console.error(err);
         }
@@ -74,14 +56,8 @@ export default function HunterDashboard() {
     const fetchResults = async () => {
         if (!activeJobId) return;
         try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`${BASE_URL}/hunter/results/${activeJobId}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setResults(data);
-            }
+            const { data } = await api.get(`/hunter/results/${activeJobId}`);
+            setResults(data);
         } catch (err) {
             console.error(err);
         }
@@ -89,20 +65,8 @@ export default function HunterDashboard() {
 
     const importToCRM = async (resultId: string) => {
         try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`${BASE_URL}/hunter/import-to-crm`, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ result_id: resultId })
-            });
-            if (res.ok) {
-                alert("Lead imported successfully!");
-            } else {
-                alert("Import failed. Maybe already exists?");
-            }
+            await api.post("/hunter/import-to-crm", { result_id: resultId });
+            toast({ title: "Lead Imported", description: "Lead has been imported to CRM successfully" });
         } catch (err) {
             console.error(err);
         }

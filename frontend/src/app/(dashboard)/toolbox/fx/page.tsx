@@ -134,7 +134,10 @@ export default function FXPage() {
                                     <Activity className="h-5 w-5 text-indigo-500" />
                                     30-Day Volatility Band
                                 </CardTitle>
-                                <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 border-indigo-200">2% Risk Band</Badge>
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="secondary" className="bg-amber-50 text-amber-600 border-amber-200 text-[9px]">Simulated</Badge>
+                                    <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 border-indigo-200">2% Risk Band</Badge>
+                                </div>
                             </div>
                         </CardHeader>
                         <CardContent className="p-6">

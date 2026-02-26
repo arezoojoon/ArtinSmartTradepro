@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, CalendarClock, Wand2, Send, Loader2 } from "lucide-react";
-import { BASE_URL } from "@/lib/api";
+import api from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,24 +47,11 @@ export default function SmartFollowUpPage() {
         setScheduleDone(false);
 
         try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`${BASE_URL}/followups/draft`, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    contact_id: contactId,
-                    objective,
-                    context_note: contextNote || undefined,
-                }),
+            const { data } = await api.post("/followups/draft", {
+                contact_id: contactId,
+                objective,
+                context_note: contextNote || undefined,
             });
-
-            const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data?.detail || data?.error?.message || "Failed to generate draft");
-            }
 
             setLanguage(data.language || "en");
             setMessageText(data.message_text || "");
@@ -90,26 +77,13 @@ export default function SmartFollowUpPage() {
         setScheduleError(null);
 
         try {
-            const token = localStorage.getItem("token");
             const iso = new Date(scheduledAt).toISOString();
 
-            const res = await fetch(`${BASE_URL}/followups/schedule`, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    contact_id: contactId,
-                    scheduled_at: iso,
-                    message_text: messageText,
-                }),
+            await api.post("/followups/schedule", {
+                contact_id: contactId,
+                scheduled_at: iso,
+                message_text: messageText,
             });
-
-            const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data?.detail || data?.error?.message || "Failed to schedule follow-up");
-            }
 
             setScheduleDone(true);
         } catch (e: any) {

@@ -8,6 +8,7 @@ import {
     listPlans, setTenantSubscription,
 } from '@/lib/sys-api';
 import { ArrowLeft, UserX, UserCheck, LogIn, BarChart2 } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
 export default function TenantDetailPage() {
     const { tenantId } = useParams<{ tenantId: string }>();
@@ -50,7 +51,8 @@ export default function TenantDetailPage() {
         setActing(true);
         try {
             const r = await impersonateTenant(tenantId);
-            alert(`Impersonation token (expires in ${r.expires_in_minutes}min):\n${r.impersonation_token}`);
+            toast({ title: 'Impersonation Token', description: `Token expires in ${r.expires_in_minutes}min. Token copied to clipboard.` });
+            navigator.clipboard.writeText(r.impersonation_token).catch(() => {});
         } finally { setActing(false); }
     };
 

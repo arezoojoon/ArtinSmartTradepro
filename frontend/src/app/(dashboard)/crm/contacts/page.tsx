@@ -8,7 +8,7 @@ import {
     Phone, MapPin, Building2, Linkedin, MessageSquare,
     Clock, ShieldCheck, MailPlus, UserPlus, Info, Upload
 } from "lucide-react";
-import { BASE_URL } from "@/lib/api";
+import api from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,15 +37,9 @@ export default function ContactsPage() {
     const fetchContacts = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("token");
             const query = search ? `?search=${search}` : "";
-            const res = await fetch(`${BASE_URL}/crm/contacts${query}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setContacts(data.contacts || []);
-            }
+            const { data } = await api.get(`/crm/contacts${query}`);
+            setContacts(data.contacts || []);
         } catch (err) {
             console.error(err);
         } finally {
