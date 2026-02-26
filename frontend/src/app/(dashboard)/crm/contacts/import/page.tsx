@@ -102,20 +102,20 @@ export default function BulkImportPage() {
                 </Button>
             </div>
 
-            <Card className="bg-white border-slate-200 shadow-sm">
+            <Card className="bg-white/5 border-white/10 shadow-sm">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-slate-900">
+                    <CardTitle className="flex items-center gap-2 text-white">
                         <Upload className="h-5 w-5 text-indigo-600" />
                         Bulk Import Contacts
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {/* Template download */}
-                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex items-center justify-between">
+                    <div className="bg-white/5 border border-white/10 rounded-lg p-4 flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-semibold text-slate-700">Download Template</p>
+                            <p className="text-sm font-semibold text-slate-200">Download Template</p>
                             <p className="text-xs text-slate-500 mt-0.5">
-                                Required column: <code className="bg-slate-200 px-1 rounded">first_name</code>.
+                                Required column: <code className="bg-white/10 px-1 rounded text-amber-400">first_name</code>.
                                 Optional: last_name, email, phone, position, linkedin_url, preferred_language
                             </p>
                         </div>
@@ -127,10 +127,10 @@ export default function BulkImportPage() {
 
                     {/* File input */}
                     <div>
-                        <div className="text-xs font-semibold text-slate-600 mb-2">Upload File (.csv or .xlsx)</div>
+                        <div className="text-xs font-semibold text-slate-300 mb-2">Upload File (.csv or .xlsx)</div>
                         <div className="flex items-center gap-3">
                             <label className="flex-1 cursor-pointer">
-                                <div className="border-2 border-dashed border-slate-300 hover:border-indigo-400 transition-colors rounded-lg p-6 text-center">
+                                <div className="border-2 border-dashed border-white/20 hover:border-amber-400/50 transition-colors rounded-lg p-6 text-center">
                                     {file ? (
                                         <div className="flex items-center justify-center gap-2">
                                             {file.name.endsWith(".xlsx") ? (
@@ -138,7 +138,7 @@ export default function BulkImportPage() {
                                             ) : (
                                                 <FileText className="h-5 w-5 text-blue-600" />
                                             )}
-                                            <span className="text-sm font-medium text-slate-700">{file.name}</span>
+                                            <span className="text-sm font-medium text-slate-200">{file.name}</span>
                                             <Badge variant="outline" className="text-[10px]">
                                                 {(file.size / 1024).toFixed(1)} KB
                                             </Badge>
@@ -164,7 +164,7 @@ export default function BulkImportPage() {
                     {/* Event name + Note */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <div className="text-xs font-semibold text-slate-600 mb-2">Event Name (optional)</div>
+                            <div className="text-xs font-semibold text-slate-300 mb-2">Event Name (optional)</div>
                             <Input
                                 value={eventName}
                                 onChange={(e) => setEventName(e.target.value)}
@@ -173,7 +173,7 @@ export default function BulkImportPage() {
                             <p className="text-[10px] text-slate-400 mt-1">Creates an &quot;event:...&quot; tag on each contact</p>
                         </div>
                         <div>
-                            <div className="text-xs font-semibold text-slate-600 mb-2">Note (optional)</div>
+                            <div className="text-xs font-semibold text-slate-300 mb-2">Note (optional)</div>
                             <Input
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
@@ -188,7 +188,7 @@ export default function BulkImportPage() {
                         <Button
                             onClick={handleImport}
                             disabled={loading || !file}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                            className="bg-amber-500 hover:bg-amber-600 text-black font-bold"
                         >
                             {loading ? (
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -207,7 +207,7 @@ export default function BulkImportPage() {
 
                     {/* Result */}
                     {result && (
-                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 space-y-2">
+                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 space-y-2">
                             <div className="flex items-center gap-2 text-emerald-700 font-semibold">
                                 <CheckCircle2 className="h-5 w-5" />
                                 Import Complete

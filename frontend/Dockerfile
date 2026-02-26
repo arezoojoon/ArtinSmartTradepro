@@ -19,13 +19,14 @@ FROM node:20-alpine AS runtime
 
 WORKDIR /app
 
-# Copy only production artifacts
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
+ENV NODE_ENV=production
+
+# Copy standalone output (includes server + node_modules subset)
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
 EXPOSE 3000
 
-# Production server (not dev server)
-CMD ["npm", "start"]
+# Run the standalone server
+CMD ["node", "server.js"]

@@ -161,3 +161,132 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ── Dashboard Dark Theme Overrides ──────────────────────────────
+   Force dark appearance on hardcoded light-mode Tailwind classes
+   that appear inside dashboard pages. The dashboard shell uses
+   bg-[#0a1628] so all children must stay dark.                   */
+
+@layer utilities {
+  /* bg-white  →  translucent dark card (skip elements with .keep-white) */
+  .bg-white:not(.keep-white) {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+  }
+
+  /* bg-slate-50 / bg-slate-100  →  subtle translucent */
+  .bg-slate-50,
+  .bg-slate-100 {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+  }
+
+  /* bg-slate-50\/50, bg-slate-50\/80 */
+  [class*="bg-slate-50/"] {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+  }
+
+  /* bg-white/80 (loading overlays) */
+  [class*="bg-white/80"] {
+    background-color: rgba(10, 22, 40, 0.85) !important;
+  }
+
+  /* text-slate-900  →  white */
+  .text-slate-900 {
+    color: rgba(255, 255, 255, 0.95) !important;
+  }
+
+  /* text-slate-800  →  near-white */
+  .text-slate-800 {
+    color: rgba(255, 255, 255, 0.88) !important;
+  }
+
+  /* text-slate-700  →  light gray */
+  .text-slate-700 {
+    color: rgba(203, 213, 225, 0.9) !important;
+  }
+
+  /* text-slate-600  →  medium gray */
+  .text-slate-600 {
+    color: rgba(148, 163, 184, 0.95) !important;
+  }
+
+  /* border-slate-200 / 300  →  translucent border */
+  .border-slate-200,
+  .border-slate-300,
+  .border-slate-100 {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  /* bg-slate-200  →  translucent */
+  .bg-slate-200 {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  /* hover states */
+  .hover\:bg-slate-100:hover,
+  .hover\:bg-slate-50:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  /* bg-indigo-50, bg-emerald-50, bg-amber-50 stat icon backgrounds */
+  .bg-indigo-50 {
+    background-color: rgba(99, 102, 241, 0.15) !important;
+  }
+  .bg-emerald-50 {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+  }
+  .bg-amber-50 {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+  }
+  .bg-sky-50 {
+    background-color: rgba(14, 165, 233, 0.15) !important;
+  }
+  .bg-rose-50 {
+    background-color: rgba(244, 63, 94, 0.15) !important;
+  }
+  .bg-blue-50 {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+  }
+  .bg-purple-50 {
+    background-color: rgba(168, 85, 247, 0.15) !important;
+  }
+  .bg-red-50 {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+  }
+
+  /* Gradient -50 from/to overrides for dark theme */
+  .from-emerald-50 { --tw-gradient-from: rgba(16, 185, 129, 0.12) !important; }
+  .to-teal-50 { --tw-gradient-to: rgba(20, 184, 166, 0.12) !important; }
+  .from-amber-50 { --tw-gradient-from: rgba(245, 158, 11, 0.12) !important; }
+  .to-yellow-50 { --tw-gradient-to: rgba(234, 179, 8, 0.12) !important; }
+  .from-orange-50 { --tw-gradient-from: rgba(249, 115, 22, 0.12) !important; }
+  .to-red-50 { --tw-gradient-to: rgba(239, 68, 68, 0.12) !important; }
+  .from-red-50 { --tw-gradient-from: rgba(239, 68, 68, 0.12) !important; }
+  .to-rose-100 { --tw-gradient-to: rgba(244, 63, 94, 0.15) !important; }
+
+  /* text-{color}-900 used inside verdict cards */
+  .text-emerald-900 { color: rgba(16, 185, 129, 0.95) !important; }
+  .text-amber-900 { color: rgba(245, 158, 11, 0.95) !important; }
+  .text-orange-900 { color: rgba(249, 115, 22, 0.95) !important; }
+  .text-red-900 { color: rgba(239, 68, 68, 0.95) !important; }
+
+  /* text-{color}-700/800 used in RiskBadge/ConfidenceRing */
+  .text-emerald-700 { color: rgba(16, 185, 129, 0.9) !important; }
+  .text-amber-700 { color: rgba(245, 158, 11, 0.9) !important; }
+  .text-orange-700 { color: rgba(249, 115, 22, 0.9) !important; }
+  .text-red-700 { color: rgba(239, 68, 68, 0.9) !important; }
+  .text-red-800 { color: rgba(239, 68, 68, 0.95) !important; }
+
+  /* bg-{color}-100 badge/pill backgrounds */
+  .bg-indigo-100 { background-color: rgba(99, 102, 241, 0.15) !important; }
+  .bg-amber-100 { background-color: rgba(245, 158, 11, 0.15) !important; }
+  .bg-emerald-100 { background-color: rgba(16, 185, 129, 0.15) !important; }
+  .bg-red-100 { background-color: rgba(239, 68, 68, 0.15) !important; }
+
+  /* border-{color}-200/300 for badges */
+  .border-emerald-200 { border-color: rgba(16, 185, 129, 0.25) !important; }
+  .border-amber-200 { border-color: rgba(245, 158, 11, 0.25) !important; }
+  .border-orange-200 { border-color: rgba(249, 115, 22, 0.25) !important; }
+  .border-red-200 { border-color: rgba(239, 68, 68, 0.25) !important; }
+  .border-red-300 { border-color: rgba(239, 68, 68, 0.3) !important; }
+  .border-indigo-100 { border-color: rgba(99, 102, 241, 0.15) !important; }
+}

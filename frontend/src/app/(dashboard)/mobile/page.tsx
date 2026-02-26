@@ -37,15 +37,15 @@ export default function MobileControlTower() {
     }, []);
 
     if (isLoading || !data) {
-        return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="animate-pulse flex flex-col items-center gap-3"><Globe className="h-8 w-8 text-indigo-500 animate-spin" /><span className="text-slate-500 font-medium">Fetching secure data...</span></div></div>;
+        return <div className="min-h-screen flex items-center justify-center"><div className="animate-pulse flex flex-col items-center gap-3"><Globe className="h-8 w-8 text-indigo-500 animate-spin" /><span className="text-slate-500 font-medium">Fetching secure data...</span></div></div>;
     }
 
     const { opportunities, risks, shocks, leads, liquidity } = data;
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-24 pt-safe animate-in fade-in duration-500 font-sans">
+        <div className="min-h-screen pb-24 pt-safe animate-in fade-in duration-500 font-sans">
             {/* Header */}
-            <div className="px-5 py-5 sticky top-0 bg-slate-50/80 backdrop-blur-xl z-40 border-b border-slate-200 shadow-sm">
+            <div className="px-5 py-5 sticky top-0 bg-[#0a1628]/80 backdrop-blur-xl z-40 border-b border-white/10 shadow-sm">
                 <div className="flex justify-between items-center">
                     <div>
                         <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Control Tower</h1>

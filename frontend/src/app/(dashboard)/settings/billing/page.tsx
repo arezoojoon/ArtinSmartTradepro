@@ -163,7 +163,7 @@ function WalletContent() {
                                 <StatusBadge status={provStatus.waha} />
                             </div>
                             {provStatus.resources?.qr_ref && provStatus.waha !== "ready" && (
-                                <div className="p-3 bg-white rounded-lg inline-block mx-auto">
+                                <div className="p-3 bg-white keep-white rounded-lg inline-block mx-auto">
                                     {/* In a real app, this would be a QR component. We show the ref/link for now. */}
                                     <p className="text-[10px] text-gray-500 mb-1">Scan to Connect:</p>
                                     <img src={provStatus.resources.qr_ref} alt="WhatsApp QR" className="h-32 w-32" />

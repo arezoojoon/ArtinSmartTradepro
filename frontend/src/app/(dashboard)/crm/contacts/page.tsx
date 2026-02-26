@@ -58,12 +58,12 @@ export default function ContactsPage() {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">Contacts</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-white">Contacts</h1>
                     <p className="text-muted-foreground mt-1">Manage individual trade relationships and key stakeholders.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <Link href="/crm/contacts/import">
-                        <Button variant="outline" className="hidden sm:flex border-slate-200">
+                        <Button variant="outline" className="hidden sm:flex border-white/10">
                             <Upload className="h-4 w-4 mr-2" />
                             Bulk Import
                         </Button>
@@ -83,11 +83,11 @@ export default function ContactsPage() {
                     { label: "Avg Sentiment", val: "High", icon: ShieldCheck, color: "sky" },
                     { label: "Recent Comm.", val: "12 Today", icon: Clock, color: "rose" }
                 ].map((stat, i) => (
-                    <Card key={i} className="shadow-sm border-slate-200 bg-white">
+                    <Card key={i} className="shadow-sm border-white/10 bg-white/5">
                         <CardContent className="p-4 flex items-center justify-between">
                             <div>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
-                                <p className="text-xl font-black text-slate-900 mt-1">{loading ? "..." : stat.val}</p>
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{stat.label}</p>
+                                <p className="text-xl font-black text-white mt-1">{loading ? "..." : stat.val}</p>
                             </div>
                             <div className={`p-2 rounded-lg bg-${stat.color}-50`}>
                                 <stat.icon className={`h-4 w-4 text-${stat.color}-600`} />
@@ -98,18 +98,18 @@ export default function ContactsPage() {
             </div>
 
             {/* Search and Filters */}
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white/5 p-4 rounded-xl border border-white/10 shadow-sm">
                 <div className="relative w-full sm:max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input
                         placeholder="Search by name, email, or phone..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="pl-10 bg-slate-50 border-slate-200"
+                        className="pl-10 bg-white/5 border-white/10"
                     />
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <Button variant="outline" className="flex-1 sm:flex-none border-slate-200 bg-white">
+                    <Button variant="outline" className="flex-1 sm:flex-none border-white/10 bg-white/5">
                         <Filter className="h-4 w-4 mr-2" />
                         Filters
                     </Button>
@@ -117,22 +117,22 @@ export default function ContactsPage() {
             </div>
 
             {/* Contacts Table */}
-            <Card className="shadow-sm border-slate-200 overflow-hidden bg-white">
+            <Card className="shadow-sm border-white/10 overflow-hidden bg-white/5">
                 <Table>
-                    <TableHeader className="bg-slate-50/50">
+                    <TableHeader className="bg-white/5">
                         <TableRow>
-                            <TableHead className="w-[300px] font-bold text-slate-700">Contact Details</TableHead>
-                            <TableHead className="font-bold text-slate-700">Company & Role</TableHead>
-                            <TableHead className="font-bold text-slate-700">Payment Behavior</TableHead>
-                            <TableHead className="font-bold text-slate-700">Verified</TableHead>
-                            <TableHead className="text-right font-bold text-slate-700">Actions</TableHead>
+                            <TableHead className="w-[300px] font-bold text-slate-300">Contact Details</TableHead>
+                            <TableHead className="font-bold text-slate-300">Company & Role</TableHead>
+                            <TableHead className="font-bold text-slate-300">Payment Behavior</TableHead>
+                            <TableHead className="font-bold text-slate-300">Verified</TableHead>
+                            <TableHead className="text-right font-bold text-slate-300">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
                             Array.from({ length: 5 }).map((_, i) => (
                                 <TableRow key={i}>
-                                    <TableCell colSpan={5} className="h-16 animate-pulse bg-slate-50/20" />
+                                    <TableCell colSpan={5} className="h-16 animate-pulse bg-white/5" />
                                 </TableRow>
                             ))
                         ) : contacts.length === 0 ? (
@@ -147,7 +147,7 @@ export default function ContactsPage() {
                             </TableRow>
                         ) : (
                             contacts.map((contact: any) => (
-                                <TableRow key={contact.id} className="hover:bg-slate-50/50 transition-colors group">
+                                <TableRow key={contact.id} className="hover:bg-white/5 transition-colors group">
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-10 w-10 border-2 border-slate-100 shadow-sm">
@@ -155,7 +155,7 @@ export default function ContactsPage() {
                                                 <AvatarFallback>{contact.first_name[0]}{contact.last_name?.[0]}</AvatarFallback>
                                             </Avatar>
                                             <div className="flex flex-col">
-                                                <div className="font-bold text-slate-900">{contact.first_name} {contact.last_name}</div>
+                                                <div className="font-bold text-white">{contact.first_name} {contact.last_name}</div>
                                                 <div className="text-xs text-slate-500 flex items-center gap-2">
                                                     <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {contact.email || "No Email"}</span>
                                                     <span className="opacity-30">•</span>
@@ -166,11 +166,11 @@ export default function ContactsPage() {
                                     </TableCell>
                                     <TableCell>
                                         <div className="space-y-1">
-                                            <div className="flex items-center gap-1.5 text-sm font-bold text-slate-700">
+                                            <div className="flex items-center gap-1.5 text-sm font-bold text-slate-200">
                                                 <Building2 className="h-3 w-3 text-indigo-500" />
                                                 {contact.company?.name || "Independent"}
                                             </div>
-                                            <div className="text-xs text-slate-500 font-medium">{contact.position || "Stakeholder"}</div>
+                                            <div className="text-xs text-slate-400 font-medium">{contact.position || "Stakeholder"}</div>
                                         </div>
                                     </TableCell>
                                     <TableCell>
@@ -179,7 +179,7 @@ export default function ContactsPage() {
                                                 <TooltipTrigger asChild>
                                                     <div className="flex items-center gap-2 cursor-help">
                                                         <div className={`h-2 w-2 rounded-full ${contact.payment_behavior_notes ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-                                                        <span className="text-sm font-medium text-slate-600 truncate max-w-[150px]">
+                                                        <span className="text-sm font-medium text-slate-300 truncate max-w-[150px]">
                                                             {contact.payment_behavior_notes || "Prompt Payment"}
                                                         </span>
                                                     </div>

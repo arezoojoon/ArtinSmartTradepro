@@ -108,7 +108,7 @@ export default function WhatsAppPage() {
                     <CardContent>
                         <div className="bg-[#e5ddd5] p-4 rounded-lg min-h-[300px] text-black bg-opacity-90 relative">
                             {/* Mock WhatsApp Bubble */}
-                            <div className="bg-white p-3 rounded-lg rounded-tl-none shadow-sm max-w-[80%] mb-2">
+                            <div className="bg-white keep-white p-3 rounded-lg rounded-tl-none shadow-sm max-w-[80%] mb-2">
                                 <p className="text-sm">Hi! This is the template header.</p>
                             </div>
                             {message && (

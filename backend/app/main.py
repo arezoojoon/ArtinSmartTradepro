@@ -45,8 +45,8 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(tenants.router, prefix="/api/v1/tenants", tags=["tenants"])
 
-from .api.routes import crm
-app.include_router(crm.router, prefix="/api/v1/crm", tags=["crm"])
+from .routers import crm as crm_full
+app.include_router(crm_full.router, prefix="/api/v1/crm", tags=["crm"])
 
 from .routers import dashboard
 app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])
