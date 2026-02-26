@@ -825,8 +825,9 @@ async def bulk_import_contacts(
     """
     fname = (file.filename or "").lower()
     ctype = (file.content_type or "").lower()
+    await file.seek(0)  # ensure we read from the beginning
     raw = await file.read()
-    logger.info(f"bulk-import: filename={file.filename!r}, content_type={ctype!r}, size={len(raw)}")
+    logger.info(f"bulk-import: filename={file.filename!r}, content_type={ctype!r}, size={len(raw)}, first_bytes={raw[:20]!r}")
 
     is_xlsx = fname.endswith(".xlsx") or "spreadsheet" in ctype or "xlsx" in ctype
     is_csv = fname.endswith(".csv") or "csv" in ctype or "text/" in ctype
@@ -835,11 +836,13 @@ async def bulk_import_contacts(
         try:
             rows = _parse_xlsx_rows(raw)
         except Exception as e:
+            logger.exception(f"bulk-import XLSX parse error (size={len(raw)}): {e}")
             raise HTTPException(status_code=400, detail=f"Failed to parse XLSX: {e}")
     elif is_csv:
         try:
             rows = _parse_csv_rows(raw)
         except Exception as e:
+            logger.exception(f"bulk-import CSV parse error (size={len(raw)}): {e}")
             raise HTTPException(status_code=400, detail=f"Failed to parse CSV: {e}")
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported file type '{fname}'. Upload .csv or .xlsx")
