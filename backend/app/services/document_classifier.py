@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text
 
 from app.models.logistics import Shipment, ShipmentEvent, ShipmentStatus
-from app.models.crm import Company, Contact, Deal
+from app.models.crm import CRMCompany as Company, CRMContact as Contact, CRMDeal as Deal
 from app.models.billing import Invoice, Receipt
 from app.core.config import settings
 
