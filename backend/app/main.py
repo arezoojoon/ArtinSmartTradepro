@@ -90,6 +90,9 @@ app.include_router(logistics.router, prefix="/api/v1/logistics", tags=["logistic
 from .routers import document_classification
 app.include_router(document_classification.router, prefix="/api/v1", tags=["documents"])
 
+from .routers import control_tower
+app.include_router(control_tower.router, prefix="/api/v1/control-tower", tags=["control-tower"])
+
 # --- Phase 6: Super Admin + Plans + Prompt Ops ---
 from .routers.sys import sys_router
 from .routers.tenant_billing import router as tenant_billing_router

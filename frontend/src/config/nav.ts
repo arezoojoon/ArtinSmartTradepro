@@ -23,7 +23,11 @@ import {
     Bot,
     Link2,
     ShoppingCart,
-    Truck
+    Truck,
+    Zap,
+    Camera,
+    ShieldCheck,
+    FileText
 } from "lucide-react";
 
 export interface NavItem {
@@ -35,15 +39,20 @@ export interface NavItem {
 
 export const navItems = {
     buyer: [
+        { label: "Control Tower", href: "/control-tower", icon: Zap },
+        { label: "Smart Scanner", href: "/scanner", icon: Camera },
         { label: "Dashboard", href: "/buyer", icon: LayoutDashboard },
         { label: "Sourcing OS", href: "/sourcing/rfqs", icon: Package },
         { label: "Trade Intelligence", href: "/trade", icon: Globe },
         { label: "Deal Flow (AI)", href: "/brain/opportunities", icon: Briefcase },
         { label: "Operations", href: "/operations/inventory", icon: Warehouse },
         { label: "Logistics", href: "/shipments", icon: Truck },
+        { label: "Documents", href: "/documents", icon: FileText },
         { label: "Settings", href: "/settings", icon: Settings },
     ],
     seller: [
+        { label: "Control Tower", href: "/control-tower", icon: Zap },
+        { label: "Smart Scanner", href: "/scanner", icon: Camera },
         { label: "Dashboard", href: "/seller", icon: LayoutDashboard },
         { label: "CRM", href: "/crm", icon: Users },
         { label: "Hunter (Leads)", href: "/hunter", icon: Search },
@@ -51,9 +60,12 @@ export const navItems = {
         { label: "Market Intel", href: "/hunter/competitors", icon: Crosshair },
         { label: "WhatsApp Sales", href: "/whatsapp", icon: MessageCircle },
         { label: "Logistics", href: "/shipments", icon: Truck },
+        { label: "Documents", href: "/documents", icon: FileText },
         { label: "Settings", href: "/settings", icon: Settings },
     ],
     hybrid: [
+        { label: "Control Tower", href: "/control-tower", icon: Zap },
+        { label: "Smart Scanner", href: "/scanner", icon: Camera },
         { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
         { label: "CRM (Sales)", href: "/crm", icon: Users },
         { label: "Hunter (Leads)", href: "/hunter", icon: Search },
@@ -61,6 +73,7 @@ export const navItems = {
         { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle },
         { label: "AI Brain", href: "/brain", icon: Brain },
         { label: "Logistics", href: "/shipments", icon: Truck },
+        { label: "Documents", href: "/documents", icon: FileText },
         { label: "Settings", href: "/settings", icon: Settings },
     ]
 };

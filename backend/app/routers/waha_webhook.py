@@ -159,8 +159,58 @@ async def _handle_inbound_message(db: AsyncSession, body: dict, raw_event: WAHAW
         )
         db.add(contact)
 
+    # ═══════════════════════════════════════════
+    # VOICE COMMAND PROCESSING (Pillar 1: Zero-Touch Input)
+    # If audio message, process with VoiceCommandProcessor
+    if media_type == "audio" and media_url:
+        try:
+            from app.services.voice_command_processor import VoiceCommandProcessor
+            from app.services.waha_service import WAHAService
+
+            # Download audio securely
+            audio_data, detected_mime = await WAHAService.download_media_secure(
+                media_url, expected_type="audio"
+            )
+
+            # Process voice command
+            processor = VoiceCommandProcessor()
+            voice_result = await processor.process_voice_message(
+                audio_data=audio_data,
+                tenant_id=tenant_id,
+                sender_phone=phone,
+                db=db,
+                mime_type=detected_mime,
+            )
+
+            # Send response back via WhatsApp
+            if voice_result.get("error"):
+                fallback = voice_result.get("fallback_message", "Sorry, I couldn't understand the audio.")
+                await WAHAService.send_text(phone, fallback)
+            elif voice_result.get("approval_required"):
+                lang = voice_result.get("language", "en")
+                if lang == "fa":
+                    reply = f"✅ متوجه شدم! درخواست شما ثبت شد و منتظر تایید مدیر است.\n\n📝 متن: {voice_result['transcript'][:200]}\n🎯 اقدام: {voice_result['intent']}"
+                elif lang == "ar":
+                    reply = f"✅ فهمت! تم تسجيل طلبك وينتظر موافقة المدير.\n\n📝 النص: {voice_result['transcript'][:200]}\n🎯 الإجراء: {voice_result['intent']}"
+                else:
+                    reply = f"✅ Got it! Your request has been logged and is pending manager approval.\n\n📝 Transcript: {voice_result['transcript'][:200]}\n🎯 Intent: {voice_result['intent']}"
+                await WAHAService.send_text(phone, reply)
+            else:
+                lang = voice_result.get("language", "en")
+                if lang == "fa":
+                    reply = f"✅ انجام شد!\n\n📝 متن: {voice_result['transcript'][:200]}\n🎯 اقدام: {voice_result['intent']}"
+                elif lang == "ar":
+                    reply = f"✅ تم!\n\n📝 النص: {voice_result['transcript'][:200]}\n🎯 الإجراء: {voice_result['intent']}"
+                else:
+                    reply = f"✅ Done!\n\n📝 Transcript: {voice_result['transcript'][:200]}\n🎯 Action: {voice_result['intent']}"
+                await WAHAService.send_text(phone, reply)
+
+            logger.info(f"Voice command processed: intent={voice_result.get('intent')}, approval={voice_result.get('approval_required')}")
+        except Exception as e:
+            logger.error(f"Voice command processing failed: {e}")
+            # Don't fail the webhook — fall through to bot orchestrator
+
     # Route to bot orchestrator
-    # Assuming BotOrchestrator handle_message is already async or will be refactored soon!
     from app.services.bot_orchestrator import BotOrchestrator
     try:
         await BotOrchestrator.handle_message(
