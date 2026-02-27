@@ -50,6 +50,9 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Copy application code
 COPY . .
 
+# Create uploads directory for document storage
+RUN mkdir -p /app/uploads/documents
+
 # Copy deploy scripts (wait_for_db.py, etc.) and entrypoint
 # COPY . . already copied these, but being explicit to ensure permissions
 COPY entrypoint.sh /app/entrypoint.sh

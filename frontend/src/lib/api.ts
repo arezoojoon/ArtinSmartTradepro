@@ -19,17 +19,20 @@ export class ApiError extends Error {
 export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
     const { token, body, headers, ...rest } = options;
 
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+
     const config: RequestInit = {
         ...rest,
         headers: {
-            "Content-Type": "application/json",
+            // Don't set Content-Type for FormData — browser sets it with boundary
+            ...(!isFormData ? { "Content-Type": "application/json" } : {}),
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
             ...(headers as any),
         },
     };
 
     if (body) {
-        config.body = JSON.stringify(body);
+        config.body = isFormData ? body : JSON.stringify(body);
     }
 
     // Ensure path starts with /
@@ -46,9 +49,14 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
     }
 
     if (!response.ok) {
-        if (response.status === 401 && typeof window !== 'undefined') {
-            // Optional: dispatch event or redirect
-            // window.location.href = '/auth/login';
+        if ((response.status === 401 || response.status === 403) && typeof window !== 'undefined') {
+            // Token expired or invalid — redirect to login
+            const currentPath = window.location.pathname;
+            if (!currentPath.startsWith('/login') && !currentPath.startsWith('/register') && !currentPath.startsWith('/forgot')) {
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return undefined as any;
+            }
         }
         throw new ApiError(response.status, data);
     }

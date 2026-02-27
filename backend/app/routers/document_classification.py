@@ -18,6 +18,7 @@ import os
 import shutil
 from pathlib import Path
 from typing import Dict, Any
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -259,11 +260,11 @@ async def _store_document_record(
             "document_type": classification.document_type.value,
             "target_module": classification.target_module.value,
             "confidence": classification.confidence,
-            "classification_data": {
+            "classification_data": json.dumps({
                 "extracted_data": classification.extracted_data,
                 "suggested_actions": classification.suggested_actions,
                 "routing_path": classification.routing_path
-            },
+            }),
             "description": description
         })
         

@@ -79,9 +79,11 @@ export default function ControlTowerPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"alerts" | "approvals">("alerts");
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
+      setFetchError(null);
       const [alertsRes, kpiRes, approvalsRes] = await Promise.all([
         api.get<Alert[]>("/control-tower/alerts"),
         api.get<KPI>("/control-tower/kpi"),
@@ -90,8 +92,13 @@ export default function ControlTowerPage() {
       setAlerts(alertsRes.data || []);
       setKpi(kpiRes.data || null);
       setApprovals(approvalsRes.data || []);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Control Tower fetch failed:", e);
+      if (e?.status === 401 || e?.status === 403) {
+        setFetchError("لطفاً دوباره وارد شوید / Please log in again");
+      } else {
+        setFetchError("خطا در دریافت اطلاعات / Failed to load data");
+      }
     } finally {
       setLoading(false);
     }
@@ -127,6 +134,32 @@ export default function ControlTowerPage() {
             <div className="absolute inset-0 w-20 h-20 rounded-full border-t-2 border-[#D4AF37] animate-spin mx-auto" />
           </div>
           <p className="text-slate-400 text-sm">Loading Control Tower...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="min-h-screen bg-[#050A15] flex items-center justify-center">
+        <div className="text-center space-y-4 max-w-sm">
+          <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto" />
+          <p className="text-white font-medium">{fetchError}</p>
+          <div className="flex gap-3 justify-center">
+            <Button
+              onClick={() => { window.location.href = '/login'; }}
+              className="bg-[#D4AF37] text-black hover:bg-[#E5C048]"
+            >
+              Login
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => { setLoading(true); fetchData(); }}
+              className="border-slate-700 text-slate-400"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" /> Retry
+            </Button>
+          </div>
         </div>
       </div>
     );

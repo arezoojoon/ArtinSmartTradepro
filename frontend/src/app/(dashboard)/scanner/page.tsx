@@ -65,7 +65,7 @@ export default function ScannerPage() {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const response = await fetch(`${BASE_URL}/documents/classify`, {
+      const response = await fetch(`${BASE_URL}/documents/upload`, {
         method: "POST",
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -74,11 +74,12 @@ export default function ScannerPage() {
       });
 
       if (!response.ok) {
-        throw new Error(`Classification failed: ${response.status}`);
+        const errData = await response.json().catch(() => null);
+        throw new Error(errData?.detail || `Classification failed: ${response.status}`);
       }
 
       const data = await response.json();
-      setResult(data);
+      setResult(data.classification || data);
       setStage("result");
     } catch (err: any) {
       console.error("Scan failed:", err);

@@ -113,7 +113,14 @@ export default function HunterTerminalPage() {
                     clearInterval(interval);
                     setStatus("error");
                 }
-            } catch (error) {
+            } catch (error: any) {
+                // Stop polling on auth errors (401/403) to prevent flooding
+                if (error?.status === 401 || error?.status === 403) {
+                    clearInterval(interval);
+                    setStatus("error");
+                    toast({ title: "Session Expired", description: "Please log in again.", variant: "destructive" });
+                    return;
+                }
                 console.error("Polling error", error);
             }
         }, 3000);

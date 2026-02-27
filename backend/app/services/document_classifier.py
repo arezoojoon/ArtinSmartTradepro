@@ -321,11 +321,12 @@ Respond in JSON format:
                 }]
             }
             
-            response = await self.client.post(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
-                headers=headers,
-                json=payload
-            )
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+                    headers=headers,
+                    json=payload
+                )
             
             if response.status_code == 200:
                 result = response.json()
