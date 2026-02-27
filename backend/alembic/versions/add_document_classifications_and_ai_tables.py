@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import UUID
 
 
 revision = "add_doc_class_ai_logs"
-down_revision = None
+down_revision = "add_logistics_tables"
 branch_labels = None
 depends_on = None
 

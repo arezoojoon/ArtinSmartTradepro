@@ -121,7 +121,7 @@ class ControlTowerService:
             active_deals_q = await db.execute(
                 select(func.count(CRMDeal.id)).where(
                     CRMDeal.tenant_id == tenant_id,
-                    CRMDeal.stage.notin_(["closed_won", "closed_lost"])
+                    CRMDeal.status.notin_(["won", "lost"])
                 )
             )
             active_deals = active_deals_q.scalar() or 0
@@ -161,19 +161,19 @@ class ControlTowerService:
                 select(Shipment).where(
                     Shipment.tenant_id == tenant_id,
                     Shipment.status.notin_(["delivered", "cancelled"]),
-                    Shipment.eta < now
+                    Shipment.estimated_delivery < now
                 ).limit(10)
             )
             delayed = delayed_q.scalars().all()
 
             for ship in delayed:
-                days_late = (now - ship.eta).days if ship.eta else 0
+                days_late = (now - ship.estimated_delivery).days if ship.estimated_delivery else 0
                 alerts.append({
                     "id": f"ship_delay_{ship.id}",
                     "type": AlertType.SHIPMENT_DELAY,
                     "severity": AlertSeverity.CRITICAL if days_late > 3 else AlertSeverity.WARNING,
-                    "title_fa": f"⚠️ محموله {ship.tracking_number or 'N/A'} با {days_late} روز تاخیر",
-                    "title_en": f"⚠️ Shipment {ship.tracking_number or 'N/A'} is {days_late} days late",
+                    "title_fa": f"⚠️ محموله {ship.shipment_number or 'N/A'} با {days_late} روز تاخیر",
+                    "title_en": f"⚠️ Shipment {ship.shipment_number or 'N/A'} is {days_late} days late",
                     "description_fa": f"مقصد: {getattr(ship, 'destination', 'N/A')} — وضعیت: {ship.status}",
                     "description_en": f"Destination: {getattr(ship, 'destination', 'N/A')} — Status: {ship.status}",
                     "entity_id": str(ship.id),
@@ -204,8 +204,8 @@ class ControlTowerService:
                     "id": f"ship_arrived_{ship.id}",
                     "type": AlertType.SHIPMENT_ARRIVED,
                     "severity": AlertSeverity.INFO,
-                    "title_fa": f"✅ محموله {ship.tracking_number or 'N/A'} تحویل داده شد",
-                    "title_en": f"✅ Shipment {ship.tracking_number or 'N/A'} delivered",
+                    "title_fa": f"✅ محموله {ship.shipment_number or 'N/A'} تحویل داده شد",
+                    "title_en": f"✅ Shipment {ship.shipment_number or 'N/A'} delivered",
                     "description_fa": "تحویل با موفقیت انجام شد",
                     "description_en": "Delivery completed successfully",
                     "entity_id": str(ship.id),
@@ -238,7 +238,7 @@ class ControlTowerService:
             stale_q = await db.execute(
                 select(CRMDeal).where(
                     CRMDeal.tenant_id == tenant_id,
-                    CRMDeal.stage.notin_(["closed_won", "closed_lost"]),
+                    CRMDeal.status.notin_(["won", "lost"]),
                     CRMDeal.updated_at < (now - timedelta(days=7))
                 ).limit(10)
             )
@@ -250,10 +250,10 @@ class ControlTowerService:
                     "id": f"deal_stale_{deal.id}",
                     "type": AlertType.DEAL_STALE,
                     "severity": AlertSeverity.WARNING,
-                    "title_fa": f"💤 معامله «{deal.title or 'بدون نام'}» {days_stale} روز بدون فعالیت",
-                    "title_en": f"💤 Deal '{deal.title or 'Untitled'}' inactive for {days_stale} days",
-                    "description_fa": f"مرحله: {deal.stage} — ارزش: {deal.value or 'N/A'}",
-                    "description_en": f"Stage: {deal.stage} — Value: {deal.value or 'N/A'}",
+                    "title_fa": f"💤 معامله «{deal.name or 'بدون نام'}» {days_stale} روز بدون فعالیت",
+                    "title_en": f"💤 Deal '{deal.name or 'Untitled'}' inactive for {days_stale} days",
+                    "description_fa": f"مرحله: {deal.stage_id} — ارزش: {deal.value or 'N/A'}",
+                    "description_en": f"Stage: {deal.stage_id} — Value: {deal.value or 'N/A'}",
                     "entity_id": str(deal.id),
                     "entity_type": "deal",
                     "suggested_action": "send_followup",
@@ -339,8 +339,8 @@ class ControlTowerService:
                     "id": f"followup_{contact.id}",
                     "type": AlertType.CUSTOMER_INACTIVE,
                     "severity": AlertSeverity.INFO,
-                    "title_fa": f"📞 {contact.name or 'مخاطب'} — {days_since} روز بدون تماس",
-                    "title_en": f"📞 {contact.name or 'Contact'} — {days_since} days no contact",
+                    "title_fa": f"📞 {contact.first_name or 'مخاطب'} {contact.last_name or ''} — {days_since} روز بدون تماس",
+                    "title_en": f"📞 {contact.first_name or 'Contact'} {contact.last_name or ''} — {days_since} days no contact",
                     "description_fa": f"شرکت: {getattr(contact, 'company_name', 'N/A')}",
                     "description_en": f"Company: {getattr(contact, 'company_name', 'N/A')}",
                     "entity_id": str(contact.id),
