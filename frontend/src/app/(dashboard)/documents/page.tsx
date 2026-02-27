@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { FileText, Brain, Clock, CheckCircle, AlertCircle, Search, Filter, Download, Eye } from 'lucide-react';
 import SmartDocumentUpload from '@/components/documents/SmartDocumentUpload';

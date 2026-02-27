@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useCallback } from 'react';
 import { Upload, FileText, Brain, CheckCircle, AlertCircle, Loader2, Eye, ArrowRight } from 'lucide-react';
 import { apiFetch } from '@/lib/api';

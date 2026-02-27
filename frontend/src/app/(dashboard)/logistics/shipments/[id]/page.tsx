@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowRight, Package, MapPin, Calendar, Weight, Truck, FileText, AlertCircle } from 'lucide-react';
