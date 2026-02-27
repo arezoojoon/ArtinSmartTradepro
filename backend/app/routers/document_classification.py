@@ -21,7 +21,7 @@ from typing import Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/documents", tags=["Document Classification"])
+router = APIRouter(prefix="/documents", tags=["Document Classification"])
 
 # Initialize classifier
 classifier = DocumentClassifier()

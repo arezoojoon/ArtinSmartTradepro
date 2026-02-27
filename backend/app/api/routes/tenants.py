@@ -63,6 +63,13 @@ async def get_user_tenants(
         )
     
     # Normal user
+    result = await db.execute(
+        select(TenantMembership, Tenant).join(
+            Tenant, TenantMembership.tenant_id == Tenant.id
+        ).where(
+            TenantMembership.user_id == current_user.id
+        ).order_by(Tenant.created_at.desc())
+    )
     memberships = result.all()
     
     tenant_memberships = []
