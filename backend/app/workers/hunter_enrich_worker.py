@@ -130,17 +130,18 @@ async def main():
     """Main worker entry point"""
     logger.info("Starting Hunter Enrichment Worker")
     
-    # Create database session
+    # Create database session with proper context management
     engine = create_engine(settings.DATABASE_URL)
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    SessionLocal = sessionmaker(bind=engine)
     
-    db = SessionLocal()
-    
-    try:
-        worker = HunterEnrichmentWorker()
-        await worker.run_worker(db)
-    finally:
-        db.close()
+    async with SessionLocal() as db:
+        try:
+            worker = HunterEnrichmentWorker()
+            await worker.run_worker(db)
+        except Exception as e:
+            logger.error(f"Worker error: {e}")
+            raise
+        # Session automatically closed by context manager
 
 if __name__ == "__main__":
     asyncio.run(main())

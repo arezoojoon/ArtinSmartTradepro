@@ -65,10 +65,13 @@ async def get_tenant_context(
     Get tenant context for the current user.
     Uses user.current_tenant_id if set, otherwise validates tenant membership.
     """
-    if not current_user.current_tenant_id:
+    # Use current_tenant_id or fallback to tenant_id for backward compatibility
+    tenant_id = current_user.current_tenant_id or current_user.tenant_id
+    
+    if not tenant_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No active tenant selected",
+            detail="No tenant association found for user",
         )
     
     # Verify user has access to this tenant
@@ -84,7 +87,7 @@ async def get_tenant_context(
         result = await db.execute(
             select(TenantMembership)
             .where(
-                TenantMembership.tenant_id == current_user.current_tenant_id,
+                TenantMembership.tenant_id == tenant_id,
                 TenantMembership.user_id == current_user.id
             )
         )
@@ -99,7 +102,7 @@ async def get_tenant_context(
     
     # Verify tenant exists
     result = await db.execute(
-        select(Tenant).where(Tenant.id == current_user.current_tenant_id)
+        select(Tenant).where(Tenant.id == tenant_id)
     )
     tenant = result.scalar_one_or_none()
     

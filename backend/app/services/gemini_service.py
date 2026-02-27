@@ -37,23 +37,91 @@ async def _call_gemini_async(sync_fn: Callable[..., Any], *args, **kwargs) -> An
     return await asyncio.to_thread(sync_fn, *args, **kwargs)
 
 def _extract_json(text: str) -> dict:
-    """Extract JSON from Gemini response that may contain markdown code blocks."""
-    # Try direct parse
+    """
+    Extract JSON from Gemini response with robust parsing and security.
+    Handles multiple response formats and prevents parsing crashes.
+    """
+    # Security: Limit input size to prevent DoS
+    if len(text) > 100000:  # 100KB limit
+        text = text[:100000]
+    
+    # Try direct JSON parse first
     try:
-        return json.loads(text)
+        parsed = json.loads(text)
+        if isinstance(parsed, dict):
+            return parsed
     except json.JSONDecodeError:
         pass
     
-    # Try extracting from code block
-    match = re.search(r'```(?:json)?\s*\n?(.*?)\n?```', text, re.DOTALL)
-    if match:
-        try:
-            return json.loads(match.group(1))
-        except json.JSONDecodeError:
-            pass
+    # Try extracting from code blocks (```json ... ```)
+    code_block_patterns = [
+        r'```json\s*\n?(.*?)\n?```',  # ```json ... ```
+        r'```\s*\n?(.*?)\n?```',      # ``` ... ```
+        r'`{[^`]*}`',               # `{...}` inline
+    ]
     
-    # Return as raw text
-    return {"raw_response": text}
+    for pattern in code_block_patterns:
+        matches = re.findall(pattern, text, re.DOTALL | re.IGNORECASE)
+        for match in matches:
+            try:
+                parsed = json.loads(match.strip())
+                if isinstance(parsed, dict):
+                    return parsed
+            except json.JSONDecodeError:
+                continue
+    
+    # Try finding JSON object boundaries with regex (more robust)
+    json_patterns = [
+        r'\{[\s\S]*\}',  # Find any JSON object
+        r'\{[^{}]*\}',   # Simple nested objects
+    ]
+    
+    for pattern in json_patterns:
+        matches = re.findall(pattern, text)
+        for match in matches:
+            try:
+                # Validate JSON structure before parsing
+                if match.count('{') == match.count('}'):  # Balanced braces
+                    parsed = json.loads(match)
+                    if isinstance(parsed, dict):
+                        return parsed
+            except json.JSONDecodeError:
+                continue
+    
+    # Last resort: try to extract key-value pairs manually
+    try:
+        # Look for key: value patterns
+        kv_pattern = r'"([^"]+)"\s*:\s*([^,}\]]+)'
+        matches = re.findall(kv_pattern, text)
+        if matches and len(matches) > 2:  # At least 3 key-value pairs
+            result = {}
+            for key, value in matches:
+                # Try to parse the value
+                try:
+                    if value.strip().startswith('"') and value.strip().endswith('"'):
+                        result[key] = value.strip()[1:-1]  # Remove quotes
+                    elif value.strip().lower() in ['true', 'false']:
+                        result[key] = value.strip().lower() == 'true'
+                    elif value.strip().isdigit():
+                        result[key] = int(value.strip())
+                    else:
+                        result[key] = value.strip()
+                except:
+                    result[key] = value.strip()
+            return result
+    except:
+        pass
+    
+    # Ultimate fallback: return structured error
+    return {
+        "error": "JSON_PARSE_FAILED",
+        "raw_response": text[:1000],  # Limit raw response size
+        "suggestion": "AI response format was invalid. Please try again.",
+        "fallback_data": {
+            "status": "failed",
+            "reason": "Invalid JSON format from AI"
+        }
+    }
 
 
 class GeminiService:

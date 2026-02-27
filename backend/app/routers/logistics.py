@@ -8,6 +8,7 @@ from sqlalchemy import select, func, desc, or_
 from app.db.session import get_db
 from app.api.deps import get_current_user
 from app.models.user import User
+from app.core.tenant import get_tenant_context, TenantContext
 from app.models.logistics import (
     Shipment, ShipmentPackage, ShipmentEvent, Carrier,
     ShipmentStatus, ShipmentEventType,
@@ -214,16 +215,23 @@ async def get_shipment(
     if not shipment:
         raise HTTPException(status_code=404, detail="Shipment not found")
 
-    # Fetch events
+    # Fetch events (SECURITY: Add tenant filter to prevent data leak)
     events = (await db.execute(
         select(ShipmentEvent)
-        .where(ShipmentEvent.shipment_id == shipment_id)
+        .where(
+            ShipmentEvent.shipment_id == shipment_id,
+            ShipmentEvent.tenant_id == tenant_id  # CRITICAL: Tenant isolation
+        )
         .order_by(desc(ShipmentEvent.timestamp))
     )).scalars().all()
 
-    # Fetch packages
+    # Fetch packages (SECURITY: Add tenant filter to prevent data leak)
     packages = (await db.execute(
-        select(ShipmentPackage).where(ShipmentPackage.shipment_id == shipment_id)
+        select(ShipmentPackage)
+        .where(
+            ShipmentPackage.shipment_id == shipment_id,
+            ShipmentPackage.tenant_id == tenant_id  # CRITICAL: Tenant isolation
+        )
     )).scalars().all()
 
     result = _shipment_to_dict(shipment)
@@ -303,15 +311,41 @@ async def add_event(
 @router.get("/shipments/{shipment_id}/events")
 async def list_events(
     shipment_id: UUID,
-    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context), # Security Gateway
 ):
-    """Get full timeline for a shipment."""
-    events = (await db.execute(
+    """
+    Get full timeline for a shipment with strict tenant isolation.
+    Multi-Tenant Security: Only returns events for shipments belonging to the current tenant.
+    """
+    # Join with Shipment to enforce tenant isolation (Row Level Security)
+    stmt = (
         select(ShipmentEvent)
-        .where(ShipmentEvent.shipment_id == shipment_id)
+        .join(Shipment, ShipmentEvent.shipment_id == Shipment.id)
+        .where(
+            Shipment.id == shipment_id,
+            Shipment.tenant_id == tenant.tenant_id # Strict RLS implementation
+        )
         .order_by(desc(ShipmentEvent.timestamp))
-    )).scalars().all()
+    )
+    
+    result = await db.execute(stmt)
+    events = result.scalars().all()
+    
+    if not events:
+        # Check if shipment exists but has no events, or if it doesn't belong to tenant
+        shipment = await db.execute(
+            select(Shipment).where(
+                Shipment.id == shipment_id, 
+                Shipment.tenant_id == tenant.tenant_id
+            )
+        )
+        if not shipment.scalar_one_or_none():
+            raise HTTPException(
+                status_code=404, 
+                detail="Shipment not found or access denied"
+            )
+            
     return [_event_to_dict(e) for e in events]
 
 

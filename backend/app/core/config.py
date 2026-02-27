@@ -23,11 +23,29 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: str = "superadmin@artin.com"
     FIRST_SUPERUSER_PASSWORD: str = ""
     
-    # CORS
+    # CORS - Security: Restrict to specific origins in production
     ALLOWED_ORIGINS: list[str] = [
         "http://localhost:3000",
-        "http://localhost:3001",
-        "https://trade.artinsmartagent.com"
+        "http://localhost:3001", 
+        "https://trade.artinsmartagent.com",
+        "https://app.artinsmarttrade.com",  # Production domain
+        "https://artin.smarttrade.com"        # Alternative production domain
+    ]
+    
+    # CORS Methods - Security: Restrict to necessary methods only
+    ALLOWED_METHODS: list[str] = [
+        "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+    ]
+    
+    # CORS Headers - Security: Restrict to necessary headers only
+    ALLOWED_HEADERS: list[str] = [
+        "accept",
+        "accept-language",
+        "content-language",
+        "content-type",
+        "authorization",
+        "x-requested-with",
+        "x-tenant-id"
     ]
     
     # Email
@@ -53,6 +71,13 @@ class Settings(BaseSettings):
     # Rate Limiting
     LOGIN_RATE_LIMIT: int = 5  # attempts per minute
     FORGOT_PASSWORD_RATE_LIMIT: int = 3  # attempts per hour
+    
+    # AI Services
+    GEMINI_API_KEY: Optional[str] = None
+    
+    # File Upload
+    UPLOAD_DIR: str = "uploads"
+    MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
 
 
 def get_settings() -> Settings:

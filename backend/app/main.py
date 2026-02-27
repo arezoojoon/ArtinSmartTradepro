@@ -32,13 +32,13 @@ from .middleware.sys_admin import SysAdminMiddleware
 # Phase 6 — Sys admin IP allowlist + rate limit (apply before CORS)
 app.add_middleware(SysAdminMiddleware)
 
-# CORS Configuration
+# CORS Configuration - Security: Restricted methods and headers
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=settings.ALLOWED_METHODS,
+    allow_headers=settings.ALLOWED_HEADERS,
 )
 
 # --- API Routers ---
@@ -86,6 +86,9 @@ app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 
 from .routers import logistics
 app.include_router(logistics.router, prefix="/api/v1/logistics", tags=["logistics"])
+
+from .routers import document_classification
+app.include_router(document_classification.router, prefix="/api/v1", tags=["documents"])
 
 # --- Phase 6: Super Admin + Plans + Prompt Ops ---
 from .routers.sys import sys_router

@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import api from "@/lib/api";
+import ShipmentTimeline from "@/components/logistics/ShipmentTimeline";
 import {
     Ship, Package, AlertTriangle, MapPin, Clock, Plus, Search,
     Camera, Loader2, CheckCircle2, Truck, ArrowRight, X,
@@ -86,6 +88,7 @@ const getStatus = (s: string) => STATUS_CONFIG[s] || { label: s, color: "text-gr
 /*  MAIN PAGE                                                         */
 /* ═══════════════════════════════════════════════════════════════════ */
 export default function ShipmentsPage() {
+    const router = useRouter();
     const [stats, setStats] = useState<StatsData | null>(null);
     const [shipments, setShipments] = useState<ShipmentData[]>([]);
     const [loading, setLoading] = useState(true);
@@ -202,6 +205,7 @@ export default function ShipmentsPage() {
                             key={s.id}
                             shipment={s}
                             onSelect={() => setSelectedShipment(s)}
+                            router={router}
                         />
                     ))}
                 </div>
@@ -283,7 +287,7 @@ function EmptyState({ onScan, onCreate }: { onScan: () => void; onCreate: () => 
 /* ═══════════════════════════════════════════════════════════════════ */
 /*  SHIPMENT ROW                                                      */
 /* ═══════════════════════════════════════════════════════════════════ */
-function ShipmentRow({ shipment, onSelect }: { shipment: ShipmentData; onSelect: () => void }) {
+function ShipmentRow({ shipment, onSelect, router }: { shipment: ShipmentData; onSelect: () => void; router: any }) {
     const st = getStatus(shipment.status);
     const origin = shipment.origin;
     const dest = shipment.destination;
@@ -333,7 +337,16 @@ function ShipmentRow({ shipment, onSelect }: { shipment: ShipmentData; onSelect:
                         <Badge className={`${st.bg} ${st.color} border-transparent text-[10px]`}>
                             {st.label}
                         </Badge>
-                        <Eye className="h-4 w-4 text-white/30" />
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/logistics/shipments/${shipment.id}`);
+                            }}
+                            className="p-1.5 bg-[#f5a623]/20 hover:bg-[#f5a623]/30 rounded-lg transition-colors"
+                            title="مشاهده جزئیات"
+                        >
+                            <Eye className="h-4 w-4 text-[#f5a623]" />
+                        </button>
                     </div>
                 </div>
             </CardContent>
@@ -663,31 +676,9 @@ function ShipmentDetailModal({ shipmentId, onClose }: { shipmentId: string; onCl
                     <h3 className="text-sm font-semibold text-white/70 mb-3 flex items-center gap-1">
                         <Clock className="h-4 w-4" /> Timeline
                     </h3>
-                    {data.events && data.events.length > 0 ? (
-                        <div className="relative pl-6 border-l border-[#1e3a5f] space-y-4">
-                            {data.events.map((ev, i) => {
-                                const evSt = getStatus(ev.event_type);
-                                return (
-                                    <div key={ev.id} className="relative">
-                                        <div className={`absolute -left-[29px] w-3 h-3 rounded-full border-2 border-[#0a1628] ${i === 0 ? "bg-[#f5a623]" : "bg-[#1e3a5f]"}`} />
-                                        <div className="bg-[#12253f]/30 rounded-lg p-3">
-                                            <div className="flex justify-between items-center">
-                                                <span className={`text-xs font-semibold ${evSt.color}`}>{evSt.label}</span>
-                                                <span className="text-[10px] text-white/30">
-                                                    {ev.timestamp ? new Date(ev.timestamp).toLocaleString() : "—"}
-                                                </span>
-                                            </div>
-                                            {ev.notes && <p className="text-xs text-white/50 mt-1">{ev.notes}</p>}
-                                            {ev.actor && <p className="text-[10px] text-white/30 mt-1">Actor: {ev.actor}</p>}
-                                            {ev.location_name && <p className="text-[10px] text-white/30">Location: {ev.location_name}</p>}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <p className="text-xs text-white/30">No events recorded yet</p>
-                    )}
+                    <div className="bg-white rounded-xl p-1">
+                        <ShipmentTimeline events={data.events || []} loading={false} />
+                    </div>
                 </div>
             </div>
         </ModalOverlay>
