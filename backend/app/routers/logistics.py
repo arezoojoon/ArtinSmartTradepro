@@ -215,23 +215,17 @@ async def get_shipment(
     if not shipment:
         raise HTTPException(status_code=404, detail="Shipment not found")
 
-    # Fetch events (SECURITY: Add tenant filter to prevent data leak)
+    # Fetch events — tenant isolation is already enforced by the shipment lookup above
     events = (await db.execute(
         select(ShipmentEvent)
-        .where(
-            ShipmentEvent.shipment_id == shipment_id,
-            ShipmentEvent.tenant_id == tenant_id  # CRITICAL: Tenant isolation
-        )
+        .where(ShipmentEvent.shipment_id == shipment_id)
         .order_by(desc(ShipmentEvent.timestamp))
     )).scalars().all()
 
-    # Fetch packages (SECURITY: Add tenant filter to prevent data leak)
+    # Fetch packages — tenant isolation is already enforced by the shipment lookup above
     packages = (await db.execute(
         select(ShipmentPackage)
-        .where(
-            ShipmentPackage.shipment_id == shipment_id,
-            ShipmentPackage.tenant_id == tenant_id  # CRITICAL: Tenant isolation
-        )
+        .where(ShipmentPackage.shipment_id == shipment_id)
     )).scalars().all()
 
     result = _shipment_to_dict(shipment)

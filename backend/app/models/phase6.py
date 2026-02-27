@@ -190,6 +190,7 @@ class PromptFamily(Base):
 
 class PromptVersion(Base):
     __tablename__ = "prompt_versions"
+    __pydantic_config__ = {"protected_namespaces": ()}
 
     family_id            = Column(UUID(as_uuid=True), ForeignKey("prompt_families.id"), nullable=False, index=True)
     version              = Column(Integer, nullable=False)

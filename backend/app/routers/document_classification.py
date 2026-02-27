@@ -75,7 +75,7 @@ async def upload_and_classify_document(
         safe_filename = f"{file_id}{file_extension}"
         
         # Save file temporarily
-        upload_dir = Path(settings.UPLOAD_DIR) / "documents" / tenant.tenant_id
+        upload_dir = Path(settings.UPLOAD_DIR) / "documents" / str(tenant.tenant_id)
         upload_dir.mkdir(parents=True, exist_ok=True)
         
         file_path = upload_dir / safe_filename
@@ -294,9 +294,9 @@ async def route_document_to_module(
     Background task to route document to appropriate module
     """
     try:
-        from app.db.session import async_session_maker
+        from app.db.session import AsyncSessionLocal
         
-        async with async_session_maker() as db:
+        async with AsyncSessionLocal() as db:
             if classification.target_module.value == TargetModule.LOGISTICS.value:
                 await route_to_logistics(db, document_id, classification, tenant_id, user_id)
             elif classification.target_module.value == TargetModule.CRM.value:
@@ -369,7 +369,6 @@ async def route_to_logistics(
                     
                     # Add document reference event
                     event = ShipmentEvent(
-                        tenant_id=tenant_id,
                         shipment_id=new_shipment.id,
                         event_type="created",
                         actor="AI Document Classifier",
