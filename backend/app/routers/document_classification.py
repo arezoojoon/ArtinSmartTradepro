@@ -10,7 +10,7 @@ from app.db.session import get_db
 from app.core.tenant import get_tenant_context, TenantContext
 from app.services.document_classifier import DocumentClassifier, DocumentType, TargetModule
 from app.models.logistics import Shipment, ShipmentEvent
-from app.models.crm import Company, Contact
+from app.models.crm import CRMCompany as Company, CRMContact as Contact
 from app.models.billing import Invoice
 from app.core.config import settings
 import uuid
