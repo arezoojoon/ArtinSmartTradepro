@@ -17,7 +17,7 @@ from sqlalchemy import select, text
 
 from app.models.logistics import Shipment, ShipmentEvent, ShipmentStatus
 from app.models.crm import CRMCompany as Company, CRMContact as Contact, CRMDeal as Deal
-from app.models.billing import Invoice, Receipt
+from app.models.billing import Invoice
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,6 @@ class DocumentType(Enum):
     COMMERCIAL_INVOICE = "commercial_invoice"
     PURCHASE_ORDER = "purchase_order"
     DELIVERY_NOTE = "delivery_note"
-    RECEIPT = "receipt"
     CONTRACT = "contract"
     INSURANCE = "insurance"
     CUSTOMS_DECLARATION = "customs_declaration"
@@ -85,10 +84,6 @@ class DocumentClassifier:
                 r"delivery note", r"delivery receipt", r"proof of delivery", r"pod",
                 r"received by", r"signature", r"date of delivery"
             ],
-            DocumentType.RECEIPT: [
-                r"receipt", r"payment received", r"cash receipt", r"paid", r"amount paid",
-                r"payment confirmation"
-            ],
             DocumentType.CONTRACT: [
                 r"contract", r"agreement", r"terms and conditions", r"party", r"obligations",
                 r"termination", r"governing law"
@@ -118,7 +113,6 @@ class DocumentClassifier:
             DocumentType.DELIVERY_NOTE: TargetModule.LOGISTICS,
             DocumentType.WAREHOUSE_RECEIPT: TargetModule.WAREHOUSE,
             DocumentType.COMMERCIAL_INVOICE: TargetModule.BILLING,
-            DocumentType.RECEIPT: TargetModule.BILLING,
             DocumentType.PURCHASE_ORDER: TargetModule.PROCUREMENT,
             DocumentType.CONTRACT: TargetModule.COMPLIANCE,
             DocumentType.INSURANCE: TargetModule.COMPLIANCE,
@@ -471,12 +465,6 @@ Respond in JSON format:
                 "Update inventory",
                 "Generate receipt"
             ],
-            DocumentType.RECEIPT: [
-                "Record payment",
-                "Update account balance",
-                "Generate receipt",
-                "Update invoice status"
-            ]
         }
         
         return actions.get(doc_type, ["Review document", "File appropriately"])
