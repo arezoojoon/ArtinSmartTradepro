@@ -349,7 +349,7 @@ async def dispatch_due_followups(
 
                 if wa_msg.status == "sent":
                     exe.status = "sent"
-                    exe.sent_at = datetime.datetime.utcnow()
+                    exe.sent_at = datetime.datetime.now(datetime.timezone.utc)
                     sent += 1
                 else:
                     exe.status = "failed"

@@ -58,7 +58,6 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
                 return undefined as any;
             }
         }
-        // BUG-14 FIX: 403 (permission denied) no longer force-logs out the user
         throw new ApiError(response.status, data);
     }
 

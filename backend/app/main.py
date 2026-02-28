@@ -19,21 +19,28 @@ docs_url = None if settings.ENVIRONMENT == "production" else "/docs"
 redoc_url = None if settings.ENVIRONMENT == "production" else "/redoc"
 openapi_url = None if settings.ENVIRONMENT == "production" else "/openapi.json"
 
-# BUG-10 FIX: Replace deprecated on_event with lifespan
 @asynccontextmanager
-async def lifespan(application: FastAPI):
-    """Initialize database tables and services on startup."""
+async def lifespan(app: FastAPI):
+    """Initialize database tables and services."""
     logger.info("Starting up Artin Smart Trade API...")
+    
     try:
+        # Create database tables
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+        
         logger.info("Database tables created/verified")
         logger.info("Artin Smart Trade API started successfully")
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
+        # Don't fail startup - let the app start and handle DB errors per request
         logger.warning("API starting without database verification")
+    
     yield
+    
+    """Cleanup on shutdown."""
     logger.info("Shutting down Artin Smart Trade API...")
+
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -42,7 +49,7 @@ app = FastAPI(
     docs_url=docs_url,
     redoc_url=redoc_url,
     openapi_url=openapi_url,
-    lifespan=lifespan,
+    lifespan=lifespan
 )
 
 from .middleware.sys_admin import SysAdminMiddleware
@@ -105,21 +112,16 @@ app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 from .routers import logistics
 app.include_router(logistics.router, prefix="/api/v1/logistics", tags=["logistics"])
 
+from .routers import dashboard_main, deals, billing_enhanced
+app.include_router(dashboard_main.router, prefix="/api/v1/dashboard-main", tags=["dashboard"])
+app.include_router(deals.router, prefix="/api/v1/deals", tags=["crm-deals"])
+app.include_router(billing_enhanced.router, prefix="/api/v1/billing-enhanced", tags=["billing-ext"])
+
 from .routers import document_classification
 app.include_router(document_classification.router, prefix="/api/v1", tags=["documents"])
 
 from .routers import control_tower
 app.include_router(control_tower.router, prefix="/api/v1/control-tower", tags=["control-tower"])
-
-# BUG-12 FIX: Register previously unregistered routers
-from .routers import deals
-app.include_router(deals.router, prefix="/api/v1/deals", tags=["deals"])
-
-from .routers import dashboard_main
-app.include_router(dashboard_main.router, prefix="/api/v1/dashboard/main", tags=["dashboard-main"])
-
-from .routers import billing_enhanced
-app.include_router(billing_enhanced.router, prefix="/api/v1/billing-enhanced", tags=["billing-enhanced"])
 
 # --- Phase 6: Super Admin + Plans + Prompt Ops ---
 from .routers.sys import sys_router
@@ -128,8 +130,7 @@ from .routers.tenant_whitelabel import router as tenant_whitelabel_router
 from .routers.tenant_prompts import router as tenant_prompts_router
 
 app.include_router(sys_router)   # /sys/*
-# BUG-01 FIX: Use unique prefix to avoid collision with billing.router
-app.include_router(tenant_billing_router, prefix="/api/v1/tenant-billing", tags=["tenant-billing"])
+app.include_router(tenant_billing_router, prefix="/api/v1/sys-billing", tags=["billing"])
 app.include_router(tenant_whitelabel_router, prefix="/api/v1", tags=["whitelabel"])
 app.include_router(tenant_prompts_router, prefix="/api/v1", tags=["prompts"])
 
@@ -181,4 +182,4 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         }
     )
 
-# Startup/shutdown now handled by lifespan context manager (BUG-10 FIX)
+

@@ -291,7 +291,7 @@ def billing_portal(
     try:
         session = stripe.billing_portal.Session.create(
             customer=sub.stripe_customer_id,
-            return_url=f"{_FRONTEND_ORIGIN}/settings/billing"
+            return_url="http://localhost:3000/billing"
         )
         return {"portal_url": session.url}
     except stripe.error.StripeError as e:

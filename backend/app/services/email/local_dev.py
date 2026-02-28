@@ -6,6 +6,8 @@ from .base import EmailProvider, EmailError, EmailDeliveryError
 
 class LocalDevEmailProvider(EmailProvider):
     """Local development email provider that prints to console."""
+    from app.core.config import settings
+    FRONTEND_URL = getattr(settings, "FRONTEND_URL", "{self.FRONTEND_URL}")
     
     def __init__(self, store_emails: bool = True):
         self.store_emails = store_emails
@@ -137,7 +139,7 @@ class LocalDevEmailProvider(EmailProvider):
                     <li>Exploring our AI-powered features</li>
                 </ul>
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="http://localhost:3000/app" style="background: #f59e0b; color: #1e293b; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                    <a href="{self.FRONTEND_URL}/app" style="background: #f59e0b; color: #1e293b; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                         Get Started
                     </a>
                 </div>
@@ -160,7 +162,7 @@ class LocalDevEmailProvider(EmailProvider):
         - Inviting team members  
         - Exploring our AI-powered features
         
-        Visit: http://localhost:3000/app
+        Visit: {self.FRONTEND_URL}/app
         
         Best regards,
         The Artin Smart Trade Team
@@ -178,7 +180,7 @@ class LocalDevEmailProvider(EmailProvider):
                 <h2>Reset Your Password</h2>
                 <p>We received a request to reset your password. Click the button below to set a new password:</p>
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="http://localhost:3000/auth/reset-password?token={data.get('token', '')}" style="background: #f59e0b; color: #1e293b; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                    <a href="{self.FRONTEND_URL}/auth/reset-password?token={data.get('token', '')}" style="background: #f59e0b; color: #1e293b; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                         Reset Password
                     </a>
                 </div>
@@ -198,7 +200,7 @@ class LocalDevEmailProvider(EmailProvider):
         
         We received a request to reset your password. Visit the link below to set a new password:
         
-        http://localhost:3000/auth/reset-password?token={data.get('token', '')}
+        {self.FRONTEND_URL}/auth/reset-password?token={data.get('token', '')}
         
         Important: This link will expire in 1 hour for security reasons.
         
@@ -220,7 +222,7 @@ class LocalDevEmailProvider(EmailProvider):
                 <h2>Verify Your Email Address</h2>
                 <p>Thanks for signing up! Please verify your email address to complete your registration:</p>
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="http://localhost:3000/auth/verify-email?token={data.get('token', '')}" style="background: #f59e0b; color: #1e293b; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                    <a href="{self.FRONTEND_URL}/auth/verify-email?token={data.get('token', '')}" style="background: #f59e0b; color: #1e293b; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                         Verify Email
                     </a>
                 </div>
@@ -240,7 +242,7 @@ class LocalDevEmailProvider(EmailProvider):
         
         Thanks for signing up! Please verify your email address to complete your registration:
         
-        http://localhost:3000/auth/verify-email?token={data.get('token', '')}
+        {self.FRONTEND_URL}/auth/verify-email?token={data.get('token', '')}
         
         Important: This link will expire in 24 hours for security reasons.
         
@@ -263,7 +265,7 @@ class LocalDevEmailProvider(EmailProvider):
                 <p>You've been invited to join <strong>{data.get('tenant_name', 'a workspace')}</strong> on Artin Smart Trade.</p>
                 <p><strong>Role:</strong> {data.get('role', 'member').title()}</p>
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="http://localhost:3000/auth/accept-invitation?token={data.get('token', '')}" style="background: #f59e0b; color: #1e293b; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                    <a href="{self.FRONTEND_URL}/auth/accept-invitation?token={data.get('token', '')}" style="background: #f59e0b; color: #1e293b; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                         Accept Invitation
                     </a>
                 </div>
@@ -285,7 +287,7 @@ class LocalDevEmailProvider(EmailProvider):
         
         Role: {data.get('role', 'member').title()}
         
-        Accept your invitation: http://localhost:3000/auth/accept-invitation?token={data.get('token', '')}
+        Accept your invitation: {self.FRONTEND_URL}/auth/accept-invitation?token={data.get('token', '')}
         
         Important: This invitation will expire in 7 days.
         

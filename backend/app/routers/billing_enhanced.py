@@ -241,9 +241,9 @@ def get_usage(
 def top_up_wallet(
     amount: float,
     payment_method_id: str,
-    background_tasks: BackgroundTasks = None,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    background_tasks: BackgroundTasks,
 ):
     """
     Top up wallet balance
@@ -460,7 +460,7 @@ def upgrade_subscription(
     ).first()
     
     if not current_subscription:
-        raise HTTPException(status_code=404, detail="No current subscription")
+        raise HTTPException(status_code=404, detail("No current subscription")
     
     # Create Stripe subscription
     try:

@@ -49,8 +49,7 @@ def _cleanup_blacklist():
 
 
 def create_access_token(subject: Union[str, Any], additional_claims: Dict[str, Any] = None, expires_delta: timedelta = None) -> str:
-    if additional_claims is None:
-        additional_claims = {}
+    additional_claims = additional_claims or {}
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
@@ -63,8 +62,7 @@ def create_access_token(subject: Union[str, Any], additional_claims: Dict[str, A
     return encoded_jwt
 
 def create_refresh_token(subject: Union[str, Any], additional_claims: Dict[str, Any] = None) -> str:
-    if additional_claims is None:
-        additional_claims = {}
+    additional_claims = additional_claims or {}
     expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode = {"exp": expire, "sub": str(subject), "type": "refresh"}
     to_encode.update(additional_claims)

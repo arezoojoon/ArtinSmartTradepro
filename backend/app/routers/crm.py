@@ -91,18 +91,18 @@ class PipelineCreate(BaseModel):
     name: str
     stages: Optional[list] = None
 
-    def get_stages(self):
-        if self.stages is not None:
-            return self.stages
-        return [
-            {"id": "new", "name": "New"},
-            {"id": "contacted", "name": "Contacted"},
-            {"id": "qualified", "name": "Qualified"},
-            {"id": "quoted", "name": "Quoted"},
-            {"id": "negotiation", "name": "Negotiation"},
-            {"id": "invoice", "name": "Invoice"},
-            {"id": "paid_won", "name": "Paid/Won"}
-        ]
+    def __init__(self, **data):
+        super().__init__(**data)
+        if self.stages is None:
+            self.stages = [
+                {"id": "new", "name": "New"},
+                {"id": "contacted", "name": "Contacted"},
+                {"id": "qualified", "name": "Qualified"},
+                {"id": "quoted", "name": "Quoted"},
+                {"id": "negotiation", "name": "Negotiation"},
+                {"id": "invoice", "name": "Invoice"},
+                {"id": "paid_won", "name": "Paid/Won"}
+            ]
 
 class DealCreate(BaseModel):
     name: str
@@ -245,12 +245,10 @@ async def list_companies(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    total = (await db.execute(select(func.count()).select_from(
-        select(CRMCompany).where(CRMCompany.tenant_id == current_user.current_tenant_id).subquery()
-    ))).scalar() or 0
+    stmt = select(CRMCompany).where(CRMCompany.tenant_id == current_user.current_tenant_id)
+    total = (await db.execute(select(func.count()).select_from(stmt.subquery()))).scalar() or 0
     companies = (await db.execute(
-        select(CRMCompany).where(CRMCompany.tenant_id == current_user.current_tenant_id)
-        .order_by(CRMCompany.created_at.desc()).offset(skip).limit(limit)
+        stmt.order_by(CRMCompany.created_at.desc()).offset(skip).limit(limit)
     )).scalars().all()
     
     return {"total": total, "companies": companies}
@@ -306,7 +304,7 @@ async def create_pipeline(
     pipeline = CRMPipeline(
         tenant_id=current_user.current_tenant_id,
         name=data.name,
-        stages=data.get_stages(),
+        stages=data.stages,
     )
     db.add(pipeline)
     await db.commit()
@@ -467,12 +465,9 @@ async def list_tags(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    total = (await db.execute(select(func.count()).select_from(
-        select(CRMTag).where(CRMTag.tenant_id == current_user.current_tenant_id).subquery()
-    ))).scalar() or 0
-    tags = (await db.execute(
-        select(CRMTag).where(CRMTag.tenant_id == current_user.current_tenant_id).offset(skip).limit(limit)
-    )).scalars().all()
+    stmt = select(CRMTag).where(CRMTag.tenant_id == current_user.current_tenant_id)
+    total = (await db.execute(select(func.count()).select_from(stmt.subquery()))).scalar() or 0
+    tags = (await db.execute(stmt.offset(skip).limit(limit))).scalars().all()
     return {"total": total, "tags": tags}
 
 class TagCreate(BaseModel):
@@ -708,8 +703,8 @@ async def list_invoices(
     total_outstanding = sum(float(inv.amount) for inv in open_invoices)
     dso_days = 0
     if open_invoices:
-        now = datetime.datetime.utcnow()
-        avg_age = sum((now - inv.issued_date).days for inv in open_invoices) / len(open_invoices)
+        now = datetime.datetime.now(datetime.timezone.utc)
+        avg_age = sum((now - inv.issued_date.replace(tzinfo=datetime.timezone.utc)).days for inv in open_invoices) / len(open_invoices)
         dso_days = round(avg_age, 1)
 
     return {

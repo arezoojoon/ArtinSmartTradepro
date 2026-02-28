@@ -191,7 +191,7 @@ async def register(
         await email_service.send_email(
             to_email=user.email,
             subject="Verify your email - Artin Smart Trade",
-            content=f"Please verify your email by clicking: {settings.APP_URL if hasattr(settings, 'APP_URL') else 'http://localhost:3000'}/verify-email?token={token}"
+            content=f"Please verify your email by clicking: {getattr(settings, 'FRONTEND_URL', getattr(settings, 'APP_URL', 'http://localhost:3000'))}/verify-email?token={token}"
         )
     except Exception as e:
         # Don't fail registration if email fails, but log it

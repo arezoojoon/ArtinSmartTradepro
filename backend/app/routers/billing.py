@@ -15,12 +15,8 @@ from app.middleware.auth import get_current_active_user
 from app.services.audit import log_audit_event
 from pydantic import BaseModel
 from typing import Optional, List
-from app.config import get_settings
 import datetime
 import uuid
-
-_settings = get_settings()
-_FRONTEND_URL = getattr(_settings, 'FRONTEND_URL', 'http://localhost:3000')
 
 router = APIRouter()
 
@@ -29,7 +25,7 @@ class CheckoutSessionRequest(BaseModel):
     interval: str = "monthly" # monthly, yearly
 
 @router.post("/checkout-session")
-async def create_checkout_session(
+def create_checkout_session(
     data: CheckoutSessionRequest,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -62,14 +58,14 @@ async def create_checkout_session(
     
     # 4. Create Session Stub
     session_id = f"cs_stub_{uuid.uuid4()}"
-    checkout_url = f"{_FRONTEND_URL}/settings/billing?session_id={session_id}"
+    checkout_url = f"http://localhost:3000/success?session_id={session_id}" 
     
     log_audit_event(db, "billing.checkout_session_created", user_id=current_user.id, tenant_id=tenant_id, details={"plan": data.plan_name})
     
     return {"url": checkout_url, "session_id": session_id}
 
 @router.get("/checkout-session")
-async def verify_checkout_session(
+def verify_checkout_session(
     session_id: str = Query(..., description="Stripe Checkout Session ID"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -130,7 +126,7 @@ async def verify_checkout_session(
     }
 
 @router.get("/subscription")
-async def get_subscription(
+def get_subscription(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -155,7 +151,7 @@ async def get_subscription(
     }
 
 @router.get("/invoices")
-async def get_invoices(
+def get_invoices(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -179,7 +175,7 @@ async def billing_webhook(request: Request):
 
 
 @router.get("/wallet")
-async def get_wallet(
+def get_wallet(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -219,7 +215,7 @@ async def get_wallet(
 
 
 @router.get("/transactions")
-async def list_transactions(
+def list_transactions(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
     tx_type: Optional[str] = None,
