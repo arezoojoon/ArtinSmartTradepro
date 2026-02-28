@@ -19,7 +19,7 @@ interface Location {
 export interface ShipmentEvent {
   id: string;
   event_type: string;
-  actor: string;
+  actor?: string;
   location_name?: string;
   notes?: string;
   timestamp: string;

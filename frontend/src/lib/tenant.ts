@@ -32,7 +32,7 @@ export async function getMyTenants(): Promise<Tenant[]> {
         // Map response to clean Tenant objects, ensuring we capture the ID correctly
         // The list response has `tenant_id`, `tenant_name` etc.
         return data.tenants.map(t => ({
-            id: t.tenant_id,
+            id: String(t.tenant_id),
             name: t.tenant_name,
             slug: t.tenant_name.toLowerCase().replace(/\s+/g, '-'), // fallback if slug not in list response
             plan: "professional", // fallback

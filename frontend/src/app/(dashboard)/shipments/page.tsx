@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import api from "@/lib/api";
-import ShipmentTimeline from "@/components/logistics/ShipmentTimeline";
+import ShipmentTimeline from "@/components/logistics/ShipmentTimelineBilingual";
 import {
     Ship, Package, AlertTriangle, MapPin, Clock, Plus, Search,
     Camera, Loader2, CheckCircle2, Truck, ArrowRight, X,
