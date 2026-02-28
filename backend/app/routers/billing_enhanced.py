@@ -5,7 +5,7 @@ Phase 6 Enhancement - Complete billing with subscription management and usage tr
 from uuid import UUID
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_
