@@ -111,9 +111,9 @@ def get_wallet(
         db.refresh(wallet)
     
     # Get last transaction
-    last_transaction = db.query(Transaction).filter(
-        Transaction.tenant_id == tenant_id
-    ).order_by(Transaction.created_at.desc()).first()
+    last_transaction = db.query(WalletTransaction).filter(
+        WalletTransaction.tenant_id == tenant_id
+    ).order_by(WalletTransaction.created_at.desc()).first()
     
     return WalletResponse(
         id=str(wallet.id),
@@ -241,9 +241,9 @@ def get_usage(
 def top_up_wallet(
     amount: float,
     payment_method_id: str,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
-    background_tasks: BackgroundTasks,
 ):
     """
     Top up wallet balance
@@ -274,7 +274,7 @@ def top_up_wallet(
         )
         
         # Create transaction record
-        transaction = Transaction(
+        transaction = WalletTransaction(
             tenant_id=tenant_id,
             type="top_up",
             amount=amount,
@@ -326,7 +326,7 @@ def withdraw_wallet(
         raise HTTPException(status_code=400, detail="Insufficient balance")
     
     # Create transaction record
-    transaction = Transaction(
+    transaction = WalletTransaction(
         tenant_id=tenant_id,
         type="withdraw",
         amount=amount,
@@ -367,12 +367,12 @@ def get_transactions(
     if not tenant_id:
         raise HTTPException(status_code=400, detail="No tenant context found")
     
-    query = db.query(Transaction).filter(Transaction.tenant_id == tenant_id)
+    query = db.query(WalletTransaction).filter(WalletTransaction.tenant_id == tenant_id)
     
     if transaction_type:
-        query = query.filter(Transaction.type == transaction_type)
+        query = query.filter(WalletTransaction.type == transaction_type)
     
-    transactions = query.order_by(Transaction.created_at.desc()).offset(offset).limit(limit).all()
+    transactions = query.order_by(WalletTransaction.created_at.desc()).offset(offset).limit(limit).all()
     
     transaction_responses = []
     for transaction in transactions:
@@ -574,9 +574,9 @@ def get_billing_overview(
     ).all()
     
     # Get recent transactions
-    recent_transactions = db.query(Transaction).filter(
-        Transaction.tenant_id == tenant_id
-    ).order_by(Transaction.created_at.desc()).limit(5).all()
+    recent_transactions = db.query(WalletTransaction).filter(
+        WalletTransaction.tenant_id == tenant_id
+    ).order_by(WalletTransaction.created_at.desc()).limit(5).all()
     
     # Get unpaid invoices
     unpaid_invoices = db.query(Invoice).filter(
