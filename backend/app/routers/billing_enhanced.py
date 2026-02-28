@@ -460,7 +460,7 @@ def upgrade_subscription(
     ).first()
     
     if not current_subscription:
-        raise HTTPException(status_code=404, detail("No current subscription")
+        raise HTTPException(status_code=404, detail="No current subscription")
     
     # Create Stripe subscription
     try:
