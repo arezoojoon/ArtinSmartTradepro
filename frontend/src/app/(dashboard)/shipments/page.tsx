@@ -67,19 +67,19 @@ interface StatsData {
 
 /* ─── Status config ──────────────────────────────────────────────── */
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    created:           { label: "Created",           color: "text-gray-400",    bg: "bg-gray-400/10" },
-    picked:            { label: "Picked",            color: "text-blue-400",    bg: "bg-blue-400/10" },
-    assigned:          { label: "Assigned",          color: "text-indigo-400",  bg: "bg-indigo-400/10" },
-    pickup_confirmed:  { label: "Pickup Confirmed",  color: "text-cyan-400",    bg: "bg-cyan-400/10" },
-    in_transit:        { label: "In Transit",        color: "text-blue-400",    bg: "bg-blue-400/10" },
-    at_hub:            { label: "At Hub",            color: "text-amber-400",   bg: "bg-amber-400/10" },
-    out_for_delivery:  { label: "Out for Delivery",  color: "text-purple-400",  bg: "bg-purple-400/10" },
-    delivery_attempt:  { label: "Delivery Attempt",  color: "text-orange-400",  bg: "bg-orange-400/10" },
-    delivered:         { label: "Delivered",          color: "text-emerald-400", bg: "bg-emerald-400/10" },
-    failed_delivery:   { label: "Failed",            color: "text-rose-400",    bg: "bg-rose-400/10" },
-    returned:          { label: "Returned",          color: "text-rose-300",    bg: "bg-rose-300/10" },
-    damaged:           { label: "Damaged",           color: "text-red-400",     bg: "bg-red-400/10" },
-    cancelled:         { label: "Cancelled",         color: "text-gray-500",    bg: "bg-gray-500/10" },
+    created: { label: "Created", color: "text-gray-400", bg: "bg-gray-400/10" },
+    picked: { label: "Picked", color: "text-blue-400", bg: "bg-blue-400/10" },
+    assigned: { label: "Assigned", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+    pickup_confirmed: { label: "Pickup Confirmed", color: "text-cyan-400", bg: "bg-cyan-400/10" },
+    in_transit: { label: "In Transit", color: "text-blue-400", bg: "bg-blue-400/10" },
+    at_hub: { label: "At Hub", color: "text-amber-400", bg: "bg-amber-400/10" },
+    out_for_delivery: { label: "Out for Delivery", color: "text-purple-400", bg: "bg-purple-400/10" },
+    delivery_attempt: { label: "Delivery Attempt", color: "text-orange-400", bg: "bg-orange-400/10" },
+    delivered: { label: "Delivered", color: "text-emerald-400", bg: "bg-emerald-400/10" },
+    failed_delivery: { label: "Failed", color: "text-rose-400", bg: "bg-rose-400/10" },
+    returned: { label: "Returned", color: "text-rose-300", bg: "bg-rose-300/10" },
+    damaged: { label: "Damaged", color: "text-red-400", bg: "bg-red-400/10" },
+    cancelled: { label: "Cancelled", color: "text-gray-500", bg: "bg-gray-500/10" },
 };
 
 const getStatus = (s: string) => STATUS_CONFIG[s] || { label: s, color: "text-gray-400", bg: "bg-gray-400/10" };
@@ -343,7 +343,7 @@ function ShipmentRow({ shipment, onSelect, router }: { shipment: ShipmentData; o
                                 router.push(`/logistics/shipments/${shipment.id}`);
                             }}
                             className="p-1.5 bg-[#f5a623]/20 hover:bg-[#f5a623]/30 rounded-lg transition-colors"
-                            title="مشاهده جزئیات"
+                            title="View Details"
                         >
                             <Eye className="h-4 w-4 text-[#f5a623]" />
                         </button>
@@ -571,7 +571,7 @@ function CreateShipmentModal({ onClose, onSuccess }: { onClose: () => void; onSu
                         <input placeholder="Weight (kg)" value={form.total_weight_kg} onChange={(e) => set("total_weight_kg", e.target.value)} className={inputCls} type="number" />
                         <select value={form.incoterms} onChange={(e) => set("incoterms", e.target.value)} className={inputCls}>
                             <option value="">Incoterms</option>
-                            {["EXW","FCA","FAS","FOB","CFR","CIF","CPT","CIP","DAP","DPU","DDP"].map(t => <option key={t}>{t}</option>)}
+                            {["EXW", "FCA", "FAS", "FOB", "CFR", "CIF", "CPT", "CIP", "DAP", "DPU", "DDP"].map(t => <option key={t}>{t}</option>)}
                         </select>
                     </div>
                     <div className="grid grid-cols-2 gap-3">

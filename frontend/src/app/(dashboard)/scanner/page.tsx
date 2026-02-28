@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Camera, Upload, Check, X, Loader2, FileText, Ship, 
+  Camera, Upload, Check, X, Loader2, FileText, Ship,
   Building2, Receipt, ArrowRight, Brain, Sparkles,
   RotateCcw, CheckCircle2, AlertCircle, ImageIcon,
 } from "lucide-react";
@@ -20,18 +20,18 @@ interface ScanResult {
   routing_path: string;
 }
 
-const docTypeLabels: Record<string, { en: string; fa: string; icon: any; color: string }> = {
-  bill_of_lading: { en: "Bill of Lading", fa: "بارنامه", icon: Ship, color: "blue" },
-  packing_list: { en: "Packing List", fa: "لیست بسته‌بندی", icon: FileText, color: "emerald" },
-  commercial_invoice: { en: "Commercial Invoice", fa: "فاکتور تجاری", icon: Receipt, color: "amber" },
-  purchase_order: { en: "Purchase Order", fa: "سفارش خرید", icon: FileText, color: "purple" },
-  delivery_note: { en: "Delivery Note", fa: "رسید تحویل", icon: Check, color: "green" },
-  contract: { en: "Contract", fa: "قرارداد", icon: FileText, color: "slate" },
-  insurance: { en: "Insurance", fa: "بیمه‌نامه", icon: FileText, color: "cyan" },
-  customs_declaration: { en: "Customs Declaration", fa: "اظهارنامه گمرکی", icon: Building2, color: "orange" },
-  quality_certificate: { en: "Quality Certificate", fa: "گواهی کیفیت", icon: CheckCircle2, color: "teal" },
-  warehouse_receipt: { en: "Warehouse Receipt", fa: "رسید انبار", icon: Building2, color: "indigo" },
-  unknown: { en: "Unknown Document", fa: "سند ناشناخته", icon: FileText, color: "slate" },
+const docTypeLabels: Record<string, { en: string; icon: any; color: string }> = {
+  bill_of_lading: { en: "Bill of Lading", icon: Ship, color: "blue" },
+  packing_list: { en: "Packing List", icon: FileText, color: "emerald" },
+  commercial_invoice: { en: "Commercial Invoice", icon: Receipt, color: "amber" },
+  purchase_order: { en: "Purchase Order", icon: FileText, color: "purple" },
+  delivery_note: { en: "Delivery Note", icon: Check, color: "green" },
+  contract: { en: "Contract", icon: FileText, color: "slate" },
+  insurance: { en: "Insurance", icon: FileText, color: "cyan" },
+  customs_declaration: { en: "Customs Declaration", icon: Building2, color: "orange" },
+  quality_certificate: { en: "Quality Certificate", icon: CheckCircle2, color: "teal" },
+  warehouse_receipt: { en: "Warehouse Receipt", icon: Building2, color: "indigo" },
+  unknown: { en: "Unknown Document", icon: FileText, color: "slate" },
 };
 
 type Stage = "capture" | "processing" | "result" | "error";
@@ -115,9 +115,6 @@ export default function ScannerPage() {
         <p className="text-slate-500 text-sm">
           Point your camera at any document — AI does the rest
         </p>
-        <p className="text-slate-600 text-xs" dir="rtl">
-          دوربین را به سند بگیرید — هوش مصنوعی بقیه کار را انجام می‌دهد
-        </p>
       </div>
 
       {/* Capture Stage */}
@@ -152,9 +149,6 @@ export default function ScannerPage() {
                 <p className="text-slate-400 text-sm">
                   Take a photo or upload a document
                 </p>
-                <p className="text-slate-600 text-xs" dir="rtl">
-                  عکس بگیرید یا سند آپلود کنید
-                </p>
               </CardContent>
             </Card>
           )}
@@ -168,7 +162,6 @@ export default function ScannerPage() {
               <Camera className="w-5 h-5 mr-2" />
               <div className="text-left">
                 <p className="text-sm">Camera</p>
-                <p className="text-[10px] opacity-70">دوربین</p>
               </div>
             </Button>
             <Button
@@ -179,7 +172,6 @@ export default function ScannerPage() {
               <Upload className="w-5 h-5 mr-2" />
               <div className="text-left">
                 <p className="text-sm">Upload</p>
-                <p className="text-[10px] opacity-70">آپلود</p>
               </div>
             </Button>
           </div>
@@ -192,7 +184,6 @@ export default function ScannerPage() {
             >
               <Sparkles className="w-5 h-5 mr-2" />
               Classify & Extract
-              <span className="text-xs opacity-70 mr-2">شناسایی و استخراج</span>
             </Button>
           )}
 
@@ -228,9 +219,6 @@ export default function ScannerPage() {
               </div>
               <div>
                 <p className="text-white font-medium">AI is analyzing your document...</p>
-                <p className="text-slate-500 text-sm mt-1" dir="rtl">
-                  هوش مصنوعی در حال تحلیل سند شماست...
-                </p>
               </div>
               <div className="space-y-2 text-xs text-slate-500">
                 <p className="flex items-center gap-2 justify-center">
@@ -265,9 +253,6 @@ export default function ScannerPage() {
                 <div className="flex-1">
                   <p className="text-white font-bold text-lg">
                     {docTypeLabels[result.document_type]?.en || result.document_type}
-                  </p>
-                  <p className="text-slate-400 text-sm" dir="rtl">
-                    {docTypeLabels[result.document_type]?.fa || ""}
                   </p>
                 </div>
                 <div className="text-right">
@@ -318,8 +303,7 @@ export default function ScannerPage() {
           >
             <CheckCircle2 className="w-6 h-6 mr-3" />
             <div className="text-left">
-              <p>Confirm & Save</p>
-              <p className="text-xs opacity-70" dir="rtl">تایید و ثبت</p>
+              <p>Confirm &amp; Save</p>
             </div>
           </Button>
 
@@ -342,16 +326,10 @@ export default function ScannerPage() {
               <AlertCircle className="w-12 h-12 text-amber-400 mx-auto" />
               <div>
                 <p className="text-white font-medium">Could not process this document</p>
-                <p className="text-slate-400 text-sm mt-1" dir="rtl">
-                  متاسفانه نتونستم این سند رو پردازش کنم
-                </p>
               </div>
               {error && <p className="text-xs text-slate-500">{error}</p>}
               <p className="text-sm text-slate-400">
                 Please try a clearer photo or upload from your files.
-              </p>
-              <p className="text-sm text-slate-500" dir="rtl">
-                لطفاً یک عکس واضح‌تر بگیرید یا فایل آپلود کنید.
               </p>
               <div className="flex gap-3 justify-center">
                 <Button

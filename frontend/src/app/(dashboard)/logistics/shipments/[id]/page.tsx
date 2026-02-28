@@ -22,22 +22,22 @@ const ShipmentDetailsPage = () => {
     const fetchShipmentDetails = async () => {
       try {
         setLoading(true);
-        
+
         // دریافت اطلاعات محموله
         const shipmentResponse = await api.get(`/logistics/shipments/${id}`);
         setShipment(shipmentResponse.data);
-        
+
         // دریافت رویدادهای محموله
         const eventsResponse = await api.get(`/logistics/shipments/${id}/events`);
         setEvents(eventsResponse.data);
-        
+
         // دریافت اطلاعات بسته‌ها
         const packagesResponse = await api.get(`/logistics/shipments/${id}/packages`);
         setPackages(packagesResponse.data);
-        
+
       } catch (err) {
         console.error('Error fetching shipment details:', err);
-        setError('خطا در دریافت اطلاعات محموله');
+        // Error handling
       } finally {
         setLoading(false);
       }
@@ -50,27 +50,27 @@ const ShipmentDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6" dir="rtl">
+      <div className="min-h-screen bg-[#050A15] text-slate-300 p-6">
         <div className="max-w-6xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
+            <div className="h-8 bg-slate-800 rounded w-1/3 mb-6"></div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <div className="bg-white rounded-xl p-6 shadow-sm">
-                  <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-6 shadow-sm">
+                  <div className="h-6 bg-slate-800 rounded mb-4"></div>
                   <div className="space-y-4">
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className="h-20 bg-gray-100 rounded"></div>
+                      <div key={i} className="h-20 bg-slate-800 rounded"></div>
                     ))}
                   </div>
                 </div>
               </div>
               <div>
-                <div className="bg-white rounded-xl p-6 shadow-sm">
-                  <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-6 shadow-sm">
+                  <div className="h-6 bg-slate-800 rounded mb-4"></div>
                   <div className="space-y-3">
                     {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="h-4 bg-gray-100 rounded"></div>
+                      <div key={i} className="h-4 bg-slate-800 rounded"></div>
                     ))}
                   </div>
                 </div>
@@ -84,17 +84,17 @@ const ShipmentDetailsPage = () => {
 
   if (error || !shipment) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6" dir="rtl">
+      <div className="min-h-screen bg-[#050A15] p-6 text-slate-300">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <div className="bg-red-900/10 border border-red-500/30 rounded-xl p-6 text-center">
             <AlertCircle className="mx-auto mb-4 text-red-500" size={48} />
-            <h2 className="text-xl font-bold text-red-800 mb-2">خطا در بارگیری اطلاعات</h2>
-            <p className="text-red-600 mb-4">{error || 'محموله مورد نظر یافت نشد'}</p>
+            <h2 className="text-xl font-bold text-red-400 mb-2">Error Loading Information</h2>
+            <p className="text-red-300/80 mb-4">{error || 'Shipment not found'}</p>
             <button
               onClick={() => router.push('/logistics')}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-colors"
             >
-              بازگشت به لیست محموله‌ها
+              Back to Shipments
             </button>
           </div>
         </div>
@@ -105,17 +105,17 @@ const ShipmentDetailsPage = () => {
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'created':
-        return { label: 'ایجاد شده', color: 'bg-gray-100 text-gray-800' };
+        return { label: 'Created', color: 'bg-slate-800 text-slate-300 border-slate-700' };
       case 'picked_up':
-        return { label: 'بارگیری شده', color: 'bg-blue-100 text-blue-800' };
+        return { label: 'Picked Up', color: 'bg-blue-900/30 text-blue-400 border-blue-500/30' };
       case 'in_transit':
-        return { label: 'در حال حمل', color: 'bg-purple-100 text-purple-800' };
+        return { label: 'In Transit', color: 'bg-purple-900/30 text-purple-400 border-purple-500/30' };
       case 'at_customs':
-        return { label: 'در گمرک', color: 'bg-orange-100 text-orange-800' };
+        return { label: 'At Customs', color: 'bg-orange-900/30 text-orange-400 border-orange-500/30' };
       case 'delivered':
-        return { label: 'تحویل داده شده', color: 'bg-green-100 text-green-800' };
+        return { label: 'Delivered', color: 'bg-emerald-900/30 text-emerald-400 border-emerald-500/30' };
       default:
-        return { label: status, color: 'bg-gray-100 text-gray-800' };
+        return { label: status, color: 'bg-slate-800 text-slate-300 border-slate-700' };
     }
   };
 
@@ -124,29 +124,29 @@ const ShipmentDetailsPage = () => {
   const destination = typeof shipment.destination === 'string' ? JSON.parse(shipment.destination) : shipment.destination;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6" dir="rtl">
+    <div className="min-h-screen bg-[#050A15] text-slate-300 p-6">
       <div className="max-w-6xl mx-auto">
-        {/* هدر صفحه */}
+        {/* Header */}
         <div className="mb-6">
           <button
             onClick={() => router.push('/logistics')}
-            className="flex items-center text-gray-600 hover:text-gray-800 mb-4 transition-colors"
+            className="flex items-center text-slate-400 hover:text-white mb-4 transition-colors"
           >
-            <ArrowRight size={20} className="ml-2" />
-            بازگشت به لیست محموله‌ها
+            <ArrowRight size={20} className="mr-2 rotate-180" />
+            Back to Shipments
           </button>
-          
+
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">
-                محموله {shipment.shipment_number}
+              <h1 className="text-2xl font-bold text-white mb-2">
+                Shipment {shipment.shipment_number}
               </h1>
-              <div className="flex items-center space-x-4 space-x-reverse">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusConfig.color}`}>
+              <div className="flex items-center space-x-4">
+                <span className={`px-3 py-1 rounded-full border text-sm font-medium ${statusConfig.color}`}>
                   {statusConfig.label}
                 </span>
-                <span className="text-sm text-gray-500">
-                  {new Date(shipment.created_at).toLocaleDateString('fa-IR')}
+                <span className="text-sm text-slate-500">
+                  {new Date(shipment.created_at).toLocaleDateString()}
                 </span>
               </div>
             </div>
@@ -156,51 +156,50 @@ const ShipmentDetailsPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* بخش اصلی - تایم‌لاین */}
           <div className="lg:col-span-2">
-            <ShipmentTimeline 
-              events={events} 
-              loading={loading} 
-              language={tenantContext.language}
+            <ShipmentTimeline
+              events={events}
+              loading={loading}
             />
           </div>
 
-          {/* بخش اطلاعات جانبی */}
+          {/* Side Info */}
           <div className="space-y-6">
-            {/* کارت اطلاعات اصلی */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">اطلاعات اصلی</h3>
-              
+            {/* Main Info Card */}
+            <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-white mb-4">Main Information</h3>
+
               <div className="space-y-4">
                 <div className="flex items-start">
-                  <Package className="ml-3 mt-1 text-gray-400" size={20} />
+                  <Package className="mr-3 mt-1 text-slate-400" size={20} />
                   <div>
-                    <p className="text-sm text-gray-500">نوع کالا</p>
-                    <p className="font-medium text-gray-800">{shipment.goods_description}</p>
+                    <p className="text-sm text-slate-500">Commodity</p>
+                    <p className="font-medium text-slate-200">{shipment.goods_description}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start">
-                  <Weight className="ml-3 mt-1 text-gray-400" size={20} />
+                  <Weight className="mr-3 mt-1 text-slate-400" size={20} />
                   <div>
-                    <p className="text-sm text-gray-500">وزن کل</p>
-                    <p className="font-medium text-gray-800">{shipment.total_weight_kg?.toLocaleString('fa-IR')} کیلوگرم</p>
+                    <p className="text-sm text-slate-500">Total Weight</p>
+                    <p className="font-medium text-slate-200">{shipment.total_weight_kg?.toLocaleString()} kg</p>
                   </div>
                 </div>
 
                 <div className="flex items-start">
-                  <Package className="ml-3 mt-1 text-gray-400" size={20} />
+                  <Package className="mr-3 mt-1 text-slate-400" size={20} />
                   <div>
-                    <p className="text-sm text-gray-500">تعداد بسته‌ها</p>
-                    <p className="font-medium text-gray-800">{shipment.total_packages} بسته</p>
+                    <p className="text-sm text-slate-500">Total Packages</p>
+                    <p className="font-medium text-slate-200">{shipment.total_packages} package(s)</p>
                   </div>
                 </div>
 
                 {shipment.estimated_delivery && (
                   <div className="flex items-start">
-                    <Calendar className="ml-3 mt-1 text-gray-400" size={20} />
+                    <Calendar className="mr-3 mt-1 text-slate-400" size={20} />
                     <div>
-                      <p className="text-sm text-gray-500">تخمین تحویل</p>
-                      <p className="font-medium text-gray-800">
-                        {new Date(shipment.estimated_delivery).toLocaleDateString('fa-IR')}
+                      <p className="text-sm text-slate-500">Estimated Delivery</p>
+                      <p className="font-medium text-slate-200">
+                        {new Date(shipment.estimated_delivery).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -208,59 +207,58 @@ const ShipmentDetailsPage = () => {
               </div>
             </div>
 
-            {/* کارت مسیر */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">مسیر حمل</h3>
-              
+            {/* Route Card */}
+            <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-white mb-4">Route Info</h3>
+
               <div className="space-y-4">
                 <div className="flex items-start">
-                  <MapPin className="ml-3 mt-1 text-blue-500" size={20} />
+                  <MapPin className="mr-3 mt-1 text-blue-500" size={20} />
                   <div>
-                    <p className="text-sm text-gray-500">مبدأ</p>
-                    <p className="font-medium text-gray-800">{origin?.city}</p>
-                    <p className="text-sm text-gray-600">{origin?.country}</p>
-                    {origin?.port && <p className="text-sm text-gray-600">بندر: {origin.port}</p>}
+                    <p className="text-sm text-slate-500">Origin</p>
+                    <p className="font-medium text-slate-200">{origin?.city}</p>
+                    <p className="text-sm text-slate-400">{origin?.country}</p>
+                    {origin?.port && <p className="text-sm text-slate-400">Port: {origin.port}</p>}
                   </div>
                 </div>
 
                 <div className="flex items-center justify-center">
-                  <Truck className="text-gray-400" size={20} />
+                  <Truck className="text-slate-600" size={20} />
                 </div>
 
                 <div className="flex items-start">
-                  <MapPin className="ml-3 mt-1 text-green-500" size={20} />
+                  <MapPin className="mr-3 mt-1 text-emerald-500" size={20} />
                   <div>
-                    <p className="text-sm text-gray-500">مقصد</p>
-                    <p className="font-medium text-gray-800">{destination?.city}</p>
-                    <p className="text-sm text-gray-600">{destination?.country}</p>
-                    {destination?.port && <p className="text-sm text-gray-600">بندر: {destination.port}</p>}
+                    <p className="text-sm text-slate-500">Destination</p>
+                    <p className="font-medium text-slate-200">{destination?.city}</p>
+                    <p className="text-sm text-slate-400">{destination?.country}</p>
+                    {destination?.port && <p className="text-sm text-slate-400">Port: {destination.port}</p>}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* کارت بسته‌ها */}
+            {/* Packages Card */}
             {packages.length > 0 && (
-              <div className="bg-white rounded-xl p-6 shadow-sm">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">بسته‌ها ({packages.length})</h3>
-                
-                <div className="space-y-3 max-h-64 overflow-y-auto">
+              <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-6 shadow-sm">
+                <h3 className="text-lg font-bold text-white mb-4">Packages ({packages.length})</h3>
+
+                <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-2">
                   {packages.map((pkg) => (
-                    <div key={pkg.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={pkg.id} className="flex items-center justify-between p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
                       <div className="flex items-center">
-                        <Package className="ml-3 text-gray-400" size={16} />
+                        <Package className="mr-3 text-[#D4AF37]" size={16} />
                         <div>
-                          <p className="font-medium text-gray-800 text-sm">{pkg.barcode}</p>
-                          <p className="text-xs text-gray-500">{pkg.weight_kg} کیلوگرم</p>
+                          <p className="font-medium text-slate-200 text-sm">{pkg.barcode}</p>
+                          <p className="text-xs text-slate-400">{pkg.weight_kg} kg</p>
                         </div>
                       </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        pkg.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                        pkg.status === 'packed' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {pkg.status === 'delivered' ? 'تحویل شده' :
-                         pkg.status === 'packed' ? 'بسته‌بندی شده' : pkg.status}
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${pkg.status === 'delivered' ? 'bg-emerald-900/30 text-emerald-400 border-emerald-500/30' :
+                        pkg.status === 'packed' ? 'bg-blue-900/30 text-blue-400 border-blue-500/30' :
+                          'bg-slate-800 text-slate-300 border-slate-700'
+                        }`}>
+                        {pkg.status === 'delivered' ? 'Delivered' :
+                          pkg.status === 'packed' ? 'Packed' : pkg.status}
                       </span>
                     </div>
                   ))}
