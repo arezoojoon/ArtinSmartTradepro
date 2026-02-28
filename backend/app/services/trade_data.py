@@ -10,7 +10,7 @@ from sqlalchemy import func, and_, or_
 import aiohttp
 import pandas as pd
 
-from app.models.phase5 import AssetSeasonalityMatrix
+from app.models.brain_assets import AssetSeasonalityMatrix
 from app.models.tenant import Tenant
 from app.config import get_settings
 

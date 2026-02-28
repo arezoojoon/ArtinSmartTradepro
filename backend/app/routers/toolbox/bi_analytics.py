@@ -334,7 +334,7 @@ async def get_data_sources(
     from app.models.billing import Wallet
     from sqlalchemy import func as sqla_func
     try:
-        from app.models.phase5 import AssetSupplierReliability
+        from app.models.brain_assets import AssetSupplierReliability
     except ImportError:
         AssetSupplierReliability = None
 

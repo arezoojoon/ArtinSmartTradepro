@@ -17,7 +17,7 @@ from app.models.billing import Wallet, WalletTransaction
 from app.models.crm import CRMInvoice, CRMCompany, CRMPipeline, CRMDeal
 from app.models.brain import BrainEngineRun
 from app.models.hunter_phase4 import HunterLead
-from app.models.phase5 import AssetArbitrageHistory, AssetSupplierReliability, AssetBuyerPaymentBehavior
+from app.models.brain_assets import AssetArbitrageHistory, AssetSupplierReliability, AssetBuyerPaymentBehavior
 
 import logging
 logger = logging.getLogger(__name__)

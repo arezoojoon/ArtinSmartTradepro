@@ -11,7 +11,7 @@ import aiohttp
 import pandas as pd
 from dataclasses import dataclass
 
-from app.models.phase5 import AssetSeasonalityMatrix
+from app.models.brain_assets import AssetSeasonalityMatrix
 from app.models.tenant import Tenant
 from app.config import get_settings
 

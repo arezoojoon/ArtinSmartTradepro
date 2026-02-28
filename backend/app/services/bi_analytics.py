@@ -15,7 +15,7 @@ from app.models.deal import Deal
 from app.models.crm import CRMCompany
 from app.models.billing import Wallet, Invoice
 from app.models.hunter_phase4 import HunterLead
-from app.models.phase5 import AssetArbitrageHistory
+from app.models.brain_assets import AssetArbitrageHistory
 from app.models.tenant import Tenant
 
 

@@ -38,7 +38,7 @@ except ImportError:
     HunterLead = None
 
 try:
-    from app.models.phase5 import AssetArbitrageHistory
+    from app.models.brain_assets import AssetArbitrageHistory
 except ImportError:
     AssetArbitrageHistory = None
 
