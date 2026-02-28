@@ -89,15 +89,20 @@ class CompanyUpdate(BaseModel):
 
 class PipelineCreate(BaseModel):
     name: str
-    stages: Optional[list] = [
-        {"id": "new", "name": "New"},
-        {"id": "contacted", "name": "Contacted"},
-        {"id": "qualified", "name": "Qualified"},
-        {"id": "quoted", "name": "Quoted"},
-        {"id": "negotiation", "name": "Negotiation"},
-        {"id": "invoice", "name": "Invoice"},
-        {"id": "paid_won", "name": "Paid/Won"}
-    ]
+    stages: Optional[list] = None
+
+    def get_stages(self):
+        if self.stages is not None:
+            return self.stages
+        return [
+            {"id": "new", "name": "New"},
+            {"id": "contacted", "name": "Contacted"},
+            {"id": "qualified", "name": "Qualified"},
+            {"id": "quoted", "name": "Quoted"},
+            {"id": "negotiation", "name": "Negotiation"},
+            {"id": "invoice", "name": "Invoice"},
+            {"id": "paid_won", "name": "Paid/Won"}
+        ]
 
 class DealCreate(BaseModel):
     name: str
@@ -199,7 +204,7 @@ async def update_contact(
 ):
     contact = await _assert_owned(db, CRMContact, contact_id, current_user.current_tenant_id, "Contact")
 
-    for field, value in data.dict(exclude_unset=True).items():
+    for field, value in data.model_dump(exclude_unset=True).items():
         setattr(contact, field, value)
 
     await db.commit()
@@ -240,10 +245,12 @@ async def list_companies(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = select(CRMCompany)
-    total = (await db.execute(select(func.count()).select_from(CRMCompany))).scalar() or 0
+    total = (await db.execute(select(func.count()).select_from(
+        select(CRMCompany).where(CRMCompany.tenant_id == current_user.current_tenant_id).subquery()
+    ))).scalar() or 0
     companies = (await db.execute(
-        stmt.order_by(CRMCompany.created_at.desc()).offset(skip).limit(limit)
+        select(CRMCompany).where(CRMCompany.tenant_id == current_user.current_tenant_id)
+        .order_by(CRMCompany.created_at.desc()).offset(skip).limit(limit)
     )).scalars().all()
     
     return {"total": total, "companies": companies}
@@ -299,7 +306,7 @@ async def create_pipeline(
     pipeline = CRMPipeline(
         tenant_id=current_user.current_tenant_id,
         name=data.name,
-        stages=data.stages,
+        stages=data.get_stages(),
     )
     db.add(pipeline)
     await db.commit()
@@ -387,13 +394,13 @@ async def update_deal(
     deal = await _assert_owned(db, CRMDeal, deal_id, current_user.current_tenant_id, "Deal")
     
     old_stage = deal.stage_id
-    updates = data.dict(exclude_unset=True)
+    updates = data.model_dump(exclude_unset=True)
     
     for field, value in updates.items():
         setattr(deal, field, value)
         
     if "status" in updates and updates["status"] in ["won", "lost"]:
-        deal.closed_at = datetime.datetime.utcnow()
+        deal.closed_at = datetime.datetime.now(datetime.timezone.utc)
 
     await db.commit()
     await db.refresh(deal)
@@ -460,9 +467,12 @@ async def list_tags(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = select(CRMTag)
-    total = (await db.execute(select(func.count()).select_from(CRMTag))).scalar() or 0
-    tags = (await db.execute(stmt.offset(skip).limit(limit))).scalars().all()
+    total = (await db.execute(select(func.count()).select_from(
+        select(CRMTag).where(CRMTag.tenant_id == current_user.current_tenant_id).subquery()
+    ))).scalar() or 0
+    tags = (await db.execute(
+        select(CRMTag).where(CRMTag.tenant_id == current_user.current_tenant_id).offset(skip).limit(limit)
+    )).scalars().all()
     return {"total": total, "tags": tags}
 
 class TagCreate(BaseModel):
@@ -535,10 +545,10 @@ async def crm_stats(
     db: AsyncSession = Depends(get_db),
 ):
     tid = current_user.current_tenant_id
-    total_contacts = (await db.execute(select(func.count(CRMContact.id)))).scalar() or 0
-    total_companies = (await db.execute(select(func.count(CRMCompany.id)))).scalar() or 0
-    total_deals = (await db.execute(select(func.count(CRMDeal.id)))).scalar() or 0
-    total_revenue = (await db.execute(select(func.sum(CRMDeal.value)))).scalar() or 0
+    total_contacts = (await db.execute(select(func.count(CRMContact.id)).where(CRMContact.tenant_id == tid))).scalar() or 0
+    total_companies = (await db.execute(select(func.count(CRMCompany.id)).where(CRMCompany.tenant_id == tid))).scalar() or 0
+    total_deals = (await db.execute(select(func.count(CRMDeal.id)).where(CRMDeal.tenant_id == tid))).scalar() or 0
+    total_revenue = (await db.execute(select(func.sum(CRMDeal.value)).where(CRMDeal.tenant_id == tid))).scalar() or 0
 
     return {
         "total_contacts": total_contacts,
@@ -635,11 +645,11 @@ async def update_task(
 ):
     task = await _assert_owned(db, CRMTask, task_id, current_user.current_tenant_id, "Task")
 
-    for field, value in data.dict(exclude_unset=True).items():
+    for field, value in data.model_dump(exclude_unset=True).items():
         setattr(task, field, value)
 
     if data.status == "completed":
-        task.completed_at = datetime.datetime.utcnow()
+        task.completed_at = datetime.datetime.now(datetime.timezone.utc)
 
     await db.commit()
     await db.refresh(task)
@@ -747,7 +757,7 @@ async def update_invoice(
 ):
     invoice = await _assert_owned(db, CRMInvoice, invoice_id, current_user.current_tenant_id, "Invoice")
 
-    for field, value in data.dict(exclude_unset=True).items():
+    for field, value in data.model_dump(exclude_unset=True).items():
         setattr(invoice, field, value)
 
     await db.commit()

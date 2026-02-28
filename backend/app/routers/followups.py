@@ -296,7 +296,7 @@ async def dispatch_due_followups(
     from app.services.waha_service import WAHAService
     from app.db.session import AsyncSessionLocal
 
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.timezone.utc)
     limit = max(1, min(int(data.limit), 200))
 
     processed = 0

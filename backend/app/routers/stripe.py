@@ -81,8 +81,8 @@ def create_checkout_session(
             customer=customer_id,
             mode="subscription",
             line_items=[{"price": price_id, "quantity": 1}],
-            success_url=f"{_FRONTEND_ORIGIN}/wallet?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{_FRONTEND_ORIGIN}/wallet?canceled=true",
+            success_url=f"{_FRONTEND_ORIGIN}/settings/billing?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{_FRONTEND_ORIGIN}/settings/billing?canceled=true",
             metadata={
                 "tenant_id": str(current_user.tenant_id),
                 "plan_id": str(plan.id),
@@ -291,7 +291,7 @@ def billing_portal(
     try:
         session = stripe.billing_portal.Session.create(
             customer=sub.stripe_customer_id,
-            return_url="http://localhost:3000/billing"
+            return_url=f"{_FRONTEND_ORIGIN}/settings/billing"
         )
         return {"portal_url": session.url}
     except stripe.error.StripeError as e:

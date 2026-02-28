@@ -15,8 +15,12 @@ from app.middleware.auth import get_current_active_user
 from app.services.audit import log_audit_event
 from pydantic import BaseModel
 from typing import Optional, List
+from app.config import get_settings
 import datetime
 import uuid
+
+_settings = get_settings()
+_FRONTEND_URL = getattr(_settings, 'FRONTEND_URL', 'http://localhost:3000')
 
 router = APIRouter()
 
@@ -58,7 +62,7 @@ async def create_checkout_session(
     
     # 4. Create Session Stub
     session_id = f"cs_stub_{uuid.uuid4()}"
-    checkout_url = f"http://localhost:3000/success?session_id={session_id}" 
+    checkout_url = f"{_FRONTEND_URL}/settings/billing?session_id={session_id}"
     
     log_audit_event(db, "billing.checkout_session_created", user_id=current_user.id, tenant_id=tenant_id, details={"plan": data.plan_name})
     

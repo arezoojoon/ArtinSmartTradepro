@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Union, Dict
 from jose import jwt
 from passlib.context import CryptContext
@@ -48,11 +48,13 @@ def _cleanup_blacklist():
         del _token_blacklist[k]
 
 
-def create_access_token(subject: Union[str, Any], additional_claims: Dict[str, Any] = {}, expires_delta: timedelta = None) -> str:
+def create_access_token(subject: Union[str, Any], additional_claims: Dict[str, Any] = None, expires_delta: timedelta = None) -> str:
+    if additional_claims is None:
+        additional_claims = {}
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
     to_encode = {"exp": expire, "sub": str(subject), "type": "access"}
     to_encode.update(additional_claims)
@@ -60,8 +62,10 @@ def create_access_token(subject: Union[str, Any], additional_claims: Dict[str, A
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-def create_refresh_token(subject: Union[str, Any], additional_claims: Dict[str, Any] = {}) -> str:
-    expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+def create_refresh_token(subject: Union[str, Any], additional_claims: Dict[str, Any] = None) -> str:
+    if additional_claims is None:
+        additional_claims = {}
+    expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode = {"exp": expire, "sub": str(subject), "type": "refresh"}
     to_encode.update(additional_claims)
     
@@ -69,7 +73,7 @@ def create_refresh_token(subject: Union[str, Any], additional_claims: Dict[str, 
     return encoded_jwt
 
 def create_password_reset_token(email: str) -> str:
-    expire = datetime.utcnow() + timedelta(hours=1)  # 1 hour expiry
+    expire = datetime.now(timezone.utc) + timedelta(hours=1)  # 1 hour expiry
     to_encode = {"exp": expire, "sub": email, "type": "password_reset"}
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 

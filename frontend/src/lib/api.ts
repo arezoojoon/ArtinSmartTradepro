@@ -49,7 +49,7 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
     }
 
     if (!response.ok) {
-        if ((response.status === 401 || response.status === 403) && typeof window !== 'undefined') {
+        if (response.status === 401 && typeof window !== 'undefined') {
             // Token expired or invalid — redirect to login
             const currentPath = window.location.pathname;
             if (!currentPath.startsWith('/login') && !currentPath.startsWith('/register') && !currentPath.startsWith('/forgot')) {
@@ -58,6 +58,7 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
                 return undefined as any;
             }
         }
+        // BUG-14 FIX: 403 (permission denied) no longer force-logs out the user
         throw new ApiError(response.status, data);
     }
 

@@ -61,8 +61,8 @@ def run_hunter_job(
         run = HunterRun(
             job_id=uuid.UUID(job_id),
             tenant_id=uuid.UUID(tenant_id),
-            keyword=keyword,
-            location=location,
+            target_keyword=keyword,
+            target_location=location,
             sources=sources,
         )
         db.add(run)
