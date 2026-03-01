@@ -4,7 +4,7 @@ Phase 6 Enhancement - Full deal lifecycle with parties, incoterms, documents, an
 """
 from uuid import UUID
 from typing import Optional, List, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -183,10 +183,10 @@ class RiskAssessmentResponse(BaseModel):
 def generate_deal_number(db: Session) -> str:
     """Generate unique deal number"""
     # Get current date in YYYYMMDD format
-    date_str = datetime.utcnow().strftime("%Y%m%d")
+    date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
     
     # Get count of deals created today
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     today_count = db.query(Deal).filter(
         Deal.created_at >= today_start
     ).count()
@@ -448,7 +448,7 @@ def update_deal(
     if deal_update.status:
         deal.status = deal_update.status
         if deal_update.status == DealStatus.CLOSED_WON.value or deal_update.status == DealStatus.CLOSED_LOST.value:
-            deal.closed_at = datetime.utcnow()
+            deal.closed_at = datetime.now(timezone.utc)
     if deal_update.priority:
         deal.priority = deal_update.priority
     if deal_update.total_value:
@@ -462,7 +462,7 @@ def update_deal(
     if deal_update.tags is not None:
         deal.tags = deal_update.tags
     
-    deal.updated_at = datetime.utcnow()
+    deal.updated_at = datetime.now(timezone.utc)
     
     db.commit()
     

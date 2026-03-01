@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 from uuid import UUID
 import uuid
 import datetime
+from datetime import timezone
 import base64
 import logging
 import json
@@ -89,7 +90,7 @@ class CarrierCreate(BaseModel):
 # ─── Helper: Generate shipment number ────────────────────────────────
 
 def _generate_shipment_number() -> str:
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(timezone.utc)
     return f"SHP-{now.year}-{uuid.uuid4().hex[:6].upper()}"
 
 
@@ -296,7 +297,7 @@ async def add_event(
     if new_status:
         shipment.status = new_status
         if body.event_type == "delivered":
-            shipment.actual_delivery = datetime.datetime.utcnow()
+            shipment.actual_delivery = datetime.datetime.now(timezone.utc)
 
     await db.commit()
     return _event_to_dict(ev)
@@ -573,7 +574,7 @@ async def smart_extract_document(
 
             if shipment:
                 shipment.status = "delivered"
-                shipment.actual_delivery = datetime.datetime.utcnow()
+                shipment.actual_delivery = datetime.datetime.now(timezone.utc)
                 pod = extracted.get("pod") or {}
                 shipment.pod_recipient_name = pod.get("recipient_name")
 
@@ -606,7 +607,7 @@ async def smart_extract_document(
                     customer_name=extracted.get("customer_name"),
                     customer_phone=extracted.get("customer_phone"),
                     status="delivered",
-                    actual_delivery=datetime.datetime.utcnow(),
+                    actual_delivery=datetime.datetime.now(timezone.utc),
                     ai_extracted=True,
                     ai_confidence=0.85,
                 )
@@ -721,7 +722,7 @@ async def _notify_delivery_whatsapp(shipment: Shipment, extracted: dict, db: Asy
         f"Your shipment {shipment.shipment_number} has been successfully delivered.\n\n"
         f"Goods: {goods}\n"
         f"Received by: {recipient}\n"
-        f"Time: {datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}\n\n"
+        f"Time: {datetime.datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}\n\n"
         f"Thank you for your business!"
     )
 

@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Any
 import datetime
+from datetime import timezone
 import logging
 
 from app.db.session import get_db
@@ -66,7 +67,7 @@ async def get_main_dashboard(
     Returns kpi_summary, margin_overview, risk_heatmap.
     """
     tenant_id = _tenant_id(current_user)
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(timezone.utc)
 
     # ── KPI: total pipeline value ──
     total_pipeline_value = 0.0
@@ -192,7 +193,7 @@ async def get_mobile_dashboard(
     db: AsyncSession = Depends(get_db),
 ) -> Any:
     tenant_id = _tenant_id(current_user)
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(timezone.utc)
 
     liquidity = {
         "balance": 0, "currency": "USD",
@@ -270,7 +271,7 @@ async def get_web_dashboard(
     db: AsyncSession = Depends(get_db),
 ) -> Any:
     tenant_id = _tenant_id(current_user)
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(timezone.utc)
 
     # 1. Pipeline
     pipeline_list = []

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_
 from typing import Any, List, Dict, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
 
 from app.database import get_db
@@ -149,7 +149,7 @@ def get_main_dashboard(
     try:
         arbitrage_history = db.query(AssetArbitrageHistory).filter(
             AssetArbitrageHistory.tenant_id == tenant_id,
-            AssetArbitrageHistory.created_at >= datetime.utcnow() - timedelta(days=30)
+            AssetArbitrageHistory.created_at >= datetime.now(timezone.utc) - timedelta(days=30)
         ).order_by(AssetArbitrageHistory.created_at.desc()).limit(10).all()
         
         for record in arbitrage_history:
@@ -170,7 +170,7 @@ def get_main_dashboard(
         wallet = db.query(Wallet).filter(Wallet.tenant_id == tenant_id).first()
         if wallet:
             for i in range(6, -1, -1):
-                period_start = datetime.utcnow() - timedelta(days=30 * i)
+                period_start = datetime.now(timezone.utc) - timedelta(days=30 * i)
                 period_end = period_start + timedelta(days=30)
 
                 credits = db.query(func.coalesce(func.sum(WalletTransaction.amount), 0)).filter(
@@ -222,7 +222,7 @@ def get_main_dashboard(
             BrainEngineRun.tenant_id == tenant_id,
             BrainEngineRun.engine_type == "risk",
             BrainEngineRun.status == "success",
-            BrainEngineRun.created_at >= datetime.utcnow() - timedelta(days=7)
+            BrainEngineRun.created_at >= datetime.now(timezone.utc) - timedelta(days=7)
         ).all()
         
         # Get payment behavior data
@@ -378,7 +378,7 @@ def get_kpi_summary(
         raise HTTPException(status_code=400, detail="No tenant context found")
     
     # Calculate key metrics
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     
     kpis = {}
