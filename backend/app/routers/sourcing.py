@@ -73,8 +73,16 @@ def get_supplier_scorecard(
     db: Session = Depends(get_db)
 ):
     try:
-        score_data = SupplierIntelligenceService.calculate_reliability_score(db, uuid.UUID(id))
-        supplier = db.query(Supplier).get(id)
+        supplier = db.query(Supplier).filter(
+            Supplier.id == uuid.UUID(id),
+            Supplier.tenant_id == current_user.tenant_id
+        ).first()
+        
+        if not supplier:
+            raise HTTPException(status_code=404, detail="Supplier not found")
+            
+        score_data = SupplierIntelligenceService.calculate_reliability_score(db, supplier.id)
+        
         return {
             "supplier": {
                 "id": str(supplier.id),
@@ -84,6 +92,8 @@ def get_supplier_scorecard(
             },
             "reliability": score_data
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -94,9 +104,17 @@ def report_issue(
     db: Session = Depends(get_db)
 ):
     try:
+        supplier = db.query(Supplier).filter(
+            Supplier.id == uuid.UUID(issue.supplier_id),
+            Supplier.tenant_id == current_user.tenant_id
+        ).first()
+        
+        if not supplier:
+            raise HTTPException(status_code=404, detail="Supplier not found")
+            
         new_issue = SupplierIssue(
             tenant_id=current_user.tenant_id,
-            supplier_id=uuid.UUID(issue.supplier_id),
+            supplier_id=supplier.id,
             issue_type=issue.issue_type,
             severity=issue.severity,
             description=issue.description
@@ -105,9 +123,11 @@ def report_issue(
         db.commit()
         
         # Trigger re-scoring immediately
-        SupplierIntelligenceService.calculate_reliability_score(db, uuid.UUID(issue.supplier_id))
+        SupplierIntelligenceService.calculate_reliability_score(db, supplier.id)
         
         return {"status": "success", "message": "Issue reported and score updated."}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -145,10 +165,26 @@ def add_quote(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
+    rfq = db.query(RFQ).filter(
+        RFQ.id == uuid.UUID(q.rfq_id),
+        RFQ.tenant_id == current_user.tenant_id
+    ).first()
+    
+    if not rfq:
+        raise HTTPException(status_code=404, detail="RFQ not found")
+        
+    supplier = db.query(Supplier).filter(
+        Supplier.id == uuid.UUID(q.supplier_id),
+        Supplier.tenant_id == current_user.tenant_id
+    ).first()
+    
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Supplier not found")
+        
     new_quote = SupplierQuote(
         tenant_id=current_user.tenant_id,
-        rfq_id=uuid.UUID(q.rfq_id),
-        supplier_id=uuid.UUID(q.supplier_id),
+        rfq_id=rfq.id,
+        supplier_id=supplier.id,
         incoterm=q.incoterm,
         unit_price=q.unit_price,
         currency=q.currency,
@@ -167,5 +203,13 @@ def compare_rfq_quotes(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    comparison = SupplierIntelligenceService.compare_quotes(db, uuid.UUID(id))
+    rfq = db.query(RFQ).filter(
+        RFQ.id == uuid.UUID(id),
+        RFQ.tenant_id == current_user.tenant_id
+    ).first()
+    
+    if not rfq:
+        raise HTTPException(status_code=404, detail="RFQ not found")
+        
+    comparison = SupplierIntelligenceService.compare_quotes(db, rfq.id)
     return comparison

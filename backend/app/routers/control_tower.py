@@ -11,7 +11,7 @@ from app.services.control_tower import ControlTowerService
 from app.models.ai_approval import AIApprovalQueue, ApprovalStatus, AIActionLog
 from typing import Optional, List
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 import logging
 
@@ -196,7 +196,7 @@ async def review_approval(
     if item.status != ApprovalStatus.PENDING.value:
         raise HTTPException(status_code=400, detail=f"Item already {item.status}")
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     if body.action == "approve":
         item.status = ApprovalStatus.APPROVED.value
