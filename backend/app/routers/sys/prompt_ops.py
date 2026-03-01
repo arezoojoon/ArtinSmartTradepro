@@ -51,9 +51,15 @@ def list_families(db: Session = Depends(get_db), admin: SystemAdmin = Depends(ge
     ]
 
 
+from pydantic import BaseModel, ConfigDict
+
+# ... (other imports)
+
 # ─── Versions ─────────────────────────────────────────────────────────────────
 
 class VersionCreateRequest(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+    
     model_target: str = "gemini-1.5-pro"
     system_prompt: str
     user_prompt_template: str
