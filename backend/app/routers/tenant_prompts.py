@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.models.user import User
 from app.middleware.auth import get_current_active_user
 from app.models.phase6 import PromptFamily, PromptVersion
 
@@ -12,7 +13,10 @@ router = APIRouter(prefix="/prompts", tags=["prompts"])
 
 
 @router.get("/families", summary="List Prompt Families (read-only)")
-def list_families(db: Session = Depends(get_db)):
+def list_families(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
     families = db.query(PromptFamily).filter(PromptFamily.is_active == True).all()
     return [
         {"id": str(f.id), "name": f.name, "description": f.description, "category": f.category}
@@ -21,7 +25,11 @@ def list_families(db: Session = Depends(get_db)):
 
 
 @router.get("/families/{name}/active-version", summary="Get Active Prompt Version for Family")
-def get_active_version(name: str, db: Session = Depends(get_db)):
+def get_active_version(
+    name: str, 
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
     family = db.query(PromptFamily).filter(PromptFamily.name == name, PromptFamily.is_active == True).first()
     if not family:
         raise HTTPException(status_code=404, detail=f"Prompt family '{name}' not found")
