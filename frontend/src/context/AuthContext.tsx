@@ -84,22 +84,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const userData = response.data;
             setUser(userData);
 
-            // V3 Redirect Logic
-            const mode = userData.tenant?.mode || "hybrid";
-            console.log(`[Auth] Redirecting for mode: ${mode}`);
-
-            if (mode === "buyer") {
-                router.push("/buyer");
-            } else if (mode === "seller") {
-                router.push("/seller");
-            } else {
-                router.push("/dashboard");
-            }
+            // V3 Unified redirect — always go to Command Center
+            console.log(`[Auth] Redirecting to Command Center`);
+            router.push("/command-center");
 
         } catch (error) {
             console.error("Login profile fetch failed:", error);
             // Fallback
-            router.push("/dashboard");
+            router.push("/command-center");
         }
     };
 
@@ -130,17 +122,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const userData = userRes.data;
             setUser(userData);
 
-            // Redirect based on new tenant mode
-            const mode = userData.tenant?.mode || "hybrid";
-            console.log(`[Auth] Switched to tenant mode: ${mode}`);
-
-            if (mode === "buyer") {
-                router.push("/buyer");
-            } else if (mode === "seller") {
-                router.push("/seller");
-            } else {
-                router.push("/dashboard");
-            }
+            // Unified redirect after tenant switch
+            console.log(`[Auth] Switched tenant — redirecting to Command Center`);
+            router.push("/command-center");
         } catch (error) {
             console.error("Switch tenant failed", error);
         } finally {

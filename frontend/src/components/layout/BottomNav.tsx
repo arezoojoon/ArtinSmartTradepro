@@ -2,10 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Search, Brain, Menu } from "lucide-react";
-import { useState } from "react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import Sidebar from "./Sidebar";
+import { Zap, Target, Briefcase, Brain, Menu } from "lucide-react";
 
 interface BottomNavProps {
     onMenuClick?: () => void;
@@ -15,17 +12,19 @@ export default function BottomNav({ onMenuClick }: BottomNavProps) {
     const pathname = usePathname();
 
     const tabs = [
-        { label: "Home", href: "/dashboard", icon: LayoutDashboard },
-        { label: "CRM", href: "/crm", icon: Users },
-        { label: "Hunter", href: "/hunter", icon: Search },
-        { label: "Brain", href: "/brain", icon: Brain },
+        { label: "Home", href: "/command-center", icon: Zap },
+        { label: "Acquisition", href: "/acquisition", icon: Target },
+        { label: "CRM", href: "/crm", icon: Briefcase },
+        { label: "Intel", href: "/brain", icon: Brain },
     ];
 
     return (
         <div className="fixed bottom-0 left-0 right-0 bg-[#0e1e33]/95 backdrop-blur-md border-t border-[#1e3a5f] pb-safe z-50 md:hidden">
             <div className="flex justify-around items-center h-16">
                 {tabs.map((tab) => {
-                    const isActive = pathname === tab.href || (tab.href !== "/dashboard" && pathname?.startsWith(tab.href + "/"));
+                    const isActive =
+                        pathname === tab.href ||
+                        (tab.href !== "/command-center" && pathname?.startsWith(tab.href + "/"));
                     return (
                         <Link
                             key={tab.href}

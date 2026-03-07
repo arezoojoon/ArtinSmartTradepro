@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import TenantSwitcher from "./TenantSwitcher";
-import { navItems, NavItem } from "@/config/nav";
+import { navItems, adminNavItem, filterNavItems, NavItem, TenantMode, UserRole } from "@/config/nav";
 import { useAuth } from "@/context/AuthContext";
-import { LogOut, ChevronLeft, ChevronRight, Settings } from "lucide-react";
+import { LogOut, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -21,6 +21,7 @@ export default function Sidebar({ forceExpanded = false, onItemClick }: SidebarP
     const { user, logout } = useAuth();
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
     // Hydration fix & LocalStorage persistence
     useEffect(() => {
@@ -31,7 +32,32 @@ export default function Sidebar({ forceExpanded = false, onItemClick }: SidebarP
         }
         const stored = localStorage.getItem("sidebar-collapsed");
         if (stored) setIsCollapsed(JSON.parse(stored));
+
+        const storedSections = localStorage.getItem("sidebar-sections");
+        if (storedSections) {
+            try { setExpandedSections(JSON.parse(storedSections)); } catch { /* ignore */ }
+        }
     }, [forceExpanded]);
+
+    // Auto-expand the section that contains the current route
+    useEffect(() => {
+        if (!pathname) return;
+        const allItems = getDisplayedItems();
+        for (const item of allItems) {
+            if (item.children) {
+                const childActive = item.children.some(c => isRouteActive(c.href, pathname));
+                if (childActive) {
+                    setExpandedSections(prev => {
+                        if (prev[item.href]) return prev; // already open
+                        const next = { ...prev, [item.href]: true };
+                        localStorage.setItem("sidebar-sections", JSON.stringify(next));
+                        return next;
+                    });
+                }
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pathname]);
 
     const toggleCollapse = () => {
         if (forceExpanded) return;
@@ -40,22 +66,33 @@ export default function Sidebar({ forceExpanded = false, onItemClick }: SidebarP
         localStorage.setItem("sidebar-collapsed", JSON.stringify(newState));
     };
 
+    const toggleSection = (href: string) => {
+        setExpandedSections(prev => {
+            const next = { ...prev, [href]: !prev[href] };
+            localStorage.setItem("sidebar-sections", JSON.stringify(next));
+            return next;
+        });
+    };
+
     const effectiveCollapsed = forceExpanded ? false : isCollapsed;
 
-    if (!mounted) return null; // Avoid hydration mismatch
-    // SAFETY: Default to hybrid if user/mode is missing to prevent disappearance
-    const safeUser = user || { role: "user", tenant: { mode: "hybrid" } };
-    const mode = (safeUser.tenant?.mode || "hybrid") as keyof typeof navItems;
-    const items: NavItem[] = navItems[mode] || navItems.hybrid;
+    // SAFETY: Default to hybrid if user/mode is missing
+    const safeUser = user || { role: "user" as UserRole, tenant: { mode: "hybrid" as TenantMode } };
+    const mode = ((safeUser as any).tenant?.mode || "hybrid") as TenantMode;
+    const role = ((safeUser as any).role || "user") as UserRole;
 
-    if (!mounted) return null; // Hydration
-    // REMOVED: if (!user) return null; -> causing sidebar to vanish if auth context is slightly delayed or malformed
+    const getDisplayedItems = useCallback((): NavItem[] => {
+        let items = filterNavItems(navItems, mode, role);
+        // Add admin panel for authorized users
+        if ((role === "super_admin" || role === "admin") && !items.some(i => i.href === "/admin")) {
+            items = [...items, adminNavItem];
+        }
+        return items;
+    }, [mode, role]);
 
-    // Add Admin Panel for Super Admins if not present
-    let displayedItems: NavItem[] = [...items];
-    if ((user?.role === "super_admin" || user?.role === "admin") && !displayedItems.some(i => i.href === "/admin")) {
-        displayedItems.push({ label: "Admin Panel", href: "/admin", icon: Settings });
-    }
+    if (!mounted) return null;
+
+    const displayedItems = getDisplayedItems();
 
     return (
         <aside
@@ -64,7 +101,7 @@ export default function Sidebar({ forceExpanded = false, onItemClick }: SidebarP
                 effectiveCollapsed ? "w-20" : "w-64"
             )}
         >
-            {/* Toggle Button - Hide if forced expanded (mobile) */}
+            {/* Toggle Button */}
             {!forceExpanded && (
                 <Button
                     variant="ghost"
@@ -95,35 +132,18 @@ export default function Sidebar({ forceExpanded = false, onItemClick }: SidebarP
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
-                {!effectiveCollapsed && (
-                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider fade-in">
-                        {mode.toUpperCase()} MODE
-                    </div>
-                )}
-
-                {displayedItems.map((item) => {
-                    const isActive = pathname === item.href || (item.href !== "/dashboard" && !item.external && pathname?.startsWith(item.href + "/"));
-                    const LinkComponent = item.external ? "a" : Link;
-                    const props = item.external ? { href: item.href, target: "_blank", rel: "noopener noreferrer" } : { href: item.href };
-
-                    return (
-                        <LinkComponent
-                            key={item.href}
-                            {...props}
-                            onClick={onItemClick}
-                            className={cn(
-                                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative",
-                                isActive ? "bg-[#f5a623]/10 text-[#f5a623]" : "text-gray-100 hover:text-white hover:bg-[#12253f]",
-                                effectiveCollapsed && "justify-center px-2"
-                            )}
-                            title={effectiveCollapsed ? item.label : undefined}
-                        >
-                            <item.icon className={cn("shrink-0", effectiveCollapsed ? "h-5 w-5" : "h-4 w-4")} />
-                            {!effectiveCollapsed && <span className="truncate">{item.label}</span>}
-                        </LinkComponent>
-                    );
-                })}
+            <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto overflow-x-hidden custom-scrollbar">
+                {displayedItems.map((item) => (
+                    <NavEntry
+                        key={item.href}
+                        item={item}
+                        pathname={pathname}
+                        collapsed={effectiveCollapsed}
+                        expanded={!!expandedSections[item.href]}
+                        onToggle={() => toggleSection(item.href)}
+                        onItemClick={onItemClick}
+                    />
+                ))}
             </nav>
 
             {/* Footer / Logout */}
@@ -142,8 +162,117 @@ export default function Sidebar({ forceExpanded = false, onItemClick }: SidebarP
                     <LogOut className="h-4 w-4" />
                     {!effectiveCollapsed && <span>Log Out</span>}
                 </button>
-                {!effectiveCollapsed && <p className="text-xs text-navy-600 text-center truncate">v2.0 • Phase D2</p>}
+                {!effectiveCollapsed && <p className="text-xs text-navy-600 text-center truncate">v3.0 • Unified</p>}
             </div>
         </aside>
     );
+}
+
+// ─── NavEntry Component ─────────────────────────────────────────────────────────
+interface NavEntryProps {
+    item: NavItem;
+    pathname: string;
+    collapsed: boolean;
+    expanded: boolean;
+    onToggle: () => void;
+    onItemClick?: () => void;
+}
+
+function NavEntry({ item, pathname, collapsed, expanded, onToggle, onItemClick }: NavEntryProps) {
+    const hasChildren = item.children && item.children.length > 0;
+    const isActive = isRouteActive(item.href, pathname);
+    const isChildActive = hasChildren && item.children!.some(c => isRouteActive(c.href, pathname));
+    const isHighlighted = isActive || isChildActive;
+
+    // ── Parent with children ──
+    if (hasChildren) {
+        return (
+            <div className="space-y-0.5">
+                {/* Parent row */}
+                <button
+                    onClick={onToggle}
+                    className={cn(
+                        "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative",
+                        isHighlighted
+                            ? "bg-[#f5a623]/10 text-[#f5a623]"
+                            : "text-gray-100 hover:text-white hover:bg-[#12253f]",
+                        collapsed && "justify-center px-2"
+                    )}
+                    title={collapsed ? item.label : undefined}
+                >
+                    <item.icon className={cn("shrink-0", collapsed ? "h-5 w-5" : "h-4 w-4")} />
+                    {!collapsed && (
+                        <>
+                            <span className="truncate flex-1 text-left">{item.label}</span>
+                            <ChevronDown
+                                className={cn(
+                                    "h-3.5 w-3.5 shrink-0 transition-transform duration-200",
+                                    expanded ? "rotate-0" : "-rotate-90",
+                                    isHighlighted ? "text-[#f5a623]/60" : "text-gray-500"
+                                )}
+                            />
+                        </>
+                    )}
+                </button>
+
+                {/* Children */}
+                {!collapsed && expanded && (
+                    <div className="ml-4 pl-3 border-l border-[#1e3a5f] space-y-0.5">
+                        {item.children!.map(child => {
+                            const childActive = isRouteActive(child.href, pathname);
+                            return (
+                                <Link
+                                    key={child.href}
+                                    href={child.href}
+                                    onClick={onItemClick}
+                                    className={cn(
+                                        "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all group",
+                                        childActive
+                                            ? "bg-[#f5a623]/10 text-[#f5a623] font-medium"
+                                            : "text-gray-400 hover:text-white hover:bg-[#12253f]"
+                                    )}
+                                >
+                                    <child.icon className="h-3.5 w-3.5 shrink-0" />
+                                    <span className="truncate">{child.label}</span>
+                                </Link>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    // ── Leaf item ──
+    const LinkComponent = item.external ? "a" : Link;
+    const props = item.external
+        ? { href: item.href, target: "_blank", rel: "noopener noreferrer" }
+        : { href: item.href };
+
+    return (
+        <LinkComponent
+            {...props}
+            onClick={onItemClick}
+            className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative",
+                isActive ? "bg-[#f5a623]/10 text-[#f5a623]" : "text-gray-100 hover:text-white hover:bg-[#12253f]",
+                collapsed && "justify-center px-2"
+            )}
+            title={collapsed ? item.label : undefined}
+        >
+            <item.icon className={cn("shrink-0", collapsed ? "h-5 w-5" : "h-4 w-4")} />
+            {!collapsed && <span className="truncate">{item.label}</span>}
+        </LinkComponent>
+    );
+}
+
+// ─── Helpers ────────────────────────────────────────────────────────────────────
+function isRouteActive(href: string, pathname: string): boolean {
+    if (!pathname) return false;
+    if (pathname === href) return true;
+    // Prevent /command-center matching / etc.
+    if (href === "/" || href === "/dashboard" || href === "/command-center") {
+        return pathname === href;
+    }
+    return pathname.startsWith(href + "/");
 }
