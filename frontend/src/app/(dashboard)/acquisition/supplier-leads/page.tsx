@@ -134,7 +134,7 @@ export default function SupplierLeadsPage() {
                                             <Star className="w-3 h-3 mr-1" /> {s.score}
                                         </Badge>
                                     )}
-                                    <Button size="sm" variant="outline" onClick={() => alert(`Opening details for ${s.company_name}...`)} className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/10 text-xs">
+                                    <Button size="sm" variant="outline" onClick={() => window.location.href = `/crm/contacts?search=${encodeURIComponent(s.company_name || '')}`} className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/10 text-xs">
                                         View <ArrowRight className="w-3 h-3 ml-1" />
                                     </Button>
                                 </div>

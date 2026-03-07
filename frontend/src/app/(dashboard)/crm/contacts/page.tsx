@@ -29,6 +29,9 @@ export default function ContactsPage() {
     const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
+    const [showAdd, setShowAdd] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [addForm, setAddForm] = useState({ first_name: "", last_name: "", email: "", phone: "", company_name: "", position: "" });
 
     useEffect(() => {
         fetchContacts();
@@ -62,7 +65,7 @@ export default function ContactsPage() {
                             Bulk Import
                         </Button>
                     </Link>
-                    <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-sm">
+                    <Button onClick={() => setShowAdd(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-sm">
                         <UserPlus className="h-4 w-4 mr-2" />
                         Add Contact
                     </Button>
@@ -217,13 +220,13 @@ export default function ContactsPage() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem className="font-medium">View Intelligence</DropdownMenuItem>
+                                                    <DropdownMenuItem className="font-medium" onClick={() => router.push(`/crm/contacts/${contact.id}/followup`)}>View Intelligence</DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => router.push(`/crm/contacts/${contact.id}/followup`)}>
                                                         Smart Follow-up
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem>Assign to Sequence</DropdownMenuItem>
-                                                    <DropdownMenuItem>Log Manual Activity</DropdownMenuItem>
-                                                    <DropdownMenuItem className="text-rose-600">Archive Contact</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => router.push(`/crm/followups/new?contact_id=${contact.id}`)}>Assign to Sequence</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => router.push(`/crm/contacts/${contact.id}/followup`)}>Log Manual Activity</DropdownMenuItem>
+                                                    <DropdownMenuItem className="text-rose-600" onClick={async () => { if (confirm(`Archive ${contact.first_name}?`)) { try { await api.delete(`/crm/contacts/${contact.id}`); fetchContacts(); } catch (e) { console.error(e); } } }}>Archive Contact</DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </div>
@@ -242,6 +245,40 @@ export default function ContactsPage() {
                     Contacts with trade history are prioritized in Hunter scoring.
                 </div>
             </div>
+            {renderAddModal()}
         </div>
     );
+
+    function renderAddModal() {
+        if (!showAdd) return null;
+        const handleAdd = async () => {
+            if (!addForm.first_name.trim()) return;
+            setSaving(true);
+            try {
+                await api.post("/crm/contacts", addForm);
+                setShowAdd(false);
+                setAddForm({ first_name: "", last_name: "", email: "", phone: "", company_name: "", position: "" });
+                fetchContacts();
+            } catch (e) { console.error(e); }
+            finally { setSaving(false); }
+        };
+        return (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAdd(false)}>
+                <div className="bg-[#0F172A] border border-white/10 rounded-2xl p-6 w-full max-w-md space-y-4" onClick={e => e.stopPropagation()}>
+                    <h3 className="text-white font-bold text-lg">Add Contact</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                        <Input placeholder="First Name *" value={addForm.first_name} onChange={e => setAddForm(p => ({ ...p, first_name: e.target.value }))} className="bg-white/5 border-white/10" />
+                        <Input placeholder="Last Name" value={addForm.last_name} onChange={e => setAddForm(p => ({ ...p, last_name: e.target.value }))} className="bg-white/5 border-white/10" />
+                    </div>
+                    <Input placeholder="Email" value={addForm.email} onChange={e => setAddForm(p => ({ ...p, email: e.target.value }))} className="bg-white/5 border-white/10" />
+                    <Input placeholder="Phone" value={addForm.phone} onChange={e => setAddForm(p => ({ ...p, phone: e.target.value }))} className="bg-white/5 border-white/10" />
+                    <Input placeholder="Company" value={addForm.company_name} onChange={e => setAddForm(p => ({ ...p, company_name: e.target.value }))} className="bg-white/5 border-white/10" />
+                    <Input placeholder="Position / Title" value={addForm.position} onChange={e => setAddForm(p => ({ ...p, position: e.target.value }))} className="bg-white/5 border-white/10" />
+                    <Button onClick={handleAdd} disabled={saving || !addForm.first_name.trim()} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
+                        {saving ? "Creating..." : "Create Contact"}
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 }

@@ -7,7 +7,7 @@ import {
     BarChart3, Users, Download, TrendingUp,
     Globe, Clock, Loader2, RefreshCw, Target,
 } from "lucide-react";
-import expoApi from "@/lib/expoApi";
+import api from "@/lib/api";
 
 export default function LeadAnalyticsPage() {
     const [stats, setStats] = useState<any>(null);
@@ -17,8 +17,8 @@ export default function LeadAnalyticsPage() {
     const fetchData = useCallback(async () => {
         try {
             const [statsRes, metricsRes] = await Promise.allSettled([
-                expoApi.get("/api/analytics/stats"),
-                expoApi.get("/api/booth-metrics/summary"),
+                api.get("/analytics/stats"),
+                api.get("/analytics/stats"), // booth-metrics merged into analytics
             ]);
             if (statsRes.status === "fulfilled") setStats(statsRes.value.data);
             if (metricsRes.status === "fulfilled") setBoothMetrics(metricsRes.value.data || {});

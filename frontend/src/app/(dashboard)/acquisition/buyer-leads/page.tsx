@@ -167,7 +167,7 @@ export default function BuyerLeadsPage() {
                                             {lead.status}
                                         </Badge>
                                     )}
-                                    <Button size="sm" variant="outline" onClick={() => alert(`Opening details for ${lead.company_name}...`)} className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/10 text-xs">
+                                    <Button size="sm" variant="outline" onClick={() => window.location.href = `/crm/contacts?search=${encodeURIComponent(lead.company_name || '')}`} className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/10 text-xs">
                                         View <ArrowRight className="w-3 h-3 ml-1" />
                                     </Button>
                                 </div>

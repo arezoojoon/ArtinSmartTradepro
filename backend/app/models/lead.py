@@ -16,10 +16,17 @@ class Lead(Base):
     city = Column(String, nullable=True)
     
     # Enrichment
-    source = Column(String)  # google_maps, linkedin, etc.
+    source = Column(String)  # google_maps, linkedin, expo, csv, etc.
     intent_score = Column(Float, default=0.0)
     status = Column(String, default="new")  # new, contacted, interested, closed
     tags = Column(JSON, default=[])
+    
+    # Expo Specific enhancements
+    telegram_username = Column(String, nullable=True)
+    lead_quality = Column(String, nullable=True) # hot, warm, cold
+    aida_stage = Column(String, nullable=True) # Attention, Interest, Desire, Action
+    priority = Column(String, default="medium")
+    notes = Column(String, nullable=True)
     
     tenant = relationship("Tenant")
 

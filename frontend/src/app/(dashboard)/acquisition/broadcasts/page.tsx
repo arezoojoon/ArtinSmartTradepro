@@ -7,7 +7,7 @@ import {
     Send, Users, MessageSquare, Globe, Clock,
     CheckCircle, AlertCircle, Loader2,
 } from "lucide-react";
-import expoApi from "@/lib/expoApi";
+import api from "@/lib/api";
 
 interface BroadcastEntry {
     id: number;
@@ -30,7 +30,7 @@ export default function BroadcastsPage() {
         if (!message.trim()) return;
         setSending(true);
         try {
-            await expoApi.post("/api/broadcast", { message, language, channel });
+            await api.post("/broadcasts/send", { message, language, channel });
         } catch { /* API may not exist yet */ }
         const entry: BroadcastEntry = {
             id: Date.now(),

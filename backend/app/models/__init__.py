@@ -103,3 +103,7 @@ from .logistics import (
     ShipmentStatus, ShipmentEventType,
 )
 
+# Acquisition Expo models
+from .representative import Representative
+from .catalog import Catalog
+

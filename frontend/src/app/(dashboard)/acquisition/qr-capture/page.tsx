@@ -7,7 +7,7 @@ import {
     QrCode, Download, Smartphone, MessageCircle,
     RefreshCw, AlertCircle, CheckCircle, Loader2, Copy,
 } from "lucide-react";
-import expoApi from "@/lib/expoApi";
+import api from "@/lib/api";
 
 export default function QRCapturePage() {
     const [loading, setLoading] = useState(true);
@@ -21,8 +21,8 @@ export default function QRCapturePage() {
         setLoading(true);
         try {
             const [waRes, tgRes] = await Promise.allSettled([
-                expoApi.get("/api/tenant/whatsapp-link"),
-                expoApi.get("/api/tenant/telegram-link"),
+                api.get("/qr/whatsapp-link"),
+                api.get("/qr/telegram-link"),
             ]);
             if (waRes.status === "fulfilled" && waRes.value.data?.whatsapp_link) {
                 setWhatsappLink(waRes.value.data.whatsapp_link);

@@ -137,6 +137,17 @@ app.include_router(tenant_prompts_router, prefix="/api/v1", tags=["prompts"])
 from .routers.tenant_settings import router as tenant_settings_router
 app.include_router(tenant_settings_router, prefix="/api/v1/settings", tags=["settings"])
 
+# --- Acquisition / Expo Module Routers ---
+from .routers import representatives, catalogs, products as products_router
+from .routers import expo_analytics, broadcasts, qr_capture
+
+app.include_router(representatives.router, prefix="/api/v1/representatives", tags=["acquisition"])
+app.include_router(catalogs.router, prefix="/api/v1/catalogs", tags=["acquisition"])
+app.include_router(products_router.router, prefix="/api/v1/products", tags=["acquisition"])
+app.include_router(expo_analytics.router, prefix="/api/v1/analytics", tags=["acquisition"])
+app.include_router(broadcasts.router, prefix="/api/v1/broadcasts", tags=["acquisition"])
+app.include_router(qr_capture.router, prefix="/api/v1/qr", tags=["acquisition"])
+
 
 # --- Health Check ---
 @app.get("/health")

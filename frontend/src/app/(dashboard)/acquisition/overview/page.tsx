@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import api from "@/lib/api";
-import expoApi from "@/lib/expoApi";
+// expoApi removed — now served by main backend
 
 export default function AcquisitionOverview() {
     const [loading, setLoading] = useState(true);
@@ -21,7 +21,7 @@ export default function AcquisitionOverview() {
             try {
                 const [mainRes, expoRes] = await Promise.allSettled([
                     api.get("/dashboard/main"),
-                    expoApi.get("/api/analytics/stats").catch(() => ({ data: null })),
+                    api.get("/analytics/stats").catch(() => ({ data: null })),
                 ]);
                 if (mainRes.status === "fulfilled") setStats(mainRes.value.data?.kpi_summary || {});
                 if (expoRes.status === "fulfilled" && expoRes.value.data) setExpoStats(expoRes.value.data);
