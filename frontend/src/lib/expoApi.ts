@@ -47,7 +47,13 @@ async function expoFetch<T>(path: string, options: ExpoApiOptions = {}): Promise
         config.body = isFormData ? body : JSON.stringify(body);
     }
 
-    const endpoint = path.startsWith("/") ? path : `/${path}`;
+    // If the path starts with /api/, strip it since EXPO_BASE_URL usually contains /api/v1
+    let endpoint = path;
+    if (endpoint.startsWith("/api/")) {
+        endpoint = endpoint.substring(4); // leaves the leading slash
+    } else if (!endpoint.startsWith("/")) {
+        endpoint = `/${endpoint}`;
+    }
     const response = await fetch(`${EXPO_BASE_URL}${endpoint}`, config);
 
     let data: any;

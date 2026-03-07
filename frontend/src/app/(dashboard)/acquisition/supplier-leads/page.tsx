@@ -35,7 +35,7 @@ export default function SupplierLeadsPage() {
         } catch (e) {
             console.error("Supplier leads fetch failed:", e);
             try {
-                const fallback = await api.get("/sourcing/suppliers?limit=50");
+                const fallback = await api.get("/crm/contacts?tag=supplier&limit=50");
                 setSuppliers(fallback.data?.suppliers || fallback.data || []);
             } catch { /* ignore */ }
         } finally {
