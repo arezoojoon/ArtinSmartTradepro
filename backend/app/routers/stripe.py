@@ -155,19 +155,20 @@ async def stripe_webhook(
         metadata = data.get("metadata", {})
         tenant_id = metadata.get("tenant_id")
         plan_id = metadata.get("plan_id")
+        plan_name = metadata.get("plan_name")  # "professional", "enterprise", etc.
         stripe_sub_id = data.get("subscription")
         stripe_customer_id = data.get("customer")
         
         if not tenant_id or not plan_id:
             return {"status": "ignored", "reason": "missing metadata"}
         
-        # 1. Update tenant.plan_id (source of truth for features)
+        # 1. Update tenant.plan (string — source of truth for features)
         tenant = db.execute(
             select(Tenant).where(Tenant.id == tenant_id)
         ).scalar_one_or_none()
         
-        if tenant:
-            tenant.plan_id = plan_id  # Upgrade/set plan
+        if tenant and plan_name:
+            tenant.plan = plan_name  # Upgrade/set plan string
         
         # 2. Upsert subscription (billing status tracking)
         existing = db.execute(
@@ -205,7 +206,7 @@ async def stripe_webhook(
         from uuid import UUID
         background_tasks.add_task(trigger_provisioning, UUID(tenant_id))
         
-        print(f"[STRIPE] ✅ Plan activated and provisioning triggered for tenant {tenant_id}")
+        print(f"[STRIPE] ✅ Plan '{plan_name}' activated for tenant {tenant_id}")
     
     # --- customer.subscription.updated ---
     elif event_type == "customer.subscription.updated":
@@ -235,12 +236,12 @@ async def stripe_webhook(
                     ).scalar_one_or_none()
                     if new_plan and str(sub.plan_id) != str(new_plan.id):
                         sub.plan_id = new_plan.id
-                        # Sync tenant.plan_id
+                        # Sync tenant.plan (string field)
                         tenant = db.execute(
                             select(Tenant).where(Tenant.id == sub.tenant_id)
                         ).scalar_one_or_none()
                         if tenant:
-                            tenant.plan_id = new_plan.id
+                            tenant.plan = new_plan.name
             
             # Sync period dates
             if data.get("current_period_start"):

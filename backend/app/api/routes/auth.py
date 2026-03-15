@@ -131,7 +131,8 @@ async def register(
         
         # Create subscription with 3-day free trial
         try:
-            from ...models.subscription import Subscription, Plan
+            from ...models.subscription import Subscription, Plan, PlanFeature
+            from ...constants import DEFAULT_PLAN_FEATURES
             trial_end = datetime.utcnow() + timedelta(days=3)
             # Find or create the plan record
             plan_result = await db.execute(
@@ -151,6 +152,11 @@ async def register(
                 db.add(plan_record)
                 await db.commit()
                 await db.refresh(plan_record)
+                
+                # Seed PlanFeature records for this plan
+                feature_keys = DEFAULT_PLAN_FEATURES.get(selected_plan, [])
+                for fk in feature_keys:
+                    db.add(PlanFeature(plan_id=plan_record.id, feature_key=fk))
             
             subscription = Subscription(
                 tenant_id=tenant.id,
