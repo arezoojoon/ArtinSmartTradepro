@@ -68,6 +68,59 @@ async def start_hunt(
         "active_sources": request.sources
     }
 
+@router.get("/search", dependencies=[Depends(require_permissions(["hunter.read"]))])
+async def search_leads(
+    type: str = "buyer",
+    limit: int = 100,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """
+    Get all hunter results for the current tenant, optionally filtered by type.
+    Returns empty list if no results found.
+    """
+    tenant_id = current_user.current_tenant_id
+    if not tenant_id:
+        return {"results": [], "total": 0}
+    
+    # Get all runs for this tenant
+    runs_result = await db.execute(
+        select(HunterRun).where(HunterRun.tenant_id == tenant_id).order_by(HunterRun.created_at.desc())
+    )
+    runs = runs_result.scalars().all()
+    
+    if not runs:
+        return {"results": [], "total": 0}
+    
+    # Get all results from those runs
+    run_ids = [run.id for run in runs]
+    results_query = select(HunterResult).where(HunterResult.run_id.in_(run_ids))
+    results_result = await db.execute(results_query)
+    all_results = results_result.scalars().all()
+    
+    # Map to response format
+    leads = []
+    for r in all_results[:limit]:
+        raw = r.raw_data if hasattr(r, 'raw_data') and r.raw_data else {}
+        leads.append({
+            "id": str(r.id),
+            "company_name": getattr(r, 'company_name', '') or raw.get('company_name', 'Unknown'),
+            "contact_name": getattr(r, 'contact_name', '') or raw.get('contact_name', ''),
+            "email": getattr(r, 'email', '') or raw.get('email', ''),
+            "phone": getattr(r, 'phone', '') or raw.get('phone', ''),
+            "country": getattr(r, 'country', '') or raw.get('country', ''),
+            "source": getattr(r, 'source', '') or raw.get('source', ''),
+            "status": getattr(r, 'status', 'new') or 'new',
+            "score": getattr(r, 'lead_score', 0) or raw.get('score', 0),
+            "brand_name": raw.get('brand_name', ''),
+            "product_name": raw.get('product_name', ''),
+            "price": raw.get('price', ''),
+            "website": raw.get('website', ''),
+            "created_at": str(r.created_at) if hasattr(r, 'created_at') else '',
+        })
+    
+    return {"results": leads, "total": len(leads)}
+
 @router.get("/status/{job_id}", dependencies=[Depends(require_permissions(["hunter.read"]))])
 async def get_job_status(
     job_id: str,
