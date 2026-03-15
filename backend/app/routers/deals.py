@@ -180,24 +180,22 @@ class RiskAssessmentResponse(BaseModel):
     created_at: str
 
 
-def generate_deal_number(db: Session) -> str:
-    """Generate unique deal number"""
-    # Get current date in YYYYMMDD format
+def generate_deal_number(db: Session, tenant_id=None) -> str:
+    """Generate unique deal number scoped to tenant."""
     date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
     
-    # Get count of deals created today
+    # Count deals created today FOR THIS TENANT (not globally)
     today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-    today_count = db.query(Deal).filter(
-        Deal.created_at >= today_start
-    ).count()
+    query = db.query(Deal).filter(Deal.created_at >= today_start)
+    if tenant_id:
+        query = query.filter(Deal.tenant_id == tenant_id)
+    today_count = query.count()
     
-    # Generate deal number: DEAL-YYYYMMDD-NNNN
     deal_number = f"DEAL-{date_str}-{today_count + 1:04d}"
     
     # Ensure uniqueness
     existing = db.query(Deal).filter(Deal.deal_number == deal_number).first()
     if existing:
-        # Add random suffix if collision
         import random
         deal_number = f"DEAL-{date_str}-{random.randint(1000, 9999)}"
     
@@ -342,7 +340,7 @@ def create_deal(
             raise HTTPException(status_code=404, detail="Seller company not found")
     
     # Generate deal number
-    deal_number = generate_deal_number(db)
+    deal_number = generate_deal_number(db, tenant_id)
     
     # Parse dates
     expected_delivery_date = None

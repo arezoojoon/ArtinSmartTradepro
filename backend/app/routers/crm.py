@@ -28,10 +28,11 @@ router = APIRouter()
 
 async def _assert_owned(db: AsyncSession, model, entity_id: UUID, tenant_id: UUID, label: str):
     """
-    Since RLS is enabled via session context, just filtering by ID
-    is sufficient to guarantee it belongs to the tenant.
+    Verify entity belongs to tenant. ALWAYS filter by tenant_id.
     """
-    result = await db.execute(select(model).where(model.id == entity_id))
+    result = await db.execute(
+        select(model).where(model.id == entity_id, model.tenant_id == tenant_id)
+    )
     obj = result.scalar_one_or_none()
     if not obj:
         raise HTTPException(status_code=404, detail=f"{label} not found")
@@ -140,8 +141,8 @@ async def list_contacts(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List contacts (RLS automatically isolates to tenant)."""
-    stmt = select(CRMContact)
+    """List contacts — ALWAYS filter by tenant_id."""
+    stmt = select(CRMContact).where(CRMContact.tenant_id == current_user.current_tenant_id)
     if search:
         search_filter = f"%{search}%"
         stmt = stmt.where(
@@ -290,7 +291,9 @@ async def list_pipelines(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = select(CRMPipeline).order_by(CRMPipeline.created_at.asc())
+    stmt = select(CRMPipeline).where(
+        CRMPipeline.tenant_id == current_user.current_tenant_id
+    ).order_by(CRMPipeline.created_at.asc())
     pipelines = (await db.execute(stmt)).scalars().all()
     return {"pipelines": pipelines}
 
@@ -329,7 +332,7 @@ async def list_deals(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = select(CRMDeal)
+    stmt = select(CRMDeal).where(CRMDeal.tenant_id == current_user.current_tenant_id)
     if pipeline_id:
         stmt = stmt.where(CRMDeal.pipeline_id == pipeline_id)
     if stage_id:
@@ -507,7 +510,9 @@ async def list_conversations(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = select(CRMConversation)
+    stmt = select(CRMConversation).where(
+        CRMConversation.tenant_id == current_user.current_tenant_id
+    )
     if contact_id:
         stmt = stmt.where(CRMConversation.contact_id == contact_id)
     if status:
