@@ -68,6 +68,122 @@ async def start_hunt(
         "active_sources": request.sources
     }
 
+@router.post("/scrape-now", dependencies=[Depends(require_permissions(["hunter.write"]))])
+async def scrape_now(
+    request: ScrapeRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """
+    Inline scraping — runs scrapers directly and returns results immediately.
+    No Celery needed. Results are saved to DB and returned to frontend.
+    """
+    import datetime
+    from app.services.scraper.base import ScraperFactory
+    
+    tenant_id = current_user.current_tenant_id
+    
+    # Create a job record
+    job = AIJob(
+        tenant_id=tenant_id,
+        job_type="hunter_inline",
+        status="running",
+        credit_cost=2.0
+    )
+    db.add(job)
+    await db.commit()
+    await db.refresh(job)
+    
+    # Create hunter run
+    run = HunterRun(
+        tenant_id=tenant_id,
+        job_id=job.id,
+        target_keyword=request.keyword,
+        target_location=request.location or "",
+        sources=request.sources,
+        status="processing"
+    )
+    db.add(run)
+    await db.commit()
+    await db.refresh(run)
+    
+    all_leads = []
+    errors = []
+    
+    for source_id in request.sources:
+        try:
+            scraper = ScraperFactory.get_scraper(source_id)
+            source_creds = (request.credentials or {}).get(source_id, {})
+            results = await scraper.scrape(
+                keyword=request.keyword,
+                location=request.location or "",
+                credentials=source_creds if source_creds else None,
+            )
+            
+            for r in results:
+                # Save to DB
+                hunter_result = HunterResult(
+                    run_id=run.id,
+                    tenant_id=tenant_id,
+                    source=r.source or source_id,
+                    type=request.hunt_type or "buyer",
+                    name=r.contact_name,
+                    company=r.company_name,
+                    email=r.email,
+                    phone=r.phone,
+                    website=r.website,
+                    country=r.country,
+                    raw_data={
+                        "brand_name": r.brand_name,
+                        "product_name": r.product_name,
+                        "price": r.price,
+                        "city": r.city,
+                        "company_name": r.company_name,
+                        "contact_name": r.contact_name,
+                        "email": r.email,
+                        "phone": r.phone,
+                        "website": r.website,
+                        "country": r.country,
+                        "source": r.source,
+                        "score": r.score,
+                    },
+                    confidence_score=r.score / 100.0 if r.score else 0.5,
+                )
+                db.add(hunter_result)
+                
+                all_leads.append({
+                    "company_name": r.company_name,
+                    "contact_name": r.contact_name,
+                    "email": r.email,
+                    "phone": r.phone,
+                    "country": r.country,
+                    "source": r.source or source_id,
+                    "brand_name": r.brand_name,
+                    "product_name": r.product_name,
+                    "price": r.price,
+                    "website": r.website,
+                    "score": r.score,
+                })
+        except Exception as e:
+            errors.append({"source": source_id, "error": str(e)})
+    
+    # Update run and job status
+    run.status = "completed"
+    run.leads_found = len(all_leads)
+    run.completed_at = datetime.datetime.utcnow()
+    job.status = "completed"
+    job.completed_at = datetime.datetime.utcnow()
+    
+    await db.commit()
+    
+    return {
+        "status": "success",
+        "total_leads": len(all_leads),
+        "results": all_leads,
+        "errors": errors,
+        "job_id": str(job.id),
+    }
+
 @router.get("/search", dependencies=[Depends(require_permissions(["hunter.read"]))])
 async def search_leads(
     type: str = "buyer",

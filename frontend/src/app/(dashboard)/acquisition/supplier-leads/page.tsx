@@ -107,7 +107,7 @@ export default function SupplierLeadsPage() {
         setHuntError("");
         setIsSubmitting(true);
         try {
-            await api.post("/hunter/start", {
+            const res = await api.post("/hunter/scrape-now", {
                 keyword: keyword.trim(),
                 location: location.trim() || undefined,
                 sources: selectedSources,
@@ -115,12 +115,19 @@ export default function SupplierLeadsPage() {
                 credentials: Object.keys(credentials).length > 0 ? credentials : undefined,
                 hunt_type: "supplier",
             });
+            // Add scraped results to suppliers immediately
+            const newSuppliers = (res.data?.results || []).map((r: any, i: number) => ({
+                id: `scraped-${Date.now()}-${i}`,
+                ...r,
+                status: "new",
+            }));
+            setSuppliers(prev => [...newSuppliers, ...prev]);
             setShowModal(false);
             setKeyword("");
             setLocation("");
             setSelectedSources([]);
             setCredentials({});
-            setTimeout(() => { setLoading(true); fetchSuppliers(); }, 2000);
+            setHsCode("");
         } catch (e: any) {
             setHuntError(e?.response?.data?.detail || "Failed to start hunt. Try again.");
         } finally {

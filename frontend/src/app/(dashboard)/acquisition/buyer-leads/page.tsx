@@ -117,7 +117,7 @@ export default function BuyerLeadsPage() {
         setHuntError("");
         setIsSubmitting(true);
         try {
-            const res = await api.post("/hunter/start", {
+            const res = await api.post("/hunter/scrape-now", {
                 keyword: keyword.trim(),
                 location: location.trim() || undefined,
                 sources: selectedSources,
@@ -125,13 +125,19 @@ export default function BuyerLeadsPage() {
                 credentials: Object.keys(credentials).length > 0 ? credentials : undefined,
                 hunt_type: "buyer",
             });
+            // Add scraped results to leads immediately
+            const newLeads = (res.data?.results || []).map((r: any, i: number) => ({
+                id: `scraped-${Date.now()}-${i}`,
+                ...r,
+                status: "new",
+            }));
+            setLeads(prev => [...newLeads, ...prev]);
             setShowModal(false);
             setKeyword("");
             setLocation("");
             setSelectedSources([]);
             setCredentials({});
-            // Refresh leads after short delay
-            setTimeout(() => { setLoading(true); fetchLeads(); }, 2000);
+            setHsCode("");
         } catch (e: any) {
             setHuntError(e?.response?.data?.detail || "Failed to start hunt. Try again.");
         } finally {
