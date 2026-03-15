@@ -1,42 +1,70 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import abc
+from dataclasses import dataclass, field
+
+@dataclass
+class ScraperResult:
+    """Standardized result from any scraper."""
+    company_name: str = ""
+    contact_name: str = ""
+    email: str = ""
+    phone: str = ""
+    country: str = ""
+    city: str = ""
+    website: str = ""
+    brand_name: str = ""
+    product_name: str = ""
+    price: str = ""
+    source: str = ""
+    score: int = 0
+    raw_data: Dict[str, Any] = field(default_factory=dict)
+
 
 class BaseScraper(abc.ABC):
     @abc.abstractmethod
-    async def scrape(self, keyword: str, location: str) -> List[Dict[str, Any]]:
+    async def scrape(
+        self,
+        keyword: str,
+        location: str = "",
+        credentials: Optional[Dict[str, str]] = None,
+        **kwargs
+    ) -> List[ScraperResult]:
         """
         Execute the scraping strategy.
+        
+        Args:
+            keyword: Search term (product, company, person)
+            location: Target country/city
+            credentials: Source-specific auth credentials
         """
         pass
+
 
 class ScraperFactory:
     @staticmethod
     def get_scraper(source: str) -> BaseScraper:
-        # Import strategies lazily to avoid circular imports
         from app.services.scraper.strategies import (
             GoogleMapsScraper,
-            LinkedInSERPScraper,
+            LinkedInScraper,
+            TelegramScraper,
+            DiscordScraper,
             TradeMapScraper,
-            SocialMediaScraper,
-            WebsiteScraper,
-            ReviewScraper,
-            IntentScraper,
-            CompetitorScraper,
-            PDFScraper,
-            ReverseImageScraper
+            FacebookScraper,
+            WebScraper,
         )
         
         strategies = {
-            "maps": GoogleMapsScraper,
-            "linkedin_serp": LinkedInSERPScraper,
+            "google_maps": GoogleMapsScraper,
+            "linkedin": LinkedInScraper,
+            "telegram": TelegramScraper,
+            "discord": DiscordScraper,
             "trademap": TradeMapScraper,
-            "social": SocialMediaScraper,
-            "website": WebsiteScraper,
-            "reviews": ReviewScraper,
-            "intent": IntentScraper,
-            "competitors": CompetitorScraper,
-            "pdfs": PDFScraper,
-            "reverse_image": ReverseImageScraper
+            "facebook": FacebookScraper,
+            "web": WebScraper,
+            # Legacy aliases
+            "maps": GoogleMapsScraper,
+            "linkedin_serp": LinkedInScraper,
+            "social": FacebookScraper,
         }
         
         scraper_class = strategies.get(source)

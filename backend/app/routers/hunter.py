@@ -19,11 +19,13 @@ router = APIRouter()
 
 class ScrapeRequest(BaseModel):
     keyword: str
-    location: str
-    sources: List[str] = Field(..., description="List of sources (maps, un_comtrade, freight, etc.)")
+    location: Optional[str] = None
+    sources: List[str] = Field(..., description="List of sources (google_maps, linkedin, telegram, discord, trademap, facebook, web)")
     hs_code: Optional[str] = None
     min_volume_usd: Optional[float] = None
     min_growth_pct: Optional[float] = None
+    credentials: Optional[dict] = Field(None, description="Per-source credentials: {source_id: {field: value}}")
+    hunt_type: Optional[str] = Field("buyer", description="Type of hunt: buyer or supplier")
 
 class ImportRequest(BaseModel):
     result_id: str
