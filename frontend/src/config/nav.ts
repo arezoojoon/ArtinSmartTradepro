@@ -129,12 +129,12 @@ export const navItems: NavItem[] = [
     },
 ];
 
-// Admin item – appended conditionally in sidebar for super_admin / admin
+// Admin item – ONLY for platform super_admin (NOT tenant admin)
 export const adminNavItem: NavItem = {
     label: "Super Admin",
     href: "/admin/super",
     icon: ShieldCheck,
-    visibleIn: { roles: ["super_admin", "admin"] },
+    visibleIn: { roles: ["super_admin"] },
 };
 
 // ---------- Helpers ----------

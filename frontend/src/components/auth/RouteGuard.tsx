@@ -30,8 +30,8 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
             // Allow root and command center universally for authenticated users
             if (pathname === "/" || pathname === "/command-center") return true;
 
-            // Allow /admin/* paths for super_admin and admin roles
-            if (pathname.startsWith("/admin") && (role === "super_admin" || role === "admin")) return true;
+            // Allow /admin/* paths ONLY for platform super_admin (NOT tenant admin)
+            if (pathname.startsWith("/admin") && role === "super_admin") return true;
 
             // Allow /settings paths for all authenticated users
             if (pathname.startsWith("/settings")) return true;

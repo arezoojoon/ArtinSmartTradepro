@@ -83,8 +83,8 @@ export default function Sidebar({ forceExpanded = false, onItemClick }: SidebarP
 
     const getDisplayedItems = useCallback((): NavItem[] => {
         let items = filterNavItems(navItems, mode, role);
-        // Add Super Admin panel for authorized users (super_admin role OR is_superuser flag)
-        const isSuperUser = (user as any)?.is_superuser === true || role === "super_admin" || role === "admin";
+        // Add Super Admin panel ONLY for platform super_admin (NOT tenant admin)
+        const isSuperUser = (user as any)?.is_superuser === true || role === "super_admin";
         if (isSuperUser && !items.some(i => i.href === "/admin/super")) {
             items = [...items, adminNavItem];
         }
