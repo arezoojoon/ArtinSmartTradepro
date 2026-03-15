@@ -25,6 +25,8 @@ import {
     Target,
     TrendingUp,
     AlertTriangle,
+    Calculator,
+    Radar,
     type LucideIcon,
 } from "lucide-react";
 
@@ -113,6 +115,8 @@ export const navItems: NavItem[] = [
         icon: Brain,
         children: [
             { label: "AI Brain", href: "/brain", icon: Brain },
+            { label: "Landed Cost", href: "/brain/landed-cost", icon: Calculator },
+            { label: "Arbitrage Finder", href: "/brain/arbitrage-finder", icon: Radar },
             { label: "Risk Engine", href: "/intelligence/risk-engine", icon: AlertTriangle },
         ],
     },

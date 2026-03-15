@@ -537,3 +537,92 @@ async def run_full_macro_intelligence(
     except Exception as e:
         logger.error(f"Macro Engine failure: {e}")
         raise HTTPException(status_code=500, detail="Macro Intelligence execution failed.")
+
+
+# ===================================================================
+# LANDED COST CALCULATOR
+# ===================================================================
+
+class LandedCostRequest(BaseModel):
+    product_name: str
+    hs_code: str = ""
+    origin_country: str
+    destination_country: str
+    unit_price: float
+    quantity_kg: float
+    currency: str = "USD"
+    sell_price_per_kg: Optional[float] = None
+
+
+@router.post("/landed-cost")
+async def calculate_landed_cost(
+    req: LandedCostRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+):
+    """
+    Smart Landed Cost Calculator.
+    Computes full cost breakdown: freight, tariffs, insurance, warehousing, taxes.
+    Returns profit analysis and margin estimation.
+    """
+    logger.info(
+        f"Tenant {current_user.tenant_id} requested landed cost: "
+        f"{req.product_name} ({req.hs_code}) {req.origin_country} → {req.destination_country}"
+    )
+    try:
+        from app.services.engines.landed_cost_engine import LandedCostEngine
+
+        result = await LandedCostEngine.calculate(
+            product_name=req.product_name,
+            hs_code=req.hs_code,
+            origin_country=req.origin_country,
+            destination_country=req.destination_country,
+            unit_price=req.unit_price,
+            quantity_kg=req.quantity_kg,
+            currency=req.currency,
+            sell_price_per_kg=req.sell_price_per_kg,
+        )
+        return {"status": "success", "result": result.dict()}
+    except Exception as e:
+        logger.error(f"Landed Cost calculation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Landed cost calculation failed: {str(e)}")
+
+
+# ===================================================================
+# REGIONAL ARBITRAGE FINDER
+# ===================================================================
+
+class RegionalArbitrageRequest(BaseModel):
+    product: str
+    hs_code: str = ""
+    markets: Optional[List[str]] = None
+    min_margin_pct: float = 5.0
+
+
+@router.post("/regional-arbitrage")
+async def find_regional_arbitrage(
+    req: RegionalArbitrageRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+):
+    """
+    Regional Arbitrage Finder.
+    Scans multiple markets for price gaps and profitable trade opportunities.
+    """
+    logger.info(
+        f"Tenant {current_user.tenant_id} requested regional arbitrage scan: "
+        f"{req.product} across {req.markets or 'default GCC markets'}"
+    )
+    try:
+        from app.services.engines.regional_arbitrage_engine import RegionalArbitrageEngine
+
+        result = await RegionalArbitrageEngine.scan(
+            product=req.product,
+            hs_code=req.hs_code,
+            markets=req.markets,
+            min_margin_pct=req.min_margin_pct,
+        )
+        return {"status": "success", "result": result.dict()}
+    except Exception as e:
+        logger.error(f"Regional arbitrage scan failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Regional arbitrage scan failed: {str(e)}")
