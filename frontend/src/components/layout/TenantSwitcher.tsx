@@ -31,8 +31,16 @@ export default function TenantSwitcher({ collapsed = false }: { collapsed?: bool
             if (!user) return;
             try {
                 const res = await api.get("/tenants");
-                // Handle response format change (array vs object)
-                const tenantList = Array.isArray(res.data) ? res.data : (res.data.tenants || []);
+                // Handle response format: API returns {tenants: [{tenant_id, tenant_name, role}], current_tenant_id}
+                const raw = Array.isArray(res.data) ? res.data : (res.data.tenants || []);
+
+                // Map API format to component format
+                const tenantList = raw.map((t: any) => ({
+                    id: t.id || t.tenant_id,
+                    name: t.name || t.tenant_name,
+                    slug: t.slug || "",
+                    mode: t.mode || "hybrid",
+                }));
 
                 // Deduplicate tenants based on ID
                 const uniqueTenants = Array.from(
