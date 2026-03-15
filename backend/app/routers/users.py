@@ -15,17 +15,16 @@ def read_user_me(
     db: Session = Depends(get_db)
 ) -> Any:
     """
-    Get current user.
-    If 'current_tenant_id' is set on the user object (via middleware), 
-    we could theoretically return tenant info here too, 
-    but Pydantic schema likely only has tenant_id/tenant fields.
-    
-    Since we removed user.tenant_id, we should update the schema or populate it dynamically.
+    Get current user profile.
+    For superadmins: returns user with role=super_admin, tenant may be None.
+    For normal users: hydrates tenant info from current_tenant_id.
     """
+    # Ensure superadmin role is correctly set
+    if current_user.is_superuser and current_user.role != "super_admin":
+        current_user.role = "super_admin"
+        db.commit()
     
-    # If the user object has a transient 'current_tenant_id', we can hydrate the tenant field
-    # But schema might expect 'tenant' object.
-    
+    # Hydrate tenant info for users with active tenant context
     if hasattr(current_user, "current_tenant_id") and current_user.current_tenant_id:
         tenant = db.query(Tenant).filter(Tenant.id == current_user.current_tenant_id).first()
         current_user.tenant = tenant

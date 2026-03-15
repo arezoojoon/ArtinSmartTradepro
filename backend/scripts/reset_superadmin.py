@@ -35,6 +35,7 @@ def reset_superadmin():
         if user:
             # Reset password and ensure superuser flags
             user.hashed_password = get_password_hash(SUPERADMIN_PASSWORD)
+            user.full_name = "Super Admin"
             user.is_superuser = True
             user.is_active = True
             user.email_verified = True
