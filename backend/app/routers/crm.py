@@ -298,7 +298,7 @@ async def list_pipelines(
     return {"pipelines": pipelines}
 
 
-@router.post("/pipelines", dependencies=[Depends(require_permissions(["crm.admin"]))])
+@router.post("/pipelines", dependencies=[Depends(require_permissions(["crm.write"]))])
 async def create_pipeline(
     data: PipelineCreate,
     current_user: User = Depends(get_current_user),
