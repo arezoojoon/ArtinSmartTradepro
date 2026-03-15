@@ -131,8 +131,8 @@ export const navItems: NavItem[] = [
 
 // Admin item – appended conditionally in sidebar for super_admin / admin
 export const adminNavItem: NavItem = {
-    label: "Admin Panel",
-    href: "/admin",
+    label: "Super Admin",
+    href: "/admin/super",
     icon: ShieldCheck,
     visibleIn: { roles: ["super_admin", "admin"] },
 };

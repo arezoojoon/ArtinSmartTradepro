@@ -83,12 +83,13 @@ export default function Sidebar({ forceExpanded = false, onItemClick }: SidebarP
 
     const getDisplayedItems = useCallback((): NavItem[] => {
         let items = filterNavItems(navItems, mode, role);
-        // Add admin panel for authorized users
-        if ((role === "super_admin" || role === "admin") && !items.some(i => i.href === "/admin")) {
+        // Add Super Admin panel for authorized users (super_admin role OR is_superuser flag)
+        const isSuperUser = (user as any)?.is_superuser === true || role === "super_admin" || role === "admin";
+        if (isSuperUser && !items.some(i => i.href === "/admin/super")) {
             items = [...items, adminNavItem];
         }
         return items;
-    }, [mode, role]);
+    }, [mode, role, user]);
 
     if (!mounted) return null;
 
